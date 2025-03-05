@@ -1,0 +1,54 @@
+Options -Indexes 
+ErrorDocument 404 /404.php
+
+<IfModule mod_rewrite.c>
+  Options +FollowSymLinks
+  RewriteEngine On
+
+
+    RewriteRule ^catalog/models/(.*)$ /catalog/electromotobikes/$1 [R=301,L]
+    RewriteRule ^catalog/electromotobikes/super-soco-tc-wanderer/(.*)$ /catalog/electromotobikes/tc-wanderer/$1 [R=301,L]
+    RewriteRule ^catalog/electromotobikes/super-soco-ts-street-hunter/(.*)$ /catalog/electromotobikes/ts-street-hunter/$1 [R=301,L]
+    RewriteRule ^catalog/electromotobikes/super-soco-tsx/(.*)$ /catalog/electromotobikes/tsx/$1 [R=301,L]
+
+    RewriteRule ^blog/poleznaya-informatsiya/dostavka-elektromototsiklov-iz-kitaya/$ /blog/news/dostavka-elektromototsiklov-iz-kitaya/ [R=301,L]
+    RewriteRule ^blog/poleznaya-informatsiya/skolko-zaryazhat-elektromototsikl/$ /blog/tips/skolko-zaryazhat-elektromototsikl/ [R=301,L]
+    RewriteRule ^blog/poleznaya-informatsiya/obzor-na-tc-wanderer/$ /blog/reviews/obzor-na-tc-wanderer/ [R=301,L]
+    RewriteRule ^blog/poleznaya-informatsiya/obzor-super-soco-tsx/$ /blog/reviews/obzor-super-soco-tsx/ [R=301,L]
+    RewriteRule ^blog/poleznaya-informatsiya/obzor-na-super-soco-street-hunter/$ /blog/reviews/obzor-na-super-soco-street-hunter/ [R=301,L]
+    RewriteRule ^blog/poleznaya-informatsiya/elektromototsikl-super-soco-tc-max-2023/$ /blog/reviews/elektromototsikl-super-soco-tc-max-2023/ [R=301,L]
+
+    RewriteRule ^blog/poleznaya-informatsiya/(.*)$ /blog/info/$1 [R=301,L]
+
+			
+	# ASPRO_ROBOTS Serve robots.txt with robots.php only if the latter exists
+	RewriteCond %{REQUEST_FILENAME} robots.txt
+	RewriteCond %{DOCUMENT_ROOT}/robots.php -f
+	RewriteRule ^(.*)$ /robots.php [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-l
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !/bitrix/urlrewrite.php$
+  RewriteRule ^(.*)$ /bitrix/urlrewrite.php [L]
+  RewriteRule .* - [E=REMOTE_USER:%{HTTP:Authorization}]
+
+  # Переадресация с index.php на /
+  RewriteCond %{ENV:REDIRECT_STATUS} ^$
+  RewriteCond %{REQUEST_FILENAME} !/bitrix/(.*)$
+  RewriteRule (^|.*?/)index\.php$ http://%{HTTP_HOST}/$1 [R=301,QSA,L]
+
+</IfModule>
+
+<IfModule mod_dir.c>
+  DirectoryIndex index.php index.html
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive on
+  ExpiresByType image/jpeg "access plus 3 day"
+  ExpiresByType image/gif "access plus 3 day"
+  ExpiresByType image/png "access plus 3 day"
+  ExpiresByType text/css "access plus 3 day"
+  ExpiresByType application/javascript "access plus 3 day"  
+</IfModule>
+

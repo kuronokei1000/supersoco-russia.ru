@@ -1,0 +1,122 @@
+<?php
+//<title>Wildberries</title>
+/** @global CUser $USER */
+/** @var int $IBLOCK_ID */
+/** @var string $SETUP_SERVER_NAME */
+/** @var string $SETUP_FILE_NAME */
+/** @var array $V */
+/** @var array|string $XML_DATA */
+/** @var bool $firstStep */
+/** @var int $CUR_ELEMENT_ID */
+/** @var bool $finalExport */
+/** @var bool $boolNeedRootSection */
+
+/** @var int $intMaxSectionID */
+
+use Bitrix\Main\Loader,
+    Bitrix\Currency,
+    Bitrix\Catalog,
+    Bitrix\Sale;
+
+IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/catalog/export_yandex.php');
+IncludeModuleLangFile(__FILE__);
+
+$SETUP_VARS_LIST = 'FILE_LOG_NAME,IBLOCK_ID,SITE_ID,V,XML_DATA,SETUP_SERVER_NAME,COMPANY_NAME,SETUP_FILE_NAME,USE_HTTPS,FILTER_AVAILABLE,DISABLE_REFERERS,EXPORT_CHARSET,MAX_EXECUTION_TIME,CHECK_PERMISSIONS';
+$INTERNAL_VARS_LIST = 'intMaxSectionID,boolNeedRootSection,arSectionIDs,arAvailGroups,curVendoreProp,NEED_UPLOAD_PRICES,NEED_UPLOAD_STORES,NEED_UPLOAD_IMAGES';
+
+$MAX_EXECUTION_TIME = (isset($MAX_EXECUTION_TIME) ? (int)$MAX_EXECUTION_TIME : 0);
+$SETUP_SERVER_NAME = (isset($SETUP_SERVER_NAME) ? trim($SETUP_SERVER_NAME) : '');
+$SITE_ID = (isset($SITE_ID) ? (string)$SITE_ID : '');
+$CHECK_PERMISSIONS = (isset($CHECK_PERMISSIONS) && $CHECK_PERMISSIONS == 'Y' ? 'Y' : 'N');
+$FILTER_AVAILABLE = (isset($FILTER_AVAILABLE) && $FILTER_AVAILABLE == 'Y');
+$FILE_LOG_NAME = (isset($FILE_LOG_NAME) && $FILE_LOG_NAME) ? $FILE_LOG_NAME : 'wildberries_' . date('d-m-Y_H:i') . '.txt';
+
+$NEED_UPLOAD_PRICES = isset($NEED_UPLOAD_PRICES) && $NEED_UPLOAD_PRICES == 'Y';
+$NEED_UPLOAD_STORES = isset($NEED_UPLOAD_STORES) && $NEED_UPLOAD_STORES == 'Y';
+$NEED_UPLOAD_IMAGES = isset($NEED_UPLOAD_IMAGES) && $NEED_UPLOAD_IMAGES == 'Y';
+
+//if ($MAX_EXECUTION_TIME <= 0) {
+    $MAX_EXECUTION_TIME = 0;
+//}
+
+if (defined('BX_CAT_CRON') && BX_CAT_CRON == true) {
+    $MAX_EXECUTION_TIME = 0;
+    $firstStep = true;
+}
+
+if (defined('CATALOG_EXPORT_NO_STEP') && CATALOG_EXPORT_NO_STEP == true) {
+    $MAX_EXECUTION_TIME = 0;
+    $firstStep = true;
+}
+
+if ($MAX_EXECUTION_TIME == 0) {
+    set_time_limit(0);
+}
+
+global $USER;
+$bTmpUserCreated = false;
+if (!CCatalog::IsUserExists()) {
+    $bTmpUserCreated = true;
+    if (isset($USER)) {
+        $USER_TMP = $USER;
+    }
+    $USER = new CUser();
+}
+
+$saleIncluded = Loader::includeModule('sale');
+if ($saleIncluded) {
+    Sale\DiscountCouponsManager::freezeCouponStorage();
+}
+\CCatalogDiscountSave::Disable();
+
+/** ----------------------------------------------------------------------------------------------------------------- */
+
+use Aspro\Lite\Marketplace\Run\Wildberries as Run;
+
+$run = new Run($IBLOCK_ID);
+
+$run->setOptions([
+    'needUploadPrices' => $NEED_UPLOAD_PRICES,
+    'needUploadStores' => $NEED_UPLOAD_STORES,
+    'needUploadImages' => $NEED_UPLOAD_IMAGES,
+    'maxExecutionTime' => $MAX_EXECUTION_TIME,
+    'startExecTime' => START_EXEC_TIME,
+    'logFolder' => '/upload/mp-export-log/wildberries_'.$PROFILE_ID,
+    'logFileName' => $FILE_LOG_NAME,
+    'serverName' => $SETUP_SERVER_NAME,
+    'checkPermission' => $CHECK_PERMISSIONS,
+    'isAvailable' => $FILTER_AVAILABLE,
+    'isAllResult' => false, //$MAX_EXECUTION_TIME == 0,
+    'curVendoreProp' => isset($curVendoreProp) ? $curVendoreProp : null,
+    'filter' => [
+        '>ID' => isset($CUR_ELEMENT_ID) && $CUR_ELEMENT_ID > 0 ? $CUR_ELEMENT_ID : null,
+        'SECTION_ID' => array_filter(array_map(function ($sectionId) {
+            return (int)$sectionId;
+        }, $V)),
+        'INCLUDE_SUBSECTIONS' => 'Y',
+    ]
+]);
+
+$result = $run->export();
+
+$curVendoreProp = $result['curVendoreProp'];
+$CUR_ELEMENT_ID = $result['lastElementId'];
+$finalExport = $result['finalExport'];
+
+if ($finalExport && file_exists($run->getALogPath())) {
+    $strExportErrorMessage = 'See the log file <br /> ' . $run->getRLogPath();
+}
+
+/** ----------------------------------------------------------------------------------------------------------------- */
+
+\CCatalogDiscountSave::Enable();
+if ($saleIncluded) {
+    Sale\DiscountCouponsManager::unFreezeCouponStorage();
+}
+
+if ($bTmpUserCreated) {
+    if (isset($USER_TMP)) {
+        $USER = $USER_TMP;
+        unset($USER_TMP);
+    }
+}

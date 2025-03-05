@@ -1,0 +1,3793 @@
+<?
+namespace Aspro\Functions;
+
+use \Bitrix\Main\Application,
+	\Bitrix\Main\Web\DOM\Document,
+	\Bitrix\Main\Localization\Loc,
+	\Bitrix\Main\Web\DOM\CssParser,
+	\Bitrix\Main\Text\HtmlFilter,
+	\Bitrix\Main\IO\File,
+	\Bitrix\Main\IO\Directory,
+	\Bitrix\Main\Config\Option,
+	\Bitrix\Main\Web\Json,
+	\Aspro\Functions\CAsproLiteCRM,
+	\Aspro\Lite\Functions\Extensions,
+	CLite as Solution;
+
+Loc::loadMessages(__FILE__);
+
+if (!class_exists("CAsproLite")) {
+	class CAsproLite
+	{
+		const MODULE_ID = Solution::moduleID;
+
+		/*public static function OnAsproShowPageTypeHandler($arTheme, &$arMainPageOrder){
+			$arMainPageOrder[] = 'NEW_BLOCK';
+		}*/
+
+		/*public static function OnAsproParametersHandler(&$arParameters){
+			//add new option with value
+			$arParameters['TEST'] = array(
+				'TITLE' => 'Test group',
+				'OPTIONS' => array(
+					'THEME_SWITCHER' => array(
+						'TITLE' => 'Test title',
+						'TYPE' => 'checkbox',
+						'DEFAULT' => 'Y',
+						'THEME' => 'N',
+					)
+				)
+			);
+			//add new value in exist option
+			$arParameters['INDEX_PAGE']['OPTIONS']['INDEX_TYPE']['LIST']['index_test'] = 'index_test';
+			$arParameters['INDEX_PAGE']['OPTIONS']['INDEX_TYPE']['SUB_PARAMS']['index4']['TEST'] = array(
+				'TITLE' => 'Test title',
+				'TYPE' => 'checkbox',
+				'DEFAULT' => 'Y',
+				'THEME' => 'N',
+				'ONE_ROW' => 'Y',
+				'SMALL_TOGGLE' => 'Y',
+			);
+		}*/
+
+		//log to file
+		public static function set_log($type="log", $path="log_file", $arMess=array())
+		{
+			$root = $_SERVER['DOCUMENT_ROOT'].'/upload/logs/'.self::MODULE_ID.'/'.$type.'/';
+			if(!file_exists($root) || !is_dir($root))
+				mkdir( $root, 0700, true );
+
+			$path_date = $root.date('Y-m').'/';
+			if(!file_exists($path_date) || !is_dir($path_date))
+				mkdir( $path_date, 0700 );
+
+			file_put_contents($path_date.$path.'.log', date('d-m-Y H-i-s', time()+\CTimeZone::GetOffset())."\n".print_r($arMess, true)."\n", LOCK_EX | FILE_APPEND);
+		}
+
+		protected static function _getAllFormFieldsHTML($WEB_FORM_ID, $RESULT_ID, $arAnswers)
+		{
+			global $APPLICATION;
+
+			$strResult = "";
+
+			$w = \CFormField::GetList($WEB_FORM_ID, "ALL", $by, $order, array("ACTIVE" => "Y"), $is_filtered);
+			while ($wr=$w->Fetch())
+			{
+				$answer = "";
+				$answer_raw = '';
+				if (is_array($arAnswers[$wr["SID"]]))
+				{
+					$bHasDiffTypes = false;
+					$lastType = '';
+					foreach ($arAnswers[$wr['SID']] as $arrA)
+					{
+						if ($lastType == '') $lastType = $arrA['FIELD_TYPE'];
+						elseif ($arrA['FIELD_TYPE'] != $lastType)
+						{
+							$bHasDiffTypes = true;
+							break;
+						}
+					}
+
+					foreach($arAnswers[$wr["SID"]] as $arrA)
+					{
+						if ($wr['ADDITIONAL'] == 'Y')
+						{
+							$arrA['FIELD_TYPE'] = $wr['FIELD_TYPE'];
+						}
+
+						$USER_TEXT_EXIST = (strlen(trim($arrA["USER_TEXT"]))>0);
+						$ANSWER_TEXT_EXIST = (strlen(trim($arrA["ANSWER_TEXT"]))>0);
+						$ANSWER_VALUE_EXIST = (strlen(trim($arrA["ANSWER_VALUE"]))>0);
+						$USER_FILE_EXIST = (intval($arrA["USER_FILE_ID"])>0);
+
+						if (
+							$bHasDiffTypes
+							&&
+							!$USER_TEXT_EXIST
+							&&
+							(
+								$arrA['FIELD_TYPE'] == 'text'
+								||
+								$arrA['FIELD_TYPE'] == 'textarea'
+							)
+						)
+							continue;
+
+						if (strlen(trim($answer))>0) $answer .= "<br />";
+						if (strlen(trim($answer_raw))>0) $answer_raw .= ",";
+
+						if ($ANSWER_TEXT_EXIST)
+							$answer .= $arrA["ANSWER_TEXT"].': ';
+
+						switch ($arrA['FIELD_TYPE'])
+						{
+							case 'text':
+							case 'textarea':
+							case 'hidden':
+							case 'date':
+							case 'password':
+
+								if ($USER_TEXT_EXIST)
+								{
+									$answer .= htmlspecialcharsbx(trim($arrA["USER_TEXT"]));
+									$answer_raw .= htmlspecialcharsbx(trim($arrA["USER_TEXT"]));
+								}
+
+							break;
+
+							case 'email':
+							case 'url':
+
+								if ($USER_TEXT_EXIST)
+								{
+									$answer .= '<a href="'.($arrA['FIELD_TYPE'] == 'email' ? 'mailto:' : '').trim($arrA["USER_TEXT"]).'">'.htmlspecialcharsbx(trim($arrA["USER_TEXT"])).'</a>';
+									$answer_raw .= htmlspecialcharsbx(trim($arrA["USER_TEXT"]));
+								}
+
+							break;
+
+							case 'checkbox':
+							case 'multiselect':
+							case 'radio':
+							case 'dropdown':
+
+								if ($ANSWER_TEXT_EXIST)
+								{
+									$answer = htmlspecialcharsbx(substr($answer, 0, -2).' ');
+									$answer_raw .= htmlspecialcharsbx($arrA['ANSWER_TEXT']);
+								}
+
+								if ($ANSWER_VALUE_EXIST)
+								{
+									$answer .= '('.htmlspecialcharsbx($arrA['ANSWER_VALUE']).') ';
+									if (!$ANSWER_TEXT_EXIST)
+										$answer_raw .= htmlspecialcharsbx($arrA['ANSWER_VALUE']);
+								}
+
+								if (!$ANSWER_VALUE_EXIST && !$ANSWER_TEXT_EXIST)
+									$answer_raw .= $arrA['ANSWER_ID'];
+
+								$answer .= '['.$arrA['ANSWER_ID'].']';
+
+							break;
+
+							case 'file':
+							case 'image':
+
+								if ($USER_FILE_EXIST)
+								{
+									$f = \CFile::GetByID($arrA["USER_FILE_ID"]);
+									if ($fr = $f->Fetch())
+									{
+										$file_size = \CFile::FormatSize($fr["FILE_SIZE"]);
+										$url = ($APPLICATION->IsHTTPS() ? "https://" : "http://").$_SERVER["HTTP_HOST"]. "/bitrix/tools/form_show_file.php?rid=".$RESULT_ID. "&hash=".$arrA["USER_FILE_HASH"]."&lang=".LANGUAGE_ID;
+
+										if ($arrA["USER_FILE_IS_IMAGE"]=="Y")
+										{
+											$answer .= "<a href=\"$url\">".htmlspecialcharsbx($arrA["USER_FILE_NAME"])."</a> [".$fr["WIDTH"]." x ".$fr["HEIGHT"]."] (".$file_size.")";
+										}
+										else
+										{
+											$answer .= "<a href=\"$url&action=download\">".htmlspecialcharsbx($arrA["USER_FILE_NAME"])."</a> (".$file_size.")";
+										}
+
+										$answer_raw .= htmlspecialcharsbx($arrA['USER_FILE_NAME']);
+									}
+								}
+
+							break;
+						}
+					}
+				}
+
+				$strResult .= $wr["TITLE"].":<br />".(strlen($answer)<=0 ? " " : $answer)."<br /><br />";
+			}
+
+			return $strResult;
+		}
+
+		protected static function _getAllFormFields($WEB_FORM_ID, $RESULT_ID, $arAnswers)
+		{
+			global $APPLICATION;
+
+			$strResult = "";
+
+			$w = \CFormField::GetList($WEB_FORM_ID, "ALL", $by, $order, array("ACTIVE" => "Y"), $is_filtered);
+			while ($wr=$w->Fetch())
+			{
+				$answer = "";
+				$answer_raw = '';
+				if (is_array($arAnswers[$wr["SID"]]))
+				{
+					$bHasDiffTypes = false;
+					$lastType = '';
+					foreach ($arAnswers[$wr['SID']] as $arrA)
+					{
+						if ($lastType == '') $lastType = $arrA['FIELD_TYPE'];
+						elseif ($arrA['FIELD_TYPE'] != $lastType)
+						{
+							$bHasDiffTypes = true;
+							break;
+						}
+					}
+
+					foreach($arAnswers[$wr["SID"]] as $arrA)
+					{
+						if ($wr['ADDITIONAL'] == 'Y')
+						{
+							$arrA['FIELD_TYPE'] = $wr['FIELD_TYPE'];
+						}
+
+						$USER_TEXT_EXIST = (strlen(trim($arrA["USER_TEXT"]))>0);
+						$ANSWER_TEXT_EXIST = (strlen(trim($arrA["ANSWER_TEXT"]))>0);
+						$ANSWER_VALUE_EXIST = (strlen(trim($arrA["ANSWER_VALUE"]))>0);
+						$USER_FILE_EXIST = (intval($arrA["USER_FILE_ID"])>0);
+
+						if (
+							$bHasDiffTypes
+							&& !$USER_TEXT_EXIST
+							&& (
+								$arrA['FIELD_TYPE'] == 'text'
+								||
+								$arrA['FIELD_TYPE'] == 'textarea'
+							)
+						)
+						{
+							continue;
+						}
+
+						if (strlen(trim($answer)) > 0)
+							$answer .= "\n";
+						if (strlen(trim($answer_raw)) > 0)
+							$answer_raw .= ",";
+
+						if ($ANSWER_TEXT_EXIST)
+							$answer .= $arrA["ANSWER_TEXT"].': ';
+
+						switch ($arrA['FIELD_TYPE'])
+						{
+							case 'text':
+							case 'textarea':
+							case 'email':
+							case 'url':
+							case 'hidden':
+							case 'date':
+							case 'password':
+
+								if ($USER_TEXT_EXIST)
+								{
+									$answer .= trim($arrA["USER_TEXT"]);
+									$answer_raw .= trim($arrA["USER_TEXT"]);
+								}
+
+							break;
+
+							case 'checkbox':
+							case 'multiselect':
+							case 'radio':
+							case 'dropdown':
+
+								if ($ANSWER_TEXT_EXIST)
+								{
+									$answer = substr($answer, 0, -2).' ';
+									$answer_raw .= $arrA['ANSWER_TEXT'];
+								}
+
+								if ($ANSWER_VALUE_EXIST)
+								{
+									$answer .= '('.$arrA['ANSWER_VALUE'].') ';
+									if (!$ANSWER_TEXT_EXIST)
+									{
+										$answer_raw .= $arrA['ANSWER_VALUE'];
+									}
+								}
+
+								if (!$ANSWER_VALUE_EXIST && !$ANSWER_TEXT_EXIST)
+								{
+									$answer_raw .= $arrA['ANSWER_ID'];
+								}
+
+								$answer .= '['.$arrA['ANSWER_ID'].']';
+
+							break;
+
+							case 'file':
+							case 'image':
+
+								if ($USER_FILE_EXIST)
+								{
+									$f = \CFile::GetByID($arrA["USER_FILE_ID"]);
+									if ($fr = $f->Fetch())
+									{
+										$file_size = \CFile::FormatSize($fr["FILE_SIZE"]);
+										$url = ($APPLICATION->IsHTTPS() ? "https://" : "http://").$_SERVER["HTTP_HOST"]. "/bitrix/tools/form_show_file.php?rid=".$RESULT_ID. "&hash=".$arrA["USER_FILE_HASH"]."&action=download&lang=".LANGUAGE_ID;
+
+										if ($arrA["USER_FILE_IS_IMAGE"]=="Y")
+										{
+											$answer .= $arrA["USER_FILE_NAME"]." [".$fr["WIDTH"]." x ".$fr["HEIGHT"]."] (".$file_size.")\n".$url;
+										}
+										else
+										{
+											$answer .= $arrA["USER_FILE_NAME"]." (".$file_size.")\n".$url."&action=download";
+										}
+									}
+
+									$answer_raw .= $arrA['USER_FILE_NAME'];
+								}
+
+							break;
+						}
+					}
+				}
+
+				$strResult .= $wr["TITLE"].":\r\n".(strlen($answer)<=0 ? " " : $answer)."\r\n\r\n";
+			}
+
+			return $strResult;
+		}
+
+		public static function prepareArray($arFields = array(), $arReplace = array(), $stamp = '_leads')
+		{
+			$arTmpFields = array();
+			if($arFields && $arReplace)
+			{
+				foreach($arFields as $key => $value)
+				{
+					$key = str_replace($stamp, '', $key);
+					if(in_array($key, $arReplace))
+						$arTmpFields[$key] = $value;
+				}
+				// $arTmpFields = self::prepareArray($arFields, array('name', 'tags', 'budget'), '_leads');
+			}
+			return $arTmpFields;
+		}
+
+		public static function sendLeadCrmFromForm(
+			$WEB_FORM_ID,
+			$RESULT_ID,
+			$TYPE = 'ALL',
+			$SITE_ID = SITE_ID,
+			$CURL = false,
+			$DECODE = false
+		){
+			$bIntegrationFlowlu = (Option::get(self::MODULE_ID, 'ACTIVE_LINK_FLOWLU', '', $SITE_ID) && (Option::get(self::MODULE_ID, 'ACTIVE_FLOWLU', 'N', $SITE_ID) == 'Y'));
+			$bIntegrationAcloud = (Option::get(self::MODULE_ID, 'ACTIVE_LINK_ACLOUD', '', $SITE_ID) && (Option::get(self::MODULE_ID, 'ACTIVE_ACLOUD', 'N', $SITE_ID) == 'Y'));
+			$bIntegrationAmoCrm = (Option::get(self::MODULE_ID, 'ACTIVE_LINK_AMO_CRM', '', $SITE_ID) && (Option::get(self::MODULE_ID, 'ACTIVE_AMO_CRM', 'N', $SITE_ID) == 'Y'));$bIntegrationAmoCrm = (Option::get(self::MODULE_ID, 'ACTIVE_LINK_AMO_CRM', '', $SITE_ID) && (Option::get(self::MODULE_ID, 'ACTIVE_AMO_CRM', 'N', $SITE_ID) == 'Y'));
+			$result = "{'erorr':{'error_msg': 'error'}}";
+
+			if($bIntegrationFlowlu || $bIntegrationAmoCrm || $bIntegrationAcloud)
+			{
+				$arAllMatchValues = array();
+
+				$arMatchValuesFlowlu = Solution::unserialize(Option::get(self::MODULE_ID, 'FLOWLU_CRM_FIELDS_MATCH_'.$WEB_FORM_ID, '', $SITE_ID));
+				$arMatchValuesAcloud = Solution::unserialize(Option::get(self::MODULE_ID, 'ACLOUD_CRM_FIELDS_MATCH_'.$WEB_FORM_ID, '', $SITE_ID));
+				$arMatchValuesAmoCrm = Solution::unserialize(Option::get(self::MODULE_ID, 'AMO_CRM_FIELDS_MATCH_'.$WEB_FORM_ID, '', $SITE_ID));
+
+				//flowlu
+				if($bIntegrationFlowlu && ($TYPE == 'ALL' || $TYPE == 'FLOWLU'))
+					$arAllMatchValues['FLOWLU'] = $arMatchValuesFlowlu;
+					
+				//acloud
+				if($bIntegrationAcloud && ($TYPE == 'ALL' || $TYPE == 'ACLOUD'))
+					$arAllMatchValues['ACLOUD'] = $arMatchValuesAcloud;
+				//amocrm
+				if($bIntegrationAmoCrm && ($TYPE == 'ALL' || $TYPE == 'AMO_CRM'))
+					$arAllMatchValues['AMO_CRM'] = $arMatchValuesAmoCrm;
+
+				if($arAllMatchValues)
+				{
+					//get fields
+					\CForm::GetResultAnswerArray(
+						$WEB_FORM_ID,
+						$arrColumns,
+						$arrAnswers,
+						$arrAnswersVarname,
+						array("RESULT_ID" => $RESULT_ID)
+					);
+
+					//get form
+					\CFormResult::GetDataByID($RESULT_ID, array(), $arResultFields, $arAnswers);
+				}
+
+				if($arAllMatchValues)
+				{
+					$arPostFields = array();
+
+					//fill main fieds
+					foreach($arAllMatchValues as $crm => $arFields)
+					{
+						foreach($arFields as $key => $id)
+						{
+							switch($id)
+							{
+								case 'RESULT_ID':
+									$arPostFields[$crm][$key] = $arResultFields['ID'];
+								break;
+								case 'FORM_SID':
+									$arPostFields[$crm][$key] = $arResultFields['SID'];
+								break;
+								case 'FORM_NAME':
+									$arPostFields[$crm][$key] = $arResultFields['NAME'];
+								break;
+								case 'SITE_ID':
+									$arPostFields[$crm][$key] = $SITE_ID;
+								break;
+								case 'FORM_ALL':
+									$arPostFields[$crm][$key] = self::_getAllFormFields($WEB_FORM_ID, $RESULT_ID, $arAnswers);
+								break;
+								case 'FORM_ALL_HTML':
+									$arPostFields[$crm][$key] = self::_getAllFormFieldsHTML($WEB_FORM_ID, $RESULT_ID, $arAnswers);
+								break;
+							}
+						}
+					}
+
+					//fill form fieds
+					foreach($arAllMatchValues as $crm => $arFields)
+					{
+						foreach($arFields as $key => $id)
+						{
+							if($arrAnswers[$RESULT_ID][$id])
+							{
+								$bCanPushCrm = true;
+
+								$arAnswer = reset($arrAnswers[$RESULT_ID][$id]);
+
+								$arPostFields[$crm][$key] = (isset($arAnswer['USER_TEXT']) && $arAnswer['USER_TEXT'] ? $arAnswer['USER_TEXT'] : $arAnswer['ANSWER_TEXT']);
+							}
+						}
+					}
+
+					if($arPostFields)
+					{
+						$arHeaders = array();
+
+						if($crm === 'AMO_CRM'){
+							$arOAuth = array();
+							$arConfig = array(
+								'type' => 'AMO_CRM',
+								'siteId' => $SITE_ID,
+							);
+							CAsproLiteCRM::restore(
+								$arOAuth,
+								$arConfig
+							);
+
+							CAsproLiteCRM::updateOAuth(
+								$arOAuth,
+								$arConfig
+							);
+
+							CAsproLiteCRM::save(
+								$arOAuth,
+								$arConfig
+							);
+
+							$arHeaders = array(
+								'Authorization' => 'Bearer '.$arOAuth['accessToken']
+							);
+						}
+
+						foreach($arPostFields as $crm => $arFields)
+						{
+							if($crm == 'FLOWLU')
+							{
+								$url = str_replace('#DOMAIN#', Option::get(self::MODULE_ID, 'DOMAIN_'.$crm, '', $SITE_ID), CAsproLiteCRM::FLOWLU_PATH);
+								$arFields['api_key'] = Option::get(self::MODULE_ID, 'TOKEN_FLOWLU', '', $SITE_ID);
+								$arFields['ref'] = 'form:aspro-lite';
+								$arFields['ref_id'] = $WEB_FORM_ID.'_'.$RESULT_ID;
+								$name_field = 'name';
+							}
+							elseif($crm == 'ACLOUD')
+							{
+								$url = str_replace('#DOMAIN#', Option::get(self::MODULE_ID, 'DOMAIN_'.$crm, '', $SITE_ID), CAsproLiteCRM::ACLOUD_PATH);
+								$arFields['api_key'] = Option::get(self::MODULE_ID, 'TOKEN_ACLOUD', '', $SITE_ID);
+								$arFields['ref'] = 'form:aspro-lite';
+								$arFields['ref_id'] = $WEB_FORM_ID.'_'.$RESULT_ID;
+								$name_field = 'name';
+							}
+							else
+							{
+								$name_field = 'name_leads';
+								$url = str_replace('#DOMAIN#', Option::get(self::MODULE_ID, 'DOMAIN_'.$crm, '', $SITE_ID), CAsproLiteCRM::AMO_CRM_PATH);
+								if(!$arFields['tags_leads'])
+									$arFields['tags_leads'] = Option::get(self::MODULE_ID, 'TAGS_AMO_CRM_TITLE', '', $SITE_ID);
+							}
+
+							if(!$arFields[$name_field])
+								$arFields[$name_field] = Option::get(self::MODULE_ID, 'LEAD_NAME_'.$crm.'_TITLE', \Bitrix\Main\Localization\Loc::getMessage('LITE_MODULE_LEAD_NAME_'.$crm), $SITE_ID);
+
+							$smCrmName = strtolower(str_replace('_', '', $crm));
+							//log to file form request
+							if(Option::get(self::MODULE_ID, 'USE_LOG_'.$crm, 'N', $SITE_ID) == 'Y')
+							{
+								self::set_log('crm', $smCrmName.'_create_lead_request', $arFields);
+							}
+
+							//convert all to UTF8 encoding for send to flowlu
+							// foreach($arFields as $key => $value)
+							// {
+							// 	$arFields[$key] = iconv(LANG_CHARSET, 'UTF-8', $value);
+							// }
+
+							$arFieldsLead = $arFields;
+
+							if($crm == 'AMO_CRM')
+							{
+								$arFieldsLeadTmp = $arFields;
+								$arCustomFields = Solution::unserialize(Option::get(self::MODULE_ID, 'CUSTOM_FIELD_AMO_CRM', '', $SITE_ID));
+								//prepare array
+								$arFieldsLeadTmp = self::prepareArray($arFields, array('name', 'tags', 'price', 'budget'), '_leads');
+								if($arCustomFields && $arCustomFields['leads'])
+								{
+									foreach($arCustomFields['leads'] as $key => $arProp)
+									{
+										if($arFields[$key.'_leads'])
+										{
+											$arFieldsLeadTmp['custom_fields'][] = array(
+												'id' => $key,
+												'values' => array(
+													array(
+														'value' => $arFields[$key.'_leads']
+													)
+												)
+											);
+										}
+										elseif(isset($arProp['ENUMS']) && $arProp['ENUMS'])
+										{
+											foreach($arProp['ENUMS'] as $key2 => $value)
+											{
+												if($arFields[$key.'_'.$key2.'_leads'])
+												{
+													$arFieldsLeadTmp['custom_fields'][] = array(
+														'id' => $key,
+														'values' => array(
+															array(
+																'value' => $arFields[$key.'_'.$key2.'_leads'],
+																'enum' => $value
+															)
+														)
+													);
+												}
+											}
+										}
+									}
+								}
+
+								$arFieldsLead = array(
+									'request' => array(
+										'leads' => array(
+											'add' => array(
+												$arFieldsLeadTmp
+											)
+										)
+									)
+								);
+							}
+
+							$result = CAsproLiteCRM::query($url, CAsproLiteCRM::$arCrmMethods[$crm]["CREATE_LEAD"], $arFieldsLead, $arHeaders, $CURL, $DECODE);
+							$arCrmResult = Json::decode($result);
+							unset($arFieldsLead);
+
+							if(isset($arCrmResult['response']))
+							{
+								if($crm == 'AMO_CRM' && $arCrmResult['response']['leads']) // create contact and company for amocrm
+								{
+									$arLead = reset($arCrmResult['response']['leads']['add']);
+									$leadID = $arLead['id'];
+
+									//add notes
+									if($arFields['notes_leads'])
+									{
+										$arFieldsNote = array(
+											'request' => array(
+												'notes' => array(
+													'add' => array(
+														array(
+															'element_id' => $leadID,
+															'element_type' => 2,
+															'note_type' => 4,
+															'text' => $arFields['notes_leads']
+														),
+													)
+												)
+											)
+										);
+										$resultNote = CAsproLiteCRM::query($url, CAsproLiteCRM::$arCrmMethods[$crm]["CREATE_NOTES"], $arFieldsNote, $arHeaders, $CURL, $DECODE);
+
+										unset($arFieldsNote);
+										unset($resultNote);
+									}
+
+									//add company
+									$company_id = 0;
+									if($arCustomFields && $arCustomFields['companies'])
+									{
+										//prepare array
+										$arFieldsCompanyTmp = self::prepareArray($arFields, array('name', 'tags'), '_companies');
+										$arFieldsCompanyTmp['linked_leads_id'] = array($leadID);
+
+										foreach($arCustomFields['companies'] as $key => $arProp)
+										{
+											if($arFields[$key.'_companies'])
+											{
+												$arFieldsCompanyTmp['custom_fields'][] = array(
+													'id' => $key,
+													'values' => array(
+														array(
+															'value' => $arFields[$key.'_companies']
+														)
+													)
+												);
+											}
+											elseif(isset($arProp['ENUMS']) && $arProp['ENUMS'])
+											{
+												foreach($arProp['ENUMS'] as $key2 => $value)
+												{
+													if($arFields[$key.'_'.$key2.'_companies'])
+													{
+														$arFieldsCompanyTmp['custom_fields'][] = array(
+															'id' => $key,
+															'values' => array(
+																array(
+																	'value' => $arFields[$key.'_'.$key2.'_companies'],
+																	'enum' => $value
+																)
+															)
+														);
+													}
+												}
+											}
+										}
+										$arFieldsCompany = array(
+											'request' => array(
+												'contacts' => array(
+													'add' => array(
+														$arFieldsCompanyTmp
+													)
+												)
+											)
+										);
+
+										$resultCompany = CAsproLiteCRM::query($url, CAsproLiteCRM::$arCrmMethods[$crm]["CREATE_COMPANY"], $arFieldsCompany, $arHeaders, $CURL, $DECODE);
+										$resultCompany = Json::decode($resultCompany);
+
+										if(isset($resultCompany['response']['contacts']['add'][0]['id']))
+											$company_id = $resultCompany['response']['contacts']['add'][0]['id'];
+
+										//log to file crm response
+										if(Option::get(self::MODULE_ID, 'USE_LOG_'.$crm, 'N', $SITE_ID) == 'Y')
+										{
+											self::set_log('crm', $smCrmName.'_create_company_response', $resultCompany);
+										}
+
+										unset($arFieldsCompany);
+										unset($resultCompany);
+									}
+
+									//add contact
+									$arFieldsContactTmp = self::prepareArray($arFields, array('name', 'tags'), '_contacts');
+									$arFieldsContactTmp['linked_leads_id'] = array($leadID);
+
+									if($company_id)
+										$arFieldsContactTmp['linked_company_id'] = $company_id;
+
+									if($arCustomFields && $arCustomFields['contacts'])
+									{
+										foreach($arCustomFields['contacts'] as $key => $arProp)
+										{
+											if($arFields[$key.'_contacts'])
+											{
+												$arFieldsContactTmp['custom_fields'][] = array(
+													'id' => $key,
+													'values' => array(
+														array(
+															'value' => $arFields[$key.'_contacts']
+														)
+													)
+												);
+											}
+											elseif(isset($arProp['ENUMS']) && $arProp['ENUMS'])
+											{
+												foreach($arProp['ENUMS'] as $key2 => $value)
+												{
+													if($arFields[$key.'_'.$key2.'_contacts'])
+													{
+														$arFieldsContactTmp['custom_fields'][] = array(
+															'id' => $key,
+															'values' => array(
+																array(
+																	'value' => $arFields[$key.'_'.$key2.'_contacts'],
+																	'enum' => $value
+																)
+															)
+														);
+													}
+												}
+											}
+										}
+									}
+
+									$arFieldsContact = array(
+										'request' => array(
+											'contacts' => array(
+												'add' => array(
+													$arFieldsContactTmp
+												)
+											)
+										)
+									);
+
+									$resultContact = CAsproLiteCRM::query($url, CAsproLiteCRM::$arCrmMethods['AMO_CRM']['CREATE_CONTACT'], $arFieldsContact, $arHeaders, $CURL, $DECODE);
+
+									//log to file crm response
+									if(Option::get(self::MODULE_ID, 'USE_LOG_'.$crm, 'N', $SITE_ID) == 'Y')
+									{
+										self::set_log('crm', $smCrmName.'_create_contact_response', Json::decode($resultContact));
+									}
+
+									unset($arFieldsContact);
+									unset($resultContact);
+
+								}
+
+								if((isset($arCrmResult['response']['id']) && $arCrmResult['response']['id']) || (isset($arCrmResult['response']['leads']) && $leadID))
+								{
+									$arFormResultOption = Solution::unserialize(Option::get(self::MODULE_ID, 'CRM_SEND_FORM_'.$RESULT_ID, '', $SITE_ID));
+									if(!isset($arFormResultOption['FLOWLU']) && (isset($arCrmResult['response']['id']) && $arCrmResult['response']['id']))
+										$arFormResultOption['FLOWLU'] = $arCrmResult['response']['id'];
+									if(!isset($arFormResultOption['ACLOUD']) && (isset($arCrmResult['response']['id']) && $arCrmResult['response']['id']))
+										$arFormResultOption['ACLOUD'] = $arCrmResult['response']['id'];
+									if(!isset($arFormResultOption['AMO_CRM']) && (isset($arCrmResult['response']['leads']) && $leadID))
+										$arFormResultOption['AMO_CRM'] = $leadID;
+									Option::set(self::MODULE_ID, 'CRM_SEND_FORM_'.$RESULT_ID, serialize($arFormResultOption), $SITE_ID);
+								}
+							}
+
+							//log to file crm response
+							if(Option::get(self::MODULE_ID, 'USE_LOG_'.$crm, 'N', $SITE_ID) == 'Y')
+							{
+								self::set_log('crm', $smCrmName.'_create_lead_response', $arCrmResult);
+							}
+						}
+					}
+				}
+			}
+			return $result;
+		}
+
+		public static function addFormResultToIBlock($WEB_FORM_ID, $RESULT_ID)
+		{
+			$bAdminSection = (defined('ADMIN_SECTION') && ADMIN_SECTION === true);
+			if(!$bAdminSection)
+			{
+				//check REVIEW form
+				$rsForm = \CForm::GetByID($WEB_FORM_ID);
+				$arForm = $rsForm->Fetch();
+				if($arForm && strpos($arForm['SID'], str_replace('.', '_', self::MODULE_ID).'_feedback') !== false)
+				{
+					\CForm::GetResultAnswerArray(
+							$WEB_FORM_ID,
+							$arrColumns,
+							$arrAnswers,
+							$arrAnswersVarname,
+							array("RESULT_ID" => $RESULT_ID)
+						);
+					\CFormResult::GetDataByID($RESULT_ID, array(), $arResultFields, $arAnswers);
+
+					if($arrAnswersVarname)
+					{
+						$PROP = array(
+							'EMAIL' => $arrAnswersVarname[$RESULT_ID]['EMAIL'][0]['USER_TEXT'],
+							'POST' => $arrAnswersVarname[$RESULT_ID]['POST'][0]['USER_TEXT'],
+							'RATING' => $arrAnswersVarname[$RESULT_ID]['RATING'][0]['USER_TEXT'],
+						);
+						if ($arrAnswersVarname[$RESULT_ID]['POST'][0]['USER_TEXT']) {
+							$PROP['POST'] = $arrAnswersVarname[$RESULT_ID]['POST'][0]['USER_TEXT'];
+						}
+						if ($arrAnswersVarname[$RESULT_ID]['RATING'][0]['USER_TEXT']) {
+							$arRating = \CIBlockPropertyEnum::GetList(
+								[],
+								[
+									"IBLOCK_ID" => $iblockID,
+									"CODE" => "RATING",
+									"VALUE" => $arrAnswersVarname[$RESULT_ID]['RATING'][0]['USER_TEXT']
+								]
+							)->Fetch();
+							if ($arRating['ID']) {
+								$PROP['RATING'] = $arRating['ID'];
+							}
+						}
+						if ($arrAnswersVarname[$RESULT_ID]['EMAIL'][0]['USER_TEXT']) {
+							$PROP['EMAIL'] = $arrAnswersVarname[$RESULT_ID]['EMAIL'][0]['USER_TEXT'];
+						}
+						if ($arrAnswersVarname[$RESULT_ID]['FILE'][0]['USER_FILE_ID']) {
+							$PROP['DOCUMENTS'] = \CFile::MakeFileArray($arrAnswersVarname[$RESULT_ID]['FILE'][0]['USER_FILE_ID']);
+						}
+						$arData = [
+							"PROPERTY_VALUES"=> $PROP,
+							"NAME"=> $arrAnswersVarname[$RESULT_ID]['NAME'][0]['USER_TEXT'],
+							"PREVIEW_TEXT"=> $arrAnswersVarname[$RESULT_ID]['MESSAGE'][0]['USER_TEXT'],
+						];
+						if ($arrAnswersVarname[$RESULT_ID]['PHOTO'][0]['USER_FILE_ID']) {
+							$arData['PREVIEW_PICTURE'] = \CFile::MakeFileArray($arrAnswersVarname[$RESULT_ID]['PHOTO'][0]['USER_FILE_ID']);
+						}
+						self::sendDataToIBlock($arData);
+					}
+				}
+			}
+		}
+
+		public static function sendDataToIBlock($arFields)
+		{
+			$el = new \CIBlockElement;
+
+			$arData = array_merge(
+				[
+					"IBLOCK_ID" => \CLiteCache::$arIBlocks[SITE_ID]["aspro_lite_content"]["aspro_lite_reviews"][0],
+					"ACTIVE"=> "N",
+				],
+				$arFields
+			);
+
+			$el->Add($arData);
+		}
+
+		public static function showSchemaAvailabilityMeta($status = "")
+		{
+		    if (!empty($status)) {
+				switch ($status) {
+					case "instock": return '<link itemprop="availability" href="http://schema.org/InStock">';
+					case "nostock": return '<link itemprop="availability" href="http://schema.org/OutOfStock">';
+					case "order": return '<link itemprop="availability" href="http://schema.org/PreOrder">';
+					case "pending": return '<link itemprop="availability" href="http://schema.org/PreSale">';
+				}
+		    }
+		}
+
+		public static function showHeaderBlock($options)
+		{
+			$bRestart = $options['AJAX_BLOCK'] == $options['PARAM_NAME'];
+			if(!$bRestart && $options['IS_AJAX'] && ($options['AJAX_BLOCK'] != 'HEADER_MAIN_PART' && $options['AJAX_BLOCK'] != 'HEADER_TOP_PART' && $options['AJAX_BLOCK'] != 'HEADER_TOPEST_PART' && $options['AJAX_BLOCK'] != 'HEADER_FIXED_TOP_PART'))
+				return false;
+
+			global $APPLICATION;
+
+			if($options['IS_AJAX'] && $bRestart) {
+				$APPLICATION->restartBuffer();
+			}?>
+
+			<div class="<?=$options['WRAPPER'] ? $options['WRAPPER'] : ''?> <?=$options['VISIBLE'] ? '' : 'hidden'?>" data-ajax-load-block="<?=$options['PARAM_NAME']?>">
+				<?if($options['VISIBLE']):?>
+
+					<?
+					switch($options['BLOCK_TYPE']) {
+						case 'SLOGAN':?>
+							<?if(\CLite::checkContentFile(SITE_DIR.'include/header/header-text.php')):?>
+								<div class="slogan font_14 muted">
+									<div class="slogan__text banner-light-text">
+										<?$APPLICATION->IncludeFile(SITE_DIR."include/header/header-text.php", array(), array(
+												"MODE" => "html",
+												"NAME" => "Text in title",
+												"TEMPLATE" => "include_area.php",
+											)
+										);?>
+									</div>
+								</div>
+							<?endif;?>
+							<?break;
+						case 'SEARCH':?>
+							<?if($options['TYPE'] == 'LINE'):?>
+								<div class="">
+									<?include $_SERVER['DOCUMENT_ROOT'].SITE_DIR.'/include/header/search.title.php';?>
+								</div>
+							<?else:?>
+								<div class="header-search banner-light-icon-fill fill-theme-hover color-theme-hover menu-light-icon-fill light-opacity-hover" title="<?=GetMessage("SEARCH_TITLE")?>">
+									<?=\CLite::showIconSvg(" header-search__icon", SITE_TEMPLATE_PATH."/images/svg/Search_black.svg");?>
+									<?if($options['MESSAGE']):?>
+										<span class="header-search__name header__icon-name banner-light-text">
+											<?=$options['MESSAGE']?>
+										</span>
+									<?endif;?>
+								</div>
+							<?endif;?>
+						<?break;
+						case 'ADDRESS':?>
+							<div class="<?=$options['NO_ICON'] ? '' : 'icon-block--with_icon'?>">
+								<?
+								\CLite::showAddress(
+									array(
+										'CLASS' => 'address',
+										'NO_LIGHT' => false,
+									)
+								);?>
+							</div>
+						<?break;
+						case 'SOCIAL':?>
+							<?include $_SERVER['DOCUMENT_ROOT'].SITE_DIR.'include/header/social.info.php';?>
+						<?break;
+						case 'PHONE':?>
+							<div class="<?=$options['ONLY_ICON'] ? 'icon-block--only_icon' : ''?>">
+								<div class="phones">
+									<?//check phone text?>
+									<div class="phones__phones-wrapper">
+										<?$svg = $options['ONLY_ICON'] ? 'Phone_big.svg' : 'Phone_black.svg';?>
+										<?\CLite::ShowHeaderPhones('phones__inner--big', $svg, $options['DROPDOWN_TOP']);?>
+									</div>
+
+									<?if($options['CALLBACK']):?>
+										<div>
+											<div class="phones__callback light-opacity-hover animate-load dark_link banner-light-text menu-light-text <?=$options['CALLBACK_CLASS'] ? $options['CALLBACK_CLASS'] : ''?>" data-event="jqm" data-param-id="<?=\CLite::getFormID("aspro_lite_callback");?>" data-name="callback">
+												<?=$options['MESSAGE']?>
+											</div>
+										</div>
+									<?endif;?>
+								</div>
+							</div>
+						<?break;
+						case 'LANG':?>
+							<div class="<?=$options['NO_ICON'] ? '' : 'icon-block--with_icon'?> <?=$options['ONLY_ICON'] ? 'icon-block--only_icon' : ''?>">
+								<?include $_SERVER['DOCUMENT_ROOT'].SITE_DIR.'/include/header/site.selector.php';?>
+							</div>
+						<?break;
+						case 'MEGA_MENU':?>
+							<div class="burger light-opacity-hover fill-theme-hover banner-light-icon-fill menu-light-icon-fill fill-dark-light-block">
+								<?=\CLite::showIconSvg("burger", SITE_TEMPLATE_PATH."/images/svg/Burger_big_white.svg");?>
+							</div>
+						<?break;
+						case 'TOPEST_BUTTON':?>
+							<div class="btn-header-topest btn btn-default">
+							COVID-19
+							</div>
+						<?break;
+						case 'CABINET':?>
+							<div class="header-cabinet">
+								<?$arCabinetParams = $options['CABINET_PARAMS'] ? $options['CABINET_PARAMS'] : array();?>
+								<?=\CLite::showCabinetLink($arCabinetParams);?>
+							</div>
+						<?break;
+						case 'COMPARE':?>
+							<div class="header-compare js-compare-block-wrapper">
+								<?=\CLite::showCompareLink($options['CLASS_LINK'], $options['CLASS_ICON'], $options['MESSAGE']);?>
+							</div>
+							<?break;
+						case 'FAVORITE':?>
+							<div class="header-favorite js-favorite-block-wrapper">
+								<?=\CLite::showFavoriteLink($options['CLASS_LINK'], $options['CLASS_ICON'], $options['MESSAGE']);?>
+							</div>
+							<?break;
+						case 'BASKET':?>
+							<div class="header-cart">
+								<?=\CLite::showBasketLink($options['CLASS_LINK'], '', $options['MESSAGE']);?>
+							</div>
+						<?break;
+						case 'CURRENCY':?>
+							<div class="header-currency">
+								<img src="/upload/temp_images/currency.png" data-src=""/>
+							</div>
+						<?break;
+						case 'THEME_SELECTOR':?>
+							<div class="header-theme-selector">
+								<?include $_SERVER['DOCUMENT_ROOT'].SITE_DIR.'/include/header/theme.selector.php';?>
+							</div>
+						<?break;
+					}?>
+
+				<?endif;?>
+
+			</div>
+
+
+			<?if($options['IS_AJAX'] && $bRestart) {
+				die();
+			}
+		}
+
+		public static function showFooterBlock($options)
+		{
+			$bRestart = $options['AJAX_BLOCK'] == $options['PARAM_NAME'];
+			$bRightIcon = $options['POSITION_ICON'] === 'RIGHT';
+			if(!$bRestart && $options['IS_AJAX'] && ($options['AJAX_BLOCK'] != 'FOOTER_MAIN_PART' && $options['AJAX_BLOCK'] != 'FOOTER_TOP_PART' && $options['AJAX_BLOCK'] != 'FOOTER_TOPEST_PART'))
+				return false;
+
+			global $APPLICATION;
+
+			if($options['IS_AJAX'] && $bRestart) {
+				$APPLICATION->restartBuffer();
+
+				if ($options['BLOCK_TYPE'] === 'DEVELOPER') {
+					$APPLICATION->ShowAjaxHead();
+				}
+			}
+			?>
+			<div class="<?=$options['WRAPPER'] ? $options['WRAPPER'] : ''?> <?=$options['VISIBLE'] ? '' : 'hidden'?>" data-ajax-load-block="<?=$options['PARAM_NAME']?>" data-ajax-check-visible="<?=($options['PARAM_CHECK_VISIBLE'] ? $options['PARAM_CHECK_VISIBLE'] : '');?>">
+		
+			<?if($options['TITLE']):?>
+				<div class="footer__title font_weight--600 font_short">
+					<?=$options['TITLE'];?>
+				</div>
+			<?endif;?>
+
+			<?if($options['INNER_WRAPPER']):?>
+					<div class="<?=$options['INNER_WRAPPER']?>">
+				<?endif;?>
+
+				<?if($options['VISIBLE']):?>
+					<?
+					switch($options['BLOCK_TYPE']) {
+						case 'SUBSCRIBE':?>
+							<?if (\Bitrix\Main\ModuleManager::isModuleInstalled("subscribe")):?>
+								<?if ($options['COMPACT']):?>
+									<div class="stroke-theme-parent-all color-theme-parent-all">
+										<div class="icon-block icon-block--with_icon" data-event="jqm" data-param-type="subscribe" data-name="subscribe">
+
+											<?if ($options['BTN_CLASS']):?>
+												<div class="<?=$options['BTN_CLASS']?>">
+											<?endif;?>
+
+												<div class="subscribe icon-block__wrapper <?=($bRightIcon ? 'flexbox--direction-row-reverse' : '');?>">
+													<span class="icon-block__icon icon-block__only-icon <?=($bRightIcon ? 'icon-block__icon--right' : '');?> stroke-theme-target banner-light-icon-fill menu-light-icon-fill light-opacity-hover"><?=\CLite::showIconSvg('subscribe', SITE_TEMPLATE_PATH.'/images/svg/Subscribe_sm.svg');?></span>
+													<div class="subscribe__text color-theme-target icon-block__name font_<?=($options['FONT_SIZE'] ? $options['FONT_SIZE'] : 13);?> color_999"><?=Loc::getMessage('SUBSCRIBE');?></div>
+												</div>
+
+											<?if ($options['BTN_CLASS']):?>
+											</div>
+											<?endif;?>
+
+										</div>
+									</div>
+								<?elseif (\CLite::checkContentFile(SITE_DIR.'include/footer/subscribe.php')):?>
+									<?include $_SERVER['DOCUMENT_ROOT'].SITE_DIR.'include/footer/subscribe.php';?>
+								<?endif;?>
+							<?endif;?>
+							<?break;
+						case 'ADDRESS':?>
+							<div class="<?=$options['NO_ICON'] ? '' : 'icon-block--with_icon'?>">
+								<?
+								\CLite::showAddress(
+									array(
+										'CLASS' => 'address',
+										'FONT_SIZE' => '15',
+										'SHOW_SVG' => false,
+									)
+								);?>
+							</div>
+						<?break;
+						case 'EMAIL':?>
+							<div class="<?=$options['NO_ICON'] ? '' : 'icon-block--with_icon'?>">
+								<?
+								\CLite::showEmail(
+									array(
+										'CLASS' => 'footer__email font_15 font_short',
+										'LINK_CLASS' => 'dark_link',
+										'SHOW_SVG' => false,
+									)
+								);?>
+							</div>
+						<?break;
+						case 'SOCIAL':?>
+							<?include $_SERVER['DOCUMENT_ROOT'].SITE_DIR.'include/footer/social.info.php';?>
+						<?break;
+						case 'PHONE':?>
+							<div class="<?=$options['ONLY_ICON'] ? 'icon-block--only_icon' : ''?>">
+								<div class="phones">
+									<?//check phone text?>
+									<div class="phones__phones-wrapper">
+										<?//$svg = $options['ONLY_ICON'] ? 'Phone_big.svg' : 'Phone_black.svg';?>
+										<?\TSolution::ShowHeaderPhones('phones__inner--big', "", $options['DROPDOWN_TOP']);?>
+									</div>
+
+									<?if($options['CALLBACK']):?>
+										<div>
+											<div class="phones__callback light-opacity-hover animate-load colored banner-light-text menu-light-text <?=$options['CALLBACK_CLASS'] ? $options['CALLBACK_CLASS'] : ''?>" data-event="jqm" data-param-id="<?=\CLite::getFormID("aspro_lite_callback");?>" data-name="callback">
+												<?=$options['MESSAGE']?>
+											</div>
+										</div>
+									<?endif;?>
+								</div>
+							</div>
+						<?break;
+						case 'LANG':?>
+							<div class="<?=$options['NO_ICON'] ? '' : 'icon-block--with_icon'?> <?=$options['ONLY_ICON'] ? 'icon-block--only_icon' : ''?>">
+								<?include $_SERVER['DOCUMENT_ROOT'].SITE_DIR.'/include/header/site.selector.php';?>
+							</div>
+						<?break;
+						case 'PAY_SYSTEMS':?>
+							<?if(\CLite::checkContentFile(SITE_DIR.'include/footer/pay_system_icons.php')):?>
+								<?$APPLICATION->IncludeFile(SITE_DIR."include/footer/pay_system_icons.php", Array(), Array(
+									"MODE" => "php",
+									"NAME" => "Payment systems",
+									"TEMPLATE" => "include_area.php",
+								)
+								);?>
+							<?endif;?>
+						<?break;
+						case 'DEVELOPER':?>
+							<?include $_SERVER['DOCUMENT_ROOT'].SITE_DIR.'include/footer/developer.php';?>
+						<?break;
+						case 'FOOTER_ALL_BLOCK':?>
+							<?if ($options['ITEMS']) {
+								foreach ($options['ITEMS'] as $arOption) {
+									self::showFooterBlock($arOption);
+								}
+							}?>
+						<?break;
+					}?>
+
+				<?endif;?>
+
+				<?if($options['INNER_WRAPPER']):?>
+					</div>
+				<?endif;?>
+
+			</div>
+
+
+			<?if($options['IS_AJAX'] && $bRestart) {
+				die();
+			}
+		}
+
+		public static function showMobileHeaderBlock($options)
+		{
+			$bRestart = $options['AJAX_BLOCK'] == $options['PARAM_NAME'];
+			if(
+				!$bRestart &&
+				$options['IS_AJAX'] &&
+				(
+					$options['AJAX_BLOCK'] != 'HEADER_MOBILE_MAIN_PART' &&
+					$options['AJAX_BLOCK'] != 'HEADER_MOBILE_TOGGLE_PHONE' &&
+					$options['AJAX_BLOCK'] != 'HEADER_MOBILE_TOGGLE_SEARCH' &&
+					$options['AJAX_BLOCK'] != 'HEADER_MOBILE_TOGGLE_PERSONAL' &&
+					$options['AJAX_BLOCK'] != 'HEADER_MOBILE_TOGGLE_COMPARE' &&
+					$options['AJAX_BLOCK'] != 'HEADER_MOBILE_TOGGLE_CART'
+				)
+			){
+				return false;
+			}
+
+			if(!$options['VISIBLE']){
+				return false;
+			}
+
+			global $APPLICATION;
+
+			$class = ($options['WRAPPER'] ? $options['WRAPPER'] : '');
+			$class .= ($options['VISIBLE'] ? '' : ' hidden');
+
+			if($options['IS_AJAX'] && $bRestart) {
+				$APPLICATION->restartBuffer();
+			}
+			?>
+			<div <?=($class ? 'class="'.$class.'"' : '')?> data-ajax-load-block="<?=$options['PARAM_NAME']?>">
+				<?
+				switch($options['BLOCK_TYPE']) {
+					case 'SEARCH':?>
+						<div class="header-search__mobile banner-light-icon-fill fill-dark-light-block fill-theme-hover color-theme-hover menu-light-icon-fill light-opacity-hover" title="<?=GetMessage("SEARCH_TITLE")?>">
+							<?= Solution::showSpriteIconSvg(SITE_TEMPLATE_PATH.'/images/svg/header_icons.svg#search-18-18', 'header__icon header-search__icon', ['WIDTH' => 18, 'HEIGHT' => 18]); ?>
+						</div>
+					<?break;
+					case 'PHONE':?>
+						<div class="icon-block--with_icon icon-block--only_icon">
+							<div class="phones">
+								<div class="phones__phones-wrapper">
+									<? 
+									Solution::ShowHeaderMobilePhones([
+										'CALLBACK' => $options['CALLBACK'],
+									]);
+									?>
+								</div>
+							</div>
+						</div>
+					<?break;
+					case 'BURGER':?>
+						<div class="burger light-opacity-hover fill-theme-hover banner-light-icon-fill menu-light-icon-fill fill-dark-light-block">
+							<?= Solution::showSpriteIconSvg(SITE_TEMPLATE_PATH . '/images/svg/header_icons.svg#burger-16-12', '', ['WIDTH' => 16, 'HEIGHT' => 12]); ?>	
+						</div>
+					<?break;
+					case 'CABINET':?>
+						<div class="header-cabinet">
+							<?$arCabinetParams = $options['CABINET_PARAMS'] ? $options['CABINET_PARAMS'] : array();?>
+							<?= Solution::showCabinetLink($arCabinetParams); ?>
+						</div>
+					<?break;
+					case 'COMPARE':?>
+						<div class="header-compare js-compare-block-wrapper">
+							<?= Solution::showCompareLink($options['CLASS_LINK'], $options['CLASS_ICON'], $options['MESSAGE']); ?>
+						</div>
+						<?break;
+					case 'FAVORITE':?>
+						<div class="header-favorite js-compare-block-wrapper">
+							<?= Solution::showFavoriteLink($options['CLASS_LINK'], $options['CLASS_ICON'], $options['MESSAGE']); ?>
+						</div>
+						<?break;
+					case 'BASKET':?>
+						<div class="header-cart">
+							<?= Solution::showBasketLink($options['CLASS_LINK'], $options['CLASS_ICON'], $options['MESSAGE']); ?>
+						</div>
+					<?break;
+				}?>
+			</div>
+			<?
+			if($options['IS_AJAX'] && $bRestart) {
+				die();
+			}
+		}
+
+		public static function showMobileMenuBlock($options)
+		{
+			$bRestart = $options['AJAX_BLOCK'] == $options['PARAM_NAME'];
+			if(
+				!$bRestart &&
+				$options['IS_AJAX'] &&
+				(
+					$options['AJAX_BLOCK'] != 'MOBILE_MENU_MAIN_PART' &&
+					$options['AJAX_BLOCK'] != 'MOBILE_MENU_TOGGLE_CONTACTS' &&
+					$options['AJAX_BLOCK'] != 'MOBILE_MENU_TOGGLE_SOCIAL' &&
+					$options['AJAX_BLOCK'] != 'MOBILE_MENU_TOGGLE_LANG' &&
+					$options['AJAX_BLOCK'] != 'MOBILE_MENU_TOGGLE_REGION' &&
+					$options['AJAX_BLOCK'] != 'MOBILE_MENU_TOGGLE_PERSONAL' &&
+					$options['AJAX_BLOCK'] != 'MOBILE_MENU_TOGGLE_CART' &&
+					$options['AJAX_BLOCK'] != 'MOBILE_MENU_TOGGLE_COMPARE' &&
+					$options['AJAX_BLOCK'] != 'MOBILE_MENU_TOGGLE_BUTTON' &&
+					$options['AJAX_BLOCK'] != 'MOBILE_MENU_TOGGLE_FAVORITE'
+				)
+			){
+				return false;
+			}
+
+			if(!$options['VISIBLE']){
+				return false;
+			}
+
+			global $APPLICATION;
+
+			$class = ($options['WRAPPER'] ? $options['WRAPPER'] : '');
+			$class .= ($options['VISIBLE'] ? '' : ' hidden');
+
+			if($options['IS_AJAX'] && $bRestart) {
+				$APPLICATION->restartBuffer();
+			}
+			?>
+			<div <?=($class ? 'class="'.$class.'"' : '')?> data-ajax-load-block="<?=$options['PARAM_NAME']?>">
+				<?
+				switch($options['BLOCK_TYPE']) {
+					case 'CONTACTS':?>
+						<div class="mobilemenu__menu mobilemenu__menu--contacts">
+							<ul class="mobilemenu__menu-list">
+								<?if($options['PHONES']):?>
+									<?
+										$blockOptions = [
+											'CALLBACK' => $options['CALLBACK'],
+											'SHOW_SVG' => false,
+										];
+
+										Solution::ShowMobileMenuPhones($blockOptions);
+									?>
+								<?endif;?>
+
+								<?if($options['EMAIL']):?>
+									<?
+										$blockOptions = [
+											'CLASS' => 'link-wrapper bg-opacity-theme-parent-hover fill-theme-parent-all color-theme-parent-all',
+											'SHOW_SVG' => false,
+											'CLASS_SVG' => 'email mobilemenu__menu-item-svg fill-theme-target',
+											'SVG_NAME' => 'Email_big.svg',
+											'TITLE' => '',
+											'TITLE_CLASS' => '',
+											'LINK_CLASS' => 'icon-block__content dark_link',
+											'WRAPPER' => 'mobilemenu__menu-item-content',
+										];
+									?>
+									<?ob_start();?>
+									<?Solution::showEmail($blockOptions);?>
+									<?$emailHtml = trim(ob_get_clean());?>
+									<?if(strlen($emailHtml)):?>
+										<li class="mobilemenu__menu-item mobilemenu__menu-item--full-height<?= $blockOptions['SHOW_SVG'] ? ' mobilemenu__menu-item--with-icon' : ''; ?>"><?=$emailHtml?></li>
+									<?endif;?>
+								<?endif;?>
+
+								<?if($options['ADDRESS']):?>
+									<?
+										$blockOptions = [
+											'CLASS' => 'link-wrapper bg-opacity-theme-parent-hover fill-theme-parent-all color-theme-parent-all',
+											'SHOW_SVG' => false,
+											'CLASS_SVG' => 'address mobilemenu__menu-item-svg fill-theme-target',
+											'SVG_NAME' => 'Address_big.svg',
+											'TITLE' => '',
+											'TITLE_CLASS' => '',
+											'WRAPPER' => 'mobilemenu__menu-item-content',
+											'NO_LIGHT' => true,
+											'LARGE' => false,
+										];
+									?>
+									<?ob_start();?>
+									<?Solution::showAddress($blockOptions);?>
+									<?$addressHtml = trim(ob_get_clean());?>
+									<?if(strlen($addressHtml)):?>
+										<li class="mobilemenu__menu-item mobilemenu__menu-item--full-height<?= $blockOptions['SHOW_SVG'] ? ' mobilemenu__menu-item--with-icon' : ''; ?>"><?=$addressHtml?></li>
+									<?endif;?>
+								<?endif;?>
+
+								<?if($options['SCHEDULE']):?>
+									<?
+										$blockOptions = [
+											'CLASS' => 'link-wrapper bg-opacity-theme-parent-hover fill-theme-parent-all color-theme-parent-all',
+											'SHOW_SVG' => false,
+											'CLASS_SVG' => 'schedule mobilemenu__menu-item-svg fill-theme-target',
+											'TITLE' => '',
+											'TITLE_CLASS' => '',
+											'WRAPPER' => 'mobilemenu__menu-item-content',
+										];
+									?>
+									<?ob_start();?>
+									<?Solution::showSchedule($blockOptions);?>
+									<?$scheduleHtml = trim(ob_get_clean());?>
+									<?if(strlen($scheduleHtml)):?>
+										<li class="mobilemenu__menu-item mobilemenu__menu-item--full-height<?= $blockOptions['SHOW_SVG'] ? ' mobilemenu__menu-item--with-icon' : ''; ?>"><?=$scheduleHtml?></li>
+									<?endif;?>
+								<?endif;?>
+							</ul>
+						</div>
+						<?break;
+					case 'SOCIAL':?>
+						<?include $_SERVER['DOCUMENT_ROOT'].SITE_DIR.'include/header/mobile-social.info.php';?>
+						<?break;
+					case 'LANG':?>
+						<?include $_SERVER['DOCUMENT_ROOT'].SITE_DIR.'/include/header/site.selector.php';?>
+						<?break;
+					case 'REGION':?>
+						<?Solution::ShowMobileMenuRegions();?>
+						<?break;
+					case 'CABINET':?>
+						<?Solution::ShowMobileMenuCabinet();?>
+					<?break;
+					case 'COMPARE':?>
+						<?Solution::ShowMobileMenuCompare();?>
+					<?break;
+					case 'BASKET':?>
+						<?Solution::ShowMobileMenuBasket();?>
+					<?break;
+					case 'FAVORITE':?>
+						<?Solution::ShowMobileMenuFavorite();?>
+					<?break;
+				}?>
+			</div>
+			<?
+			if($options['IS_AJAX'] && $bRestart) {
+				die();
+			}
+		}
+
+		public static function getItemMapHtml($arOptions)
+		{
+			if ($handler = self::getCustomFunc(__FUNCTION__)) {
+				return call_user_func_array($handler, [$arOptions]);
+			}
+
+			$arItem = $arOptions['ITEM'];
+			$arParams = $arOptions['PARAMS'];
+			$bShowQuestionBtn = ($arOptions['SHOW_QUESTION_BTN'] === 'Y');
+			$bShowSocial = ($arOptions['SHOW_SOCIAL'] === 'Y');
+			$bShowClose = ($arOptions['SHOW_CLOSE'] === 'Y');
+			$bShowTitle = ($arOptions['SHOW_TITLE'] === 'Y' && $arParams['TITLE']);
+
+			$btnClass = (isset($arParams['BTN_CLASS']) && $arParams['BTN_CLASS'] ? $arParams['BTN_CLASS'] : 'btn btn-default  btn-transparent-border font_14');
+
+			$html = '';
+			// $html = '<div>';
+				if ($bShowTitle) {
+					$html .= '<div class="map-detail-items__item-subtitle font_13 color_999">'.$arParams['TITLE'].'</div>';
+				}
+				$html .= '<div class="map-detail-items__item-title switcher-title font_18 color_222 font_large">'.(strlen($arItem['URL']) ? '<a class="dark_link" href="'.$arItem['URL'].'">' : '').$arItem['NAME'].(strlen($arItem['URL']) ? '</a>' : '').'</div>';
+				if ($arItem['METRO'] || $arItem['SCHEDULE'] || $arItem['EMAIL'] || $arItem['PHONE'] ) {
+					$html .= '<div class="map-detail-items__item-props">';
+					if ($arItem['METRO']) {
+						$html .= '<div class="map-detail-items__item-property">';
+							$html .= '<div class="map-detail-items__item-property-title font_14 muted">'.$arItem['DISPLAY_PROPERTIES']['METRO']['NAME'].'</div>';
+							$html .= '<div class="map-detail-items__item-property-value color_222">'.$arItem['METRO_HTML'].'</div>';
+						$html .= '</div>';
+					}
+					if ($arItem['SCHEDULE']) {
+						$html .= '<div class="map-detail-items__item-property">';
+							$html .= '<div class="map-detail-items__item-property-title font_14 muted">'.$arItem['DISPLAY_PROPERTIES']['SCHEDULE']['NAME'].'</div>';
+							$html .= '<div class="map-detail-items__item-property-value color_222">'.$arItem['SCHEDULE'].'</div>';
+						$html .= '</div>';
+					}
+					if ($arItem['PHONE']) {
+						$html .= '<div class="map-detail-items__item-property">';
+							$html .= '<div class="map-detail-items__item-property-title font_14 muted">'.$arItem['DISPLAY_PROPERTIES']['PHONE']['NAME'].'</div>';
+							$html .= '<div class="map-detail-items__item-property-value color_222">'.$arItem['PHONE_HTML'].'</div>';
+						$html .= '</div>';
+					}
+					if ($arItem['EMAIL']) {
+						$html .= '<div class="map-detail-items__item-property">';
+							$html .= '<div class="map-detail-items__item-property-title font_14 muted">'.$arItem['DISPLAY_PROPERTIES']['EMAIL']['NAME'].'</div>';
+							if($arItem['EMAIL_HTML']) {
+								$html .= '<div class="map-detail-items__item-property-value color_222">'.$arItem['EMAIL_HTML'].'</div>';
+							} else {
+								$html .= '<div class="map-detail-items__item-property-value color_222"><a class="dark_link" href="mailto:' . $arItem['EMAIL'] . '">' . $arItem['EMAIL'] . '</a></div>';
+							}
+						$html .= '</div>';
+					}
+					$html .= '</div>';
+				}
+				if ($arItem['SOCIAL_INFO'] && $bShowSocial) {
+					$html .= '<div class="social-list social-list--mt-30">';
+						foreach ($arItem['SOCIAL_INFO'] as $arSoc) {
+							$html .= '<a class="social-list__item fill-theme-hover" rel="nofollow" href="'.$arSoc['VALUE'].'">';
+								$html .= \CLite::showIconSvg('', $arSoc['PATH']);
+							$html .= '</a>';
+						}
+					$html .= '</div>';
+				}
+				if ($bShowClose) {
+					$html .= '<div class="map-detail-items__item-svg muted fill-theme-hover">';
+						$html .= '<svg class="map-detail-items__item-close fill-999" width="14" height="14" viewBox="0 0 14 14"><path data-name="Rounded Rectangle 568 copy 16" class="cls-1" d="M1009.4,953l5.32,5.315a0.987,0.987,0,0,1,0,1.4,1,1,0,0,1-1.41,0L1008,954.4l-5.32,5.315a0.991,0.991,0,0,1-1.4-1.4L1006.6,953l-5.32-5.315a0.991,0.991,0,0,1,1.4-1.4l5.32,5.315,5.31-5.315a1,1,0,0,1,1.41,0,0.987,0.987,0,0,1,0,1.4Z" transform="translate(-1001 -946)"></path></svg>';
+					$html .= '</div>';
+				}
+				if ($bShowQuestionBtn) {
+					$html .= '<div class="map-detail-items__item-buttons">';
+						$html .= '<span class="animate-load '.$btnClass.'" data-event="jqm" data-param-id="'.\CLite::getFormID("aspro_lite_question").'" data-name="question">'.GetMessage('SEND_MESSAGE_BUTTON').'</span>';
+					$html .= '</div>';
+				}
+			// $html .= '</div>';
+
+			foreach(GetModuleEvents(self::MODULE_ID, 'onGetItemMapHtml', true) as $arEvent) // event for manipulation map item block
+				ExecuteModuleEventEx($arEvent, array($arOptions, &$html));
+
+			return $html;
+		}
+
+		public static function prepareShopListArray($arShops)
+		{
+			$arFormatShops=array();
+
+			$arPlacemarks = array();
+
+			if (is_array($arShops)) {
+				foreach ($arShops as $i => $arShop) {
+					$arShop['GPS_S'] = false;
+					$arShop['GPS_N'] = false;
+					if ($arStoreMap = explode(',', $arShop['MAP'])) {
+						$arShop['GPS_S'] = $arStoreMap[0];
+						$arShop['GPS_N'] = $arStoreMap[1];
+					}
+
+					if ($arShop['GPS_S'] && $arShop['GPS_N']) {
+						$mapLAT += $arShop['GPS_S'];
+						$mapLON += $arShop['GPS_N'];
+
+						$html = self::getItemMapHtml([
+							'ITEM' => $arShop,
+							'SHOW_QUESTION_BTN' => 'Y'
+						]);
+
+						$arPlacemarks[] = array(
+							"ID" => $arShop["ID"],
+							"LAT" => $arShop['GPS_S'],
+							"LON" => $arShop['GPS_N'],
+							"TEXT" => $html,
+							//"HTML" => '<div class="title">'.(strlen($arShop['URL']) ? '<a href="'.$arShop['URL'].'">' : '').$arShop["ADDRESS"].(strlen($arShop['URL']) ? '</a>' : '').'</div><div class="info-content">'.($arShop['METRO'] ? $arShop['METRO_PLACEMARK_HTML'] : '').(strlen($arShop['SCHEDULE']) ? '<div class="schedule">'.$arShop['SCHEDULE'].'</div>' : '').$str_phones.(strlen($arShop['EMAIL']) ? '<div class="email"><a rel="nofollow" href="mailto:'.$arShop['EMAIL'].'">'.$arShop['EMAIL'].'</a></div>' : '').'</div>'.(strlen($arShop['URL']) ? '<a rel="nofollow" class="button" href="'.$arShop['URL'].'"><span>'.GetMessage('DETAIL').'</span></a>' : '')
+						);
+					}
+					$arShops[$i] = $arShop;
+				}
+			}
+			$arFormatShops["SHOPS"]=$arShops;
+			$arFormatShops["PLACEMARKS"]=$arPlacemarks;
+			$arFormatShops["POINTS"]=array(
+				"LAT" => $mapLAT,
+				"LON" => $mapLON,
+			);
+
+			return $arFormatShops;
+		}
+
+		public static function showDiscountCounter($arOptions = [])
+		{
+			$arDefaultOptions = [
+				'WRAPPER' => false,
+				'WRAPPER_CLASS' => '',
+				'ICONS' => false,
+				'SHADOWED' => false,
+				'IS_COMPACT' => true,
+				'TYPE' => 'type-1',
+				'DATE' => $arOptions['ITEM']['ACTIVE_TO'],
+				'ITEM' => []
+			];
+			$arConfig = array_merge($arDefaultOptions, $arOptions);
+
+			if ($handler = self::getCustomFunc(__FUNCTION__)) {
+				return call_user_func_array($handler, [$arConfig]);
+			}?>
+
+			<?
+			$bShowDiscont = ($arConfig['DATE'] && time() <= strtotime($arConfig['DATE']));
+			?>
+
+			<?ob_start();?>
+				<?if ($arConfig['ITEM'] && $bShowDiscont):?>
+					<?if ($arConfig['WRAPPER']):?>
+						<div class="countdown_wrapper <?=$arConfig['WRAPPER_CLASS']?>">
+					<?endif;?>
+
+					<div class="countdown countdown-<?=$arConfig['TYPE']?><?=($arConfig['ICONS'] ? ' countdown--icons' : '');?><?=($arConfig['SHADOWED'] ? ' countdown--shadowed' : '');?><?=($arConfig['IS_COMPACT'] ? ' compact' : '');?>">
+
+						<div class="countdown__inner">
+							<span class="countdown__active-to hidden"><?=$arConfig['DATE'];?></span>
+							<?if ($arConfig['ICONS']):?>
+								<span class="countdown__icon countdown__item"></span>
+							<?endif;?>
+							<span class="countdown__items"><span class="countdown__item">0</span><span class="countdown__item">0</span><span class="countdown__item">0</span><span class="countdown__item">0</span></span>
+						</div>
+
+					</div>
+
+					<?if ($arConfig['WRAPPER']):?>
+						</div>
+					<?endif;?>
+				<?endif;?>
+			<?$html = ob_get_contents();
+			ob_end_clean();
+
+			// event for manipulation
+			foreach (GetModuleEvents(self::MODULE_ID, 'OnAspro'.ucfirst(__FUNCTION__), true) as $arEvent) {
+				ExecuteModuleEventEx($arEvent, array($arConfig, &$html));
+			}
+
+			echo $html;?>
+		<?}
+
+		public static function showTitleInLeftBlock($arOptions = [])
+		{
+			global $APPLICATION;
+			$arDefaultOptions = [
+				'WRAPPER_CLASS' => 'flexbox--w34-f992',
+				'STICKY_CLASS' => 'flexbox--mb20-t991',
+				'VISIBLE' => true,
+				'PATH' => 'sale-list',
+				'POSITION' => 'TOP',
+				'PARAMS' => [],
+				'ITEM' => []
+			];
+			$arConfig = array_merge($arDefaultOptions, $arOptions);
+
+			if ($handler = self::getCustomFunc(__FUNCTION__)) {
+				return call_user_func_array($handler, [$arConfig]);
+			}
+
+			$bShowTitle = $arConfig['PARAMS']['TITLE'];
+			$bShowTitleLink = $arConfig['PARAMS']['RIGHT_TITLE'] && $arConfig['PARAMS']['RIGHT_LINK'];
+
+			ob_start();
+			?>
+				<?if ($bShowTitle && $arConfig['VISIBLE']):?>
+
+					<?if ($arConfig['WRAPPER_CLASS']):?>
+						<div class="<?=$arConfig['WRAPPER_CLASS']?>">
+					<?endif?>
+
+					<div class="sticky-block <?=$arConfig['STICKY_CLASS']?>">
+						<?if($bShowTitle):?>
+							<h3 class="index-block__title switcher-title"><?=$arConfig['PARAMS']['TITLE']?></h3>
+						<?endif;?>
+
+						<?if ($bShowTitleLink):?>
+							<a href="<?=preg_replace('/(?<!:)[\/]{2,}/', '/', SITE_DIR.$arConfig['PARAMS']['RIGHT_LINK'])?>" class="btn btn-transparent-border btn-lg index-block__btn"><?=$arConfig['PARAMS']['RIGHT_TITLE'] ;?></a>
+						<?endif;?>
+					</div>
+
+					<?if ($arConfig['WRAPPER_CLASS']):?>
+						</div>
+					<?endif?>
+
+				<?endif?>
+			<?
+			$html = ob_get_contents();
+			ob_end_clean();
+
+			// event for manipulation
+			foreach (GetModuleEvents(self::MODULE_ID, 'OnAspro'.ucfirst(__FUNCTION__), true) as $arEvent) {
+				ExecuteModuleEventEx($arEvent, array($arConfig, &$html));
+			}
+
+			echo $html;
+		}
+
+		public static function showTitleBlock($arOptions = [])
+		{
+			global $APPLICATION;
+			$arDefaultOptions = [
+				'WRAPPER' => true,
+				'VISIBLE' => true,
+				'PATH' => 'sale-list',
+				'POSITION' => 'TOP',
+				'CENTER_BLOCK' => '',
+				'PARAMS' => [],
+				'ITEM' => []
+			];
+			$arConfig = array_merge($arDefaultOptions, $arOptions);
+
+			if ($handler = self::getCustomFunc(__FUNCTION__)) {
+				return call_user_func_array($handler, [$arConfig]);
+			}
+			
+			$bShowTitle = $arConfig['PARAMS']['TITLE'] && $arConfig['PARAMS']['SHOW_TITLE'];
+			$bShowTitleLink = $arConfig['PARAMS']['RIGHT_TITLE'] && $arConfig['PARAMS']['RIGHT_LINK'];
+			
+			ob_start();
+			?>
+				<?if($bShowTitle && $arConfig['VISIBLE']):?>
+					<?if($arConfig['WRAPPER']):?>
+					<div class="maxwidth-theme">
+					<?endif?>
+						<?$bExternalLink = $arConfig['PARAMS']['RIGHT_LINK_EXTERNAL']?>
+
+						<div class="index-block__title-wrapper <?=$arConfig['CENTER_BLOCK'] ? 'index-block__title-wrapper--with-center-block' : ''?> index-block__title-wrapper--mb-35">
+							<?if($bShowTitle):?>
+								<div class="index-block__part--left">
+									<h3 class="index-block__title switcher-title">
+										<?if ($arConfig['PARAMS']['RIGHT_LINK']):?>
+											<?if ($bExternalLink):?>
+												<a class="index-block__link-wrapper dark_link stroke-theme-hover" href="<?=$arConfig['PARAMS']['RIGHT_LINK']?>" title="<?=$arConfig['PARAMS']['RIGHT_TITLE']?>" target="_blank" rel="nofollow">
+											<?else:?>
+												<a class="index-block__link-wrapper dark_link stroke-theme-hover" href="<?=preg_replace('/(?<!:)[\/]{2,}/', '/', SITE_DIR.$arConfig['PARAMS']['RIGHT_LINK'])?>" title="<?=$arConfig['PARAMS']['RIGHT_TITLE']?>">
+											<?endif;?>
+										<?endif;?>
+										<span><?=$arConfig['PARAMS']['TITLE']?></span>
+										<?if ($arConfig['PARAMS']['RIGHT_LINK']):?>
+												<span class="index-block__link"><span class="index-block__arrow"><?=Solution::showSpriteIconSvg(SITE_TEMPLATE_PATH.'/images/svg/arrows.svg#right-7-12', '', ['WIDTH' => 7,'HEIGHT' => 12]);?></span></span>
+											</a>
+										<?endif;?>
+									</h3>
+									<?//=$htmlLinkAll;?>
+								</div>
+									
+								<?if ($arConfig['CENTER_BLOCK']):?>
+									<div class="index-block__part--right">
+										<?=$arConfig['CENTER_BLOCK'];?>
+									</div>
+								<?endif;?>
+							<?endif;?>
+						</div>
+
+					<?if($arConfig['WRAPPER']):?>
+					</div>
+					<?endif;?>
+				<?endif;?>
+			<?
+			$html = ob_get_contents();
+			ob_end_clean();
+
+			// event for manipulation
+			foreach (GetModuleEvents(self::MODULE_ID, 'OnAspro'.ucfirst(__FUNCTION__), true) as $arEvent) {
+				ExecuteModuleEventEx($arEvent, array($arConfig, &$html));
+			}
+
+			echo $html;
+		}
+		
+		public static function showBlockHtml($arOptions = [])
+		{
+			global $APPLICATION;
+			$arDefaultOptions = [
+				'TYPE' => '',
+				'BASE_PATH' => SITE_DIR.'/include/blocks/',
+				'FILE' => '',
+				'PARAMS' => []
+			];
+			$arConfig = array_merge($arDefaultOptions, $arOptions);
+
+			if ($handler = self::getCustomFunc(__FUNCTION__)) {
+				return call_user_func_array($handler, [$arConfig]);
+			}
+
+			if ($arConfig['FILE']) {
+				$path = str_replace('//', '/', $_SERVER['DOCUMENT_ROOT'].$arConfig['BASE_PATH'].$arConfig['FILE']);
+				if (file_exists($path)) {
+					$customFile = str_replace('.php', '_custom.php', $arConfig['FILE']);
+					$customPath = str_replace('//', '/', $_SERVER['DOCUMENT_ROOT'].$arConfig['BASE_PATH'].$customFile);
+					if (file_exists($customPath)) {
+						include($customPath);
+					} else {
+						include($path);
+					}
+				}
+			}
+		}
+
+		public static function getItemsYear($arOptions = [])
+		{
+			global $APPLICATION;
+			$arDefaultOptions = [
+				'TYPE' => '',
+				'PARAMS' => [],
+				'FILTER' => []
+			];
+			$arConfig = array_merge($arDefaultOptions, $arOptions);
+
+			if ($handler = self::getCustomFunc(__FUNCTION__)) {
+				return call_user_func_array($handler, [$arConfig]);
+			}
+
+			$arYears = [];
+
+			if ($arConfig['FILTER'] && $arConfig['PARAMS']['IBLOCK_ID']) {
+				$arItems = \CLiteCache::CIBlockElement_GetList(
+					[
+						'SORT' => 'ASC',
+						'NAME' => 'ASC',
+						'CACHE' => [
+							'TAG' => \CLiteCache::GetIBlockCacheTag($arConfig['PARAMS']['IBLOCK_ID'])
+						]
+					],
+					$arConfig['FILTER'],
+					false,
+					false,
+					['ID', 'NAME', 'ACTIVE_FROM']
+				);
+
+				if ($arItems) {
+					foreach ($arItems as $arItem) {
+						if ($arItem['ACTIVE_FROM']) {
+							if ($arDateTime = \ParseDateTime($arItem['ACTIVE_FROM'], FORMAT_DATETIME)) {
+								$arYears[$arDateTime['YYYY']] = $arDateTime['YYYY'];
+							}
+						}
+					}
+					if ($arYears && count($arYears) > 1) {
+						rsort($arYears);
+					} else {
+						$arYears = [];
+					}
+				}
+			}
+
+			return $arYears;
+		}
+
+		public static function CheckSelected($arItemChild)
+		{
+			$selectedKey = false;
+			if (is_array($arItemChild)) {
+				foreach($arItemChild as $key => $arChild) {
+					if(isset($arChild["SELECTED"]) && !empty($arChild["SELECTED"])){
+						$selectedKey = $key;
+						break;
+					}
+				}
+			}
+			return $selectedKey;
+		}
+
+		public static function getSectionsForMenu($arOptions = [])
+		{
+			global $APPLICATION;
+			$arDefaultOptions = [
+				'TYPE' => '',
+				'PARAMS' => [],
+			];
+			$arConfig = array_merge($arDefaultOptions, $arOptions);
+
+			if ($handler = self::getCustomFunc(__FUNCTION__)) {
+				return call_user_func_array($handler, [$arConfig]);
+			}
+
+			$arExtParams = array(
+				'IBLOCK_ID' => $arConfig['PARAMS']['IBLOCK_ID'],
+				'MENU_PARAMS' => array(
+					'MENU_SHOW_SECTIONS' => 'Y'
+				),
+				'SECTION_FILTER' => array(),	// custom filter for sections (through array_merge)
+				'SECTION_SELECT' => array(),	// custom select for sections (through array_merge)
+				'ELEMENT_FILTER' => array(),	// custom filter for elements (through array_merge)
+				'ELEMENT_SELECT' => array(),	// custom select for elements (through array_merge)
+				'MENU_TYPE' => 'sections-menu',
+			);
+			\CLite::getMenuChildsExt($arExtParams, $aMenuLinksExt, true);
+			$arSections = \CLite::getChilds($aMenuLinksExt);
+
+			return $arSections;
+		}
+
+		public static function getSectionsWithElementCount($arOptions = [])
+		{
+			global $APPLICATION;
+			$arDefaultOptions = [
+				'TYPE' => '',
+				'SECTION' => [],
+				'PARAMS' => [],
+				'FILTER' => []
+			];
+			$arConfig = array_merge($arDefaultOptions, $arOptions);
+
+			if ($handler = self::getCustomFunc(__FUNCTION__)) {
+				return call_user_func_array($handler, [$arConfig]);
+			}
+
+			$arResult = [
+				'TAGS' => [],
+				'SECTIONS' => []
+			];
+
+			if ($arConfig['FILTER'] && $arConfig['PARAMS']['IBLOCK_ID']) {
+
+				/* get menu items*/
+				$arResult['SECTIONS'] = self::getSectionsForMenu([
+					'PARAMS' => $arConfig['PARAMS']
+				]);
+				/* */
+
+				/* remove useless filter params */
+				if (
+					isset($arConfig['FILTER']['CODE']) ||
+					isset($arConfig['FILTER']['SECTION_CODE'])
+				) {
+					unset($arConfig['FILTER']['CODE']);
+					unset($arConfig['FILTER']['SECTION_CODE']);
+				}
+				if (
+					isset($arConfig['FILTER']['ID']) ||
+					isset($arConfig['FILTER']['SECTION_ID'])
+				) {
+					unset($arConfig['FILTER']['ID']);
+					unset($arConfig['FILTER']['SECTION_ID']);
+				}
+				/* */
+
+				/* get tags and items count */
+				if ($arResult['SECTIONS']) {
+
+					if ($arConfig['SECTION']) {
+						$cur_page = $GLOBALS['APPLICATION']->GetCurPage(true);
+						$cur_page_no_index = $GLOBALS['APPLICATION']->GetCurPage(false);
+					}
+
+					foreach ($arResult['SECTIONS'] as $key => $arSection) {
+						$arElements = \CLiteCache::CIBlockElement_GetList(
+							array(
+								'CACHE' => array(
+									'TAG' => \CLiteCache::GetIBlockCacheTag($arConfig['PARAMS']['IBLOCK_ID']),
+									'MULTI' => 'Y'
+								)
+							),
+							array_merge(
+								$arConfig['FILTER'],
+								array(
+									"SECTION_ID" => $arSection["PARAMS"]["ID"],
+									"INCLUDE_SUBSECTIONS" => "Y"
+								)
+							),
+							false,
+							false,
+							array('ID', 'TAGS', 'IBLOCK_SECTION_ID')
+						);
+						if (!$arElements) {
+							unset($arResult['SECTIONS'][$key]);
+						} else {
+							foreach ($arElements as $arElement) {
+								if ($arElement['TAGS']) {
+									if ($arConfig['SECTION'] && $arConfig['SECTION']['ID']) {
+										if ($arElement['IBLOCK_SECTION_ID'] == $arConfig['SECTION']['ID']) {
+											$arResult['TAGS'][] = explode(',', $arElement['TAGS']);
+										}
+									} else {
+										$arResult['TAGS'][] = explode(',', $arElement['TAGS']);
+									}
+								}
+							}
+							$arResult['SECTIONS'][$key]['ELEMENT_COUNT'] = count($arElements);
+							if ($arConfig['SECTION']) {
+								$arResult['SECTIONS'][$key]['CURRENT'] = \CMenu::IsItemSelected($arSection['LINK'], $cur_page, $cur_page_no_index);
+								if ($arSection['CHILD']) {
+									foreach ($arSection['CHILD'] as $key2 => $arChild) {
+										if (\CMenu::IsItemSelected($arChild['LINK'], $cur_page, $cur_page_no_index)) {
+											$arResult['SECTIONS'][$key]['CHILD'][$key2]['CURRENT'] = 'darken bold';
+											$arResult['SECTIONS'][$key]['CURRENT'] = true;
+										}
+									}
+								}
+							}
+						}
+					}
+				} else {
+					$arElements = \CLiteCache::CIBlockElement_GetList(
+						array(
+							'CACHE' => array(
+								'TAG' => \CLiteCache::GetIBlockCacheTag($arConfig['PARAMS']['IBLOCK_ID']),
+								'MULTI' => 'Y'
+							)
+						),
+						$arItemFilter,
+						false,
+						false,
+						array('ID', 'TAGS')
+					);
+
+					foreach ($arElements as $arElement) {
+						if ($arElement['TAGS']) {
+							$arResult['TAGS'][] = explode(',', $arElement['TAGS']);
+						}
+					}
+				}
+			}
+			return $arResult;
+		}
+
+		public static function showSideIcons($arOptions = [])
+		{
+			global $APPLICATION;
+			$arDefaultOptions = [
+				'TYPE' => '',
+				'DOP_CLASS' => '',
+				'RETURN' => false,
+				'ITEM' => [],
+				'PARAMS' => [],
+			];
+			$arConfig = array_merge($arDefaultOptions, $arOptions);
+
+			if ($handler = self::getCustomFunc(__FUNCTION__)) {
+				return call_user_func_array($handler, [$arConfig]);
+			}
+
+			$arParams = $arConfig['PARAMS'];
+			$arItem = $arConfig['ITEM'];
+			
+			$arParams['DISPLAY_COMPARE'] = $arParams['DISPLAY_COMPARE'] === true || $arParams['DISPLAY_COMPARE'] === 'true';
+			$bOrderButton = ($arItem["DISPLAY_PROPERTIES"]["FORM_ORDER"]["VALUE_XML_ID"] == "YES");
+			$bOrderViewBasket = $arParams['ORDER_VIEW'];
+			if($arItem):?>
+				<?ob_start();?>
+					<div class="side-icons js-replace-icons <?=$arConfig['DOP_CLASS'];?>">
+						<?if ($arParams['USE_FAST_VIEW_PAGE_DETAIL'] != 'NO'):?>
+							<?$sFastOrderText = $arParams['EXPRESSION_FOR_FAST_VIEW'];?>
+							<div class="side-icons__item side-icons__item--fast-view bordered rounded-4">
+								<a href="javascript:void(0)" rel="nofollow" data-event="jqm" title="<?=$sFastOrderText?>" data-name="fast_view" data-param-form_id="fast_view" data-param-iblock_id="<?=$arItem['IBLOCK_ID']?>" data-param-id="<?=$arItem['ID']?>" data-param-item_href="<?=urlencode($arItem['DETAIL_PAGE_URL'])?>">
+									<?=\CLite::showIconSvg("side-search", SITE_TEMPLATE_PATH."/images/svg/catalog/Fancy_side.svg");?>
+								</a>
+							</div>
+						<?endif;?>
+						<?if ($arParams['SHOW_ONE_CLICK_BUY'] != 'N' && $bOrderButton && $bOrderViewBasket):?>
+							<?$price = ($arItem['DISPLAY_PROPERTIES']['PRICE']['VALUE'] ? $arItem['DISPLAY_PROPERTIES']['PRICE']['VALUE'] : $arItem['PROPERTIES']['PRICE']['VALUE'])?>
+							<div class="side-icons__item side-icons__item--ocb bordered rounded-4">
+								<a href="javascript:void(0)" rel="nofollow" class="ocb" data-param-id="<?=\CLite::getFormID("aspro_lite_quick_buy");?>" data-name="ocb" data-event="jqm" title="<?=Loc::getMessage('ONE_CLICK_BUY')?>" data-autoload-product_name="<?=\CLite::formatJsName($arItem['NAME'])?>" data-autoload-product_price="<?=\CLite::formatJsName($price)?>">
+									<?=\CLite::showIconSvg("side-ocb", SITE_TEMPLATE_PATH."/images/svg/catalog/one_click.svg");?>
+								</a>
+							</div>
+						<?endif;?>
+						<?if ($arParams['DISPLAY_COMPARE']):?>
+							<div class="side-icons__item side-icons__item--compare side-icons__item--fill bordered rounded-4">
+								<?$arTransferData = [
+									'ID' => (isset($arConfig['ITEM_ID']) && $arItem['ID'] !== $arConfig['ITEM_ID'] ? $arConfig['ITEM_ID'] : $arItem['ID']),
+									'IBLOCK_ID' => $arConfig['CATALOG_IBLOCK_ID'] ?? $arItem['IBLOCK_ID'],
+								];?>
+								<a href="javascript:void(0)" rel="nofollow" class="js-item-action" data-action="compare" data-id="<?=$arTransferData['ID'];?>" data-item_compare='<?=str_replace('\'', '"', \CUtil::PhpToJsObject($arTransferData))?>' title="<?=Loc::getMessage('COMPARE_ITEM')?>" data-title="<?=Loc::getMessage('COMPARE_ITEM')?>" data-title_compared="<?=Loc::getMessage('COMPARE_ITEM_REMOVE')?>">
+									<?=\CLite::showSpriteIconSvg(SITE_TEMPLATE_PATH."/images/svg/catalog/item_icons.svg#compare_small", "compare", [
+										'WIDTH' => 14,
+										'HEIGHT' => 14,
+									]);?>
+								</a>
+							</div>
+						<?endif;?>
+						<?if ($arParams['SHOW_FAVORITE'] === 'Y'):?>
+							<div class="side-icons__item side-icons__item--favorite side-icons__item--fill bordered rounded-4">
+								<?$arTransferData = [
+									'ID' => (isset($arConfig['ITEM_ID']) && $arItem['ID'] !== $arConfig['ITEM_ID'] ? $arConfig['ITEM_ID'] : $arItem['ID']),
+									'IBLOCK_ID' => $arConfig['CATALOG_IBLOCK_ID'] ?? $arItem['IBLOCK_ID'],
+									'SITE_ID' => SITE_ID,
+								];?>
+								<a href="javascript:void(0)" rel="nofollow" class="js-item-action" data-action="favorite" data-id="<?=$arTransferData['ID'];?>" data-item_compare='<?=str_replace('\'', '"', \CUtil::PhpToJsObject($arTransferData))?>' title="<?=Loc::getMessage('FAVORITE_ITEM')?>" data-title="<?=Loc::getMessage('FAVORITE_ITEM')?>" data-title_compared="<?=Loc::getMessage('FAVORITE_ITEM_REMOVE')?>">
+									<?=\CLite::showSpriteIconSvg(SITE_TEMPLATE_PATH."/images/svg/catalog/item_icons.svg#compare_small", "compare", [
+										'WIDTH' => 14,
+										'HEIGHT' => 14,
+									]);?>
+								</a>
+							</div>
+						<?endif;?>
+					</div>
+				<?$html = ob_get_contents();
+				ob_end_clean();
+
+				// event for manipulation
+				foreach (GetModuleEvents(self::MODULE_ID, 'OnAspro'.ucfirst(__FUNCTION__), true) as $arEvent) {
+					ExecuteModuleEventEx($arEvent, array($arConfig, &$html));
+				}
+				if ($arConfig['RETURN']) {
+					return $html;
+				} else {
+					echo $html;
+				}
+				?>
+			<?endif;?>
+		<?}
+
+		/*public static function showImage($arOptions = [])
+		{
+			global $APPLICATION;
+			$arDefaultOptions = [
+				'TYPE' => '',
+				'CONTENT_TOP' => '',
+				'CONTENT_BOTTOM' => '',
+				'WRAP_LINK' => true,
+				'ADDITIONAL_WRAPPER_CLASS' => '',
+				'ADDITIONAL_IMG_CLASS' => '',
+				'RETURN' => false,
+				'ITEM' => [],
+				'PARAMS' => [],
+				'STICKY' => false,
+			];
+			$arConfig = array_merge($arDefaultOptions, $arOptions);
+
+			if ($handler = self::getCustomFunc(__FUNCTION__)) {
+				return call_user_func_array($handler, [$arConfig]);
+			}
+
+			$arParams = $arConfig['PARAMS'];
+			$arItem = $arConfig['ITEM'];
+			?>
+			<?ob_start();?>
+				<div class="image-list <?=$arConfig['ADDITIONAL_WRAPPER_CLASS'];?>">
+					<div class="image-list-wrapper js-image-block<?=($arConfig['STICKY'] ? ' sticky-block' : '')?>">
+						
+						<?self::showStickers([
+							'TYPE' => $arConfig['TYPE'],
+							'ITEM' => $arItem,
+							'PARAMS' => $arParams,
+							'CONTENT' => $arConfig['CONTENT_TOP'],
+						]);?>
+						<?if($arParams['SHOW_GALLERY'] != 'N'):?>
+							<?self::showSectionGallery([
+								'TYPE' => $arConfig['TYPE'],
+								'ADDITIONAL_IMG_CLASS' => $arConfig['ADDITIONAL_IMG_CLASS'],
+								'ITEM' => $arItem,
+								'PARAMS' => $arParams,
+							]);?>
+						<?else:?>
+							<?self::showImg([
+								'TYPE' => $arConfig['TYPE'],
+								'WRAP_LINK' => $arConfig['WRAP_LINK'],
+								'ADDITIONAL_IMG_CLASS' => $arConfig['ADDITIONAL_IMG_CLASS'],
+								'ITEM' => $arItem,
+								'PARAMS' => $arParams,
+							]);?>
+						<?endif;?>
+					</div>
+					<?if ($arConfig['CONTENT_BOTTOM']):?>
+						<?=$arConfig['CONTENT_BOTTOM'];?>
+					<?endif;?>
+				</div>
+			<?$html = ob_get_contents();
+			ob_end_clean();
+
+			// event for manipulation
+			foreach (GetModuleEvents(self::MODULE_ID, 'OnAspro'.ucfirst(__FUNCTION__), true) as $arEvent) {
+				ExecuteModuleEventEx($arEvent, array($arConfig, &$html));
+			}
+			if ($arConfig['RETURN']) {
+				return $html;
+			} else {
+				echo $html;
+			}?>
+		<?}
+		*/
+		/*
+		public static function showImg($arOptions = [])
+		{
+			global $APPLICATION;
+			$arDefaultOptions = [
+				'TYPE' => '',
+				'WRAP_LINK' => true,
+				'ADDITIONAL_IMG_CLASS' => '',
+				'ITEM' => [],
+				'PARAMS' => [],
+			];
+			$arConfig = array_merge($arDefaultOptions, $arOptions);
+
+			if ($handler = self::getCustomFunc(__FUNCTION__)) {
+				return call_user_func_array($handler, [$arConfig]);
+			}
+
+			$arParams = $arConfig['PARAMS'];
+			$arItem = $arConfig['ITEM'];
+			$dopClassImg = $arConfig['ADDITIONAL_IMG_CLASS'];
+			$bHasParentImg = (isset($arItem['PARENT_IMG']) && $arItem['PARENT_IMG']);
+			?>
+
+			<?if($arItem):?>
+				<?ob_start();?>
+
+				<?
+				$jsImgSrc = '';
+				if ($bHasParentImg) {
+					$arItem['PARENT_IMG'] = is_array($arItem['PARENT_IMG'])
+						? $arItem['PARENT_IMG']['SRC']
+						: \CFile::GetPath($arItem['PARENT_IMG']);
+					$jsImgSrc = 'data-js="'.$arItem['PARENT_IMG'].'"';
+				}
+				?>
+
+				<?if($arConfig['WRAP_LINK']):?>
+					<?/*if($arConfig['ZOOM']):?>
+						<a href="javascript:void(0)" rel="nofollow" class="image-list__link fancy-js">
+					<?else://?>
+						<a href="<?=$arItem["DETAIL_PAGE_URL"]?>" class="image-list__link">
+					<?//endif;?>
+				<?endif;?>
+					<?
+					$a_alt = (is_array($arItem["PREVIEW_PICTURE"]) && strlen($arItem["PREVIEW_PICTURE"]['DESCRIPTION']) ? $arItem["PREVIEW_PICTURE"]['DESCRIPTION'] : ($arItem['SELECTED_SKU_IPROPERTY_VALUES'] ? ($arItem["SELECTED_SKU_IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_ALT"] ? $arItem["SELECTED_SKU_IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_ALT"] : $arItem["NAME"]) : ($arItem["IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_ALT"] ? $arItem["IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_ALT"] : $arItem["NAME"])));
+
+					$a_title = (is_array($arItem["PREVIEW_PICTURE"]) && strlen($arItem["PREVIEW_PICTURE"]['DESCRIPTION']) ? $arItem["PREVIEW_PICTURE"]['DESCRIPTION'] : ($arItem['SELECTED_SKU_IPROPERTY_VALUES'] ? ($arItem["SELECTED_SKU_IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_TITLE"] ? $arItem["SELECTED_SKU_IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_TITLE"] : $arItem["NAME"]) : ($arItem["IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_TITLE"] ? $arItem["IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_TITLE"] : $arItem["NAME"])));
+					?>
+
+					<?if (!empty($arItem["PREVIEW_PICTURE"]) ):?>
+						<?
+						$src = is_array($arItem["PREVIEW_PICTURE"]) ? $arItem["PREVIEW_PICTURE"]["SRC"] : \CFile::GetPath($arItem["PREVIEW_PICTURE"]);
+						if ($arItem["DETAIL_PICTURE"]) {
+							if (isset($arItem["DETAIL_PICTURE"]["SRC"])) {
+								$bigSrc = $arItem["DETAIL_PICTURE"]["SRC"];
+							} else {
+								$bigSrc = \CFile::GetPath($arItem["DETAIL_PICTURE"]);
+							}
+						} else {
+							$bigSrc = $src;
+						}
+						?>
+						<img class="img-responsive <?=$dopClassImg;?>" src="<?=$src;?>" data-big="<?=$bigSrc?>" <?=$jsImgSrc;?> alt="<?=$a_alt;?>" title="<?=$a_title;?>" />
+					<?elseif (!empty($arItem["DETAIL_PICTURE"])):?>
+						<?if(isset($arItem["DETAIL_PICTURE"]["src"])):?>
+							<?$img["src"] = $arItem["DETAIL_PICTURE"]["src"]?>
+						<?else:?>
+							<?$img = \CFile::ResizeImageGet($arItem["DETAIL_PICTURE"], array( "width" => 350, "height" => 350 ), BX_RESIZE_IMAGE_PROPORTIONAL,true );?>
+						<?endif;?>
+						<img class="img-responsive <?=$dopClassImg;?>" src="<?=$img["src"]?>" <?=$jsImgSrc;?> alt="<?=$a_alt;?>" title="<?=$a_title;?>" />
+					<?else:?>
+						<img class="img-responsive <?=$dopClassImg;?>" src="<?=SITE_TEMPLATE_PATH.'/images/svg/noimage_product.svg';?>" alt="<?=$a_alt;?>" title="<?=$a_title;?>" />
+					<?endif;?>
+				<?if($arConfig['WRAP_LINK']):?>
+					</a>
+				<?endif;?>
+
+				<?$html = ob_get_contents();
+				ob_end_clean();
+
+				// event for manipulation
+				foreach (GetModuleEvents(self::MODULE_ID, 'OnAspro'.ucfirst(__FUNCTION__), true) as $arEvent) {
+					ExecuteModuleEventEx($arEvent, array($arConfig, &$html));
+				}
+
+				echo $html;?>
+			<?endif;?>
+		<?}*/
+
+		public static function showSectionGallery($arOptions = [])
+		{
+			global $APPLICATION;
+			$arDefaultOptions = [
+				'TYPE' => '',
+				'WRAP_LINK' => true,
+				'RETURN' => false,
+				'ZOOM' => true,
+				'ADDITIONAL_IMG_CLASS' => '',
+				'RESIZE' => [
+					'WIDTH' => 2000,
+					'HEIGHT' => 2000,
+				],
+				'ITEM' => [],
+				'PARAMS' => [],
+			];
+			$arConfig = array_merge($arDefaultOptions, $arOptions);
+
+			if ($handler = self::getCustomFunc(__FUNCTION__)) {
+				return call_user_func_array($handler, [$arConfig]);
+			}
+
+			$arParams = $arConfig['PARAMS'];
+			$arItem = $arConfig['ITEM'];
+			$key = $arParams['GALLERY_KEY'] ? $arParams['GALLERY_KEY'] : 'GALLERY';
+			$bReturn = $arConfig['RETURN'];
+			$arResize = $arConfig['RESIZE'];
+			$dopClassImg = $arConfig['ADDITIONAL_IMG_CLASS'];
+			$bHasParentImg = (isset($arItem['PARENT_IMG']) && $arItem['PARENT_IMG']);
+
+			if($arItem):?>
+				<?ob_start();?>
+
+					<?
+					$jsImgSrc = '';
+					if ($bHasParentImg) {
+						$arItem['PARENT_IMG'] = is_array($arItem['PARENT_IMG'])
+							? $arItem['PARENT_IMG']['SRC']
+							: \CFile::GetPath($arItem['PARENT_IMG']);
+						$jsImgSrc = 'data-js="'.$arItem['PARENT_IMG'].'"';
+					}
+					?>
+
+					<?if($arItem[$key]):?>
+						<?$count = count($arItem[$key]);?>
+						<?if($arConfig['WRAP_LINK']):?>
+							<?/*if($arConfig['ZOOM']):?>
+								<a href="javascript:void(0)" rel="nofollow" class="image-list__link fancy-js">
+							<?else:*/?>
+								<a href="<?=$arItem["DETAIL_PAGE_URL"]?>" class="image-list__link">
+							<?//endif;?>
+						<?endif;?>
+							<span class="section-gallery-wrapper js-replace-gallery flexbox">
+								<?foreach($arItem[$key] as $i => $arGalleryItem):?>
+									<?
+									if($arResize) {
+										$resizeImage = \CFile::ResizeImageGet($arGalleryItem["ID"], array("width" => $arResize['WIDTH'], "height" => $arResize['HEIGHT']), BX_RESIZE_IMAGE_PROPORTIONAL, true, array());
+										$arGalleryItem['SRC'] = $resizeImage['src'];
+										$arGalleryItem['HEIGHT'] = $resizeImage['height'];
+										$arGalleryItem['WIDTH'] = $resizeImage['width'];
+									}?>
+									<span class="section-gallery-wrapper__item<?=(!$i ? ' active' : '');?>">
+										<span class="section-gallery-wrapper__item-nav<?=($count > 1 ? ' ' : ' section-gallery-wrapper__item_hidden ');?>"></span>
+										<img class="img-responsive <?=$dopClassImg?>" src="<?=$arGalleryItem["SRC"];?>" <?=$jsImgSrc;?> data-big="<?=$arGalleryItem["SRC"]?>" alt="<?=$arGalleryItem["ALT"];?>" title="<?=$arGalleryItem["TITLE"];?>" />
+									</span>
+								<?endforeach;?>
+							</span>
+						<?if($arConfig['WRAP_LINK']):?>
+							</a>
+						<?endif;?>
+						<?if ($count > 1):?>
+							<span class="section-gallery-nav hide-600">
+								<span class="section-gallery-nav__wrapper">
+									<?foreach($arItem[$key] as $i => $arGalleryItem):?>
+										<span class="section-gallery-nav__item bg-theme-hover bg-theme-active<?=(!$i ? ' active' : '');?>"></span>
+									<?endforeach;?>
+								</span>
+							</span>
+						<?endif;?>
+					<?else:?>
+						<a href="<?=$arItem["DETAIL_PAGE_URL"]?>" class="image-list__link"><img class="img-responsive <?=$dopClassImg?>" src="<?=SITE_TEMPLATE_PATH.'/images/svg/noimage_product.svg';?>" alt="<?=$arItem["NAME"]?>" title="<?=$arItem["NAME"]?>" /></a>
+					<?endif;?>
+				<?$html = ob_get_contents();
+				ob_end_clean();
+
+				// event for manipulation
+				foreach (GetModuleEvents(self::MODULE_ID, 'OnAspro'.ucfirst(__FUNCTION__), true) as $arEvent) {
+					ExecuteModuleEventEx($arEvent, array($arConfig, &$html));
+				}
+
+				if(!$bReturn)
+					echo $html;
+				else
+					return $html?>
+			<?endif;?>
+		<?}
+
+		public static function getSliderForItem($arOptions = [])
+		{
+			global $APPLICATION;
+			$arDefaultOptions = [
+				'TYPE' => '',
+				'PROP_CODE' => 'MORE_PHOTO',
+				'ENCODE' => true,
+				'ADD_DETAIL_SLIDER' => true,
+				'ITEM' => [],
+				'PARAMS' => [],
+			];
+			$arConfig = array_merge($arDefaultOptions, $arOptions);
+
+			if ($handler = self::getCustomFunc(__FUNCTION__)) {
+				return call_user_func_array($handler, [$arConfig]);
+			}
+
+			$arParams = $arConfig['PARAMS'];
+			$arItem = $arConfig['ITEM'];
+
+			$encode = ($arConfig['ENCODE'] === true);
+			$addDetailToSlider = ($arConfig['ADD_DETAIL_SLIDER'] === true);
+			$result = array();
+
+			if (!empty($arItem) && is_array($arItem)) {
+				if (!isset($arItem['PROPERTIES'][$arConfig['PROP_CODE']]) && isset($arItem['DISPLAY_PROPERTIES'][$arConfig['PROP_CODE']])) {
+					$arItem['PROPERTIES'][$arConfig['PROP_CODE']] = $arItem['DISPLAY_PROPERTIES'][$arConfig['PROP_CODE']];
+				}
+				if (
+					'' != $arConfig['PROP_CODE'] &&
+					isset($arItem['PROPERTIES'][$arConfig['PROP_CODE']]) &&
+					'F' == $arItem['PROPERTIES'][$arConfig['PROP_CODE']]['PROPERTY_TYPE']
+				) {
+					if ('MORE_PHOTO' == $arConfig['PROP_CODE']  && isset($arItem['MORE_PHOTO']) && !empty($arItem['MORE_PHOTO'])) {
+						foreach ($arItem['MORE_PHOTO'] as $onePhoto) {
+							$alt = ($onePhoto["DESCRIPTION"] ? $onePhoto["DESCRIPTION"] : ($arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_ALT'] ? $arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_ALT'] : $arItem["NAME"]));
+							$title = ($onePhoto["DESCRIPTION"] ? $onePhoto["DESCRIPTION"] : ($arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_TITLE'] ? $arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_TITLE'] : $arItem["NAME"]));
+							if ($arItem['ALT_TITLE_GET'] == 'SEO') {
+								$alt = ($arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_ALT'] ? $arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_ALT'] : $arItem["NAME"]);
+								$title = ($arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_TITLE'] ? $arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_TITLE'] : $arItem["NAME"]);
+							}
+							$result[] = array(
+								'ID' => (int)$onePhoto['ID'],
+								'SRC' => ($encode ? \CHTTP::urnEncode($onePhoto['SRC'], 'utf-8') : $onePhoto['SRC']),
+								'WIDTH' => (int)$onePhoto['WIDTH'],
+								'HEIGHT' => (int)$onePhoto['HEIGHT'],
+								'ALT' => $alt,
+								'TITLE' => $title
+							);
+						}
+						unset($onePhoto);
+					} else {
+						if (
+							isset($arItem['DISPLAY_PROPERTIES'][$arConfig['PROP_CODE']]['FILE_VALUE'])
+							&& !empty($arItem['DISPLAY_PROPERTIES'][$arConfig['PROP_CODE']]['FILE_VALUE'])
+						) {
+							$fileValues = (
+							isset($arItem['DISPLAY_PROPERTIES'][$arConfig['PROP_CODE']]['FILE_VALUE']['ID']) ?
+								array(0 => $arItem['DISPLAY_PROPERTIES'][$arConfig['PROP_CODE']]['FILE_VALUE']) :
+								$arItem['DISPLAY_PROPERTIES'][$arConfig['PROP_CODE']]['FILE_VALUE']
+							);
+							foreach ($fileValues as &$oneFileValue) {
+								$alt = ($oneFileValue["DESCRIPTION"] ? $oneFileValue["DESCRIPTION"] : ($arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_ALT'] ? $arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_ALT'] : $arItem["NAME"]));
+								$title = ($oneFileValue["DESCRIPTION"] ? $oneFileValue["DESCRIPTION"] : ($arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_TITLE'] ? $arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_TITLE'] : $arItem["NAME"]));
+								if($arItem['ALT_TITLE_GET'] == 'SEO')
+								{
+									$alt = ($arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_ALT'] ? $arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_ALT'] : $arItem["NAME"]);
+									$title = ($arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_TITLE'] ? $arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_TITLE'] : $arItem["NAME"]);
+								}
+								$result[] = array(
+									'ID' => (int)$oneFileValue['ID'],
+									'SRC' => ($encode ? \CHTTP::urnEncode($oneFileValue['SRC'], 'utf-8') : $oneFileValue['SRC']),
+									'WIDTH' => (int)$oneFileValue['WIDTH'],
+									'HEIGHT' => (int)$oneFileValue['HEIGHT'],
+									'ALT' => $alt,
+									'TITLE' => $title
+								);
+							}
+							if (isset($oneFileValue))
+								unset($oneFileValue);
+						} else {
+							$propValues = $arItem['PROPERTIES'][$arConfig['PROP_CODE']]['VALUE'];
+							
+							if (!is_array($propValues))
+								$propValues = array($propValues);
+
+							foreach ($propValues as &$oneValue) {
+								$oneFileValue = \CFile::GetFileArray($oneValue);
+								if (isset($oneFileValue['ID'])) {
+									$alt = ($oneFileValue["DESCRIPTION"] ? $oneFileValue["DESCRIPTION"] : ($arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_ALT'] ? $arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_ALT'] : $arItem["NAME"]));
+									$title = ($oneFileValue["DESCRIPTION"] ? $oneFileValue["DESCRIPTION"] : ($arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_TITLE'] ? $arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_TITLE'] : $arItem["NAME"]));
+									if($arItem['ALT_TITLE_GET'] == 'SEO')
+									{
+										$alt = ($arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_ALT'] ? $arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_ALT'] : $arItem["NAME"]);
+										$title = ($arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_TITLE'] ? $arItem['IPROPERTY_VALUES']['ELEMENT_DETAIL_PICTURE_FILE_TITLE'] : $arItem["NAME"]);
+									}
+									$result[] = array(
+										'ID' => (int)$oneFileValue['ID'],
+										'SRC' => ($encode ? \CHTTP::urnEncode($oneFileValue['SRC'], 'utf-8') : $oneFileValue['SRC']),
+										'WIDTH' => (int)$oneFileValue['WIDTH'],
+										'HEIGHT' => (int)$oneFileValue['HEIGHT'],
+										'ALT' => $alt,
+										'TITLE' => $title
+									);
+								}
+							}
+							if (isset($oneValue)) {
+								unset($oneValue);
+							}
+						}
+					}
+				}
+				if ($addDetailToSlider || empty($result)) {
+
+					if (!empty($arItem['DETAIL_PICTURE'])) {
+						if (!is_array($arItem['DETAIL_PICTURE'])) {
+							$arItem['DETAIL_PICTURE'] = \CFile::GetFileArray($arItem['DETAIL_PICTURE']);
+						}
+
+						if (isset($arItem['DETAIL_PICTURE']['ID'])) {
+							$alt = ($arItem['DETAIL_PICTURE']['DESCRIPTION'] ? $arItem['DETAIL_PICTURE']['DESCRIPTION'] : ($arItem['DETAIL_PICTURE']['ALT'] ? $arItem['DETAIL_PICTURE']['ALT'] : $arItem['NAME'] ));
+							$title = ($arItem['DETAIL_PICTURE']['DESCRIPTION'] ? $arItem['DETAIL_PICTURE']['DESCRIPTION'] : ($arItem['DETAIL_PICTURE']['TITLE'] ? $arItem['DETAIL_PICTURE']['TITLE'] : $arItem['NAME'] ));
+							if ($arItem['ALT_TITLE_GET'] == 'SEO') {
+								$alt = ($arItem['DETAIL_PICTURE']['ALT'] ? $arItem['DETAIL_PICTURE']['ALT'] : $arItem['NAME'] );
+								$title = ($arItem['DETAIL_PICTURE']['TITLE'] ? $arItem['DETAIL_PICTURE']['TITLE'] : $arItem['NAME'] );
+							}
+							$detailPictIds = array_column($result, 'ID');
+							if (!in_array((int)$arItem['DETAIL_PICTURE']['ID'], $detailPictIds)) {
+								array_unshift(
+									$result,
+									array(
+										'ID' => (int)$arItem['DETAIL_PICTURE']['ID'],
+										'SRC' => ($encode ? \CHTTP::urnEncode($arItem['DETAIL_PICTURE']['SRC'], 'utf-8') : $arItem['DETAIL_PICTURE']['SRC']),
+										'WIDTH' => (int)$arItem['DETAIL_PICTURE']['WIDTH'],
+										'HEIGHT' => (int)$arItem['DETAIL_PICTURE']['HEIGHT'],
+										'ALT' => $alt,
+										'TITLE' => $title
+									)
+								);
+							}
+						} elseif ($arItem['PICTURE']) {
+							array_unshift(
+								$result,
+								array(
+									'SRC' => $arItem['PICTURE'],
+									'ALT' => $arItem['NAME'],
+									'TITLE' => $arItem['NAME']
+								)
+							);
+						}
+					}
+				}
+			}
+
+			// event for manipulation
+			foreach (GetModuleEvents(self::MODULE_ID, 'OnAspro'.ucfirst(__FUNCTION__), true) as $arEvent) {
+				ExecuteModuleEventEx($arEvent, array($arConfig, &$result));
+			}
+
+			return $result;
+		}
+
+		public static function getCustomFunc($method = '')
+		{
+			$className = end(explode('\\', __CLASS__));
+			$methodCall = $method.$className;
+			$classCall = __CLASS__.'Custom';
+			$handler = [$classCall, $methodCall];
+			if (method_exists($classCall, $methodCall) && is_callable($handler)) {
+				return $handler;
+			}
+			return false;
+		}
+
+		public static function showBottomPanel() {
+			global $arTheme, $APPLICATION, $arBasketPrices, $compare_items;
+
+			\Bitrix\Main\Page\Frame::getInstance()->startDynamicWithID('bottom-panel-block');
+
+			if ($arTheme['BOTTOM_ICONS_PANEL']['VALUE'] == 'Y') {
+				$APPLICATION->SetAdditionalCSS(SITE_TEMPLATE_PATH.'/css/bottom-icons-panel.css');
+
+				$iblockID = \CLiteCache::$arIBlocks[SITE_ID]['aspro_lite_content']['aspro_lite_bottom_icons'][0];			
+
+				if ($iblockID) {
+
+					$arFilter = [
+						'IBLOCK_ID' => $iblockID,
+						'ACTIVE' => 'Y'
+					];
+					$arItems = \CLiteCache::CIBLockElement_GetList(array('SORT' => 'ASC', 'ID' => 'ASC', 'CACHE' => array('TAG' => \CLiteCache::GetIBlockCacheTag($iblockID))), $arFilter, false, false, array('ID', 'NAME', 'CODE', 'IBLOCK_ID', 'PROPERTY_IMG', 'PROPERTY_TYPE', 'PROPERTY_URL', 'PROPERTY_SHOW_TEXT'));
+					?>
+					<?
+					/*prepare data*/
+					foreach($arItems as $itemKey => $arItem){
+						$title = $arItem['NAME'];
+						$url = trim($arItem['PROPERTY_URL_VALUE']);
+						if(strlen($url)){
+							if(strpos($url, '#'.'SITE_DIR'.'#') !== false){
+								$url = str_replace('#'.'SITE_DIR'.'#', SITE_DIR, $url);
+							}
+
+							$url = '/'.ltrim($url, '/');
+						}
+
+						$arItems[$itemKey]['IS_SELECTED'] = strlen($url) && ($APPLICATION->GetCurPage() === $url || (\CSite::InDir($url) && $url != SITE_DIR));
+						$arItems[$itemKey]['IS_SHOW_TEXT'] = ($arItem['PROPERTY_SHOW_TEXT_VALUE'] == 'Y');
+						$bBasket = $bRegion = false;
+						$counterClass = "";
+						$wrapCounterClass = "";
+						$bShowCounter = false;
+						$svgFromSprite = [];
+
+
+						if($arItem['PROPERTY_TYPE_VALUE']){
+							$arProperty = \CIBlockPropertyEnum::GetByID($arItem['PROPERTY_TYPE_ENUM_ID']);
+
+							if($bBasket = $arProperty['XML_ID'] === 'basket'){
+								if($arTheme['ORDER_VIEW']['VALUE'] !== 'Y'){
+									unset($arItems[$itemKey]);
+									continue;
+								}
+
+								$arBasketItems = \Aspro\Lite\Itemaction\Basket::getItems();
+								$count = count($arBasketItems['BASKET']);
+								$bEmptyBasket = !$count;
+								$title = \Aspro\Lite\Itemaction\Basket::getTitle();
+								$svgFromSprite['PATH'] = SITE_TEMPLATE_PATH."/images/svg/catalog/item_icons.svg#cart-21-18";
+								$svgFromSprite['WIDTH'] = 21;
+								$svgFromSprite['HEIGHT'] = 18;
+							}
+							elseif(
+								$arProperty['XML_ID'] === 'cabinet'
+							){
+								if($arTheme['CABINET']['VALUE'] !== 'Y'){
+									unset($arItems[$itemKey]);
+									continue;
+								}
+								$userID = Solution::GetUserID();
+								if($userID){
+									$svgFromSprite['PATH'] = SITE_TEMPLATE_PATH."/images/svg/header_icons.svg#log-in-22-20";
+									$svgFromSprite['WIDTH'] = 22;
+									$svgFromSprite['HEIGHT'] = 20;
+								} else {
+									$svgFromSprite['PATH'] = SITE_TEMPLATE_PATH."/images/svg/header_icons.svg#log-out-18-18";
+									$svgFromSprite['WIDTH'] = 18;
+									$svgFromSprite['HEIGHT'] = 18;
+								}
+								
+							}
+							elseif(
+								$arProperty['XML_ID'] === 'region'
+							){
+								if($arTheme['USE_REGIONALITY']['VALUE'] !== 'Y'){
+									unset($arItems[$itemKey]);
+									continue;
+								}
+								$svgFromSprite['PATH'] = SITE_TEMPLATE_PATH."/images/svg/header_icons.svg#region-17-16";
+								$svgFromSprite['WIDTH'] = 19;
+								$svgFromSprite['HEIGHT'] = 19;
+								$bRegion = true;
+							}
+							elseif(
+								$arProperty['XML_ID'] === 'tariffs'
+							){
+								if($arTheme['TARIFFS_USE_DETAIL']['VALUE'] !== 'Y'){
+									unset($arItems[$itemKey]);
+									continue;
+								}
+							}elseif(
+								$arProperty['XML_ID'] === 'compare'
+							){
+								if($arTheme['CATALOG_COMPARE']['VALUE'] !== 'Y'){
+									unset($arItems[$itemKey]);
+									continue;
+								}
+								
+								$wrapCounterClass = " js-compare-block";
+								$counterClass = " icon-count--compare";
+								$bShowCounter = true;
+								
+								$arCompareItems = \Aspro\Lite\Itemaction\Compare::getItems();
+								$count = count($arCompareItems);
+
+								if($count){
+									$wrapCounterClass .= ' icon-block-with-counter--count';
+								}
+
+								$svgFromSprite['PATH'] = SITE_TEMPLATE_PATH."/images/svg/catalog/item_icons.svg#compare-20-16";
+								$svgFromSprite['WIDTH'] = 20;
+								$svgFromSprite['HEIGHT'] = 16;
+							}elseif(
+								$arProperty['XML_ID'] === 'favorite'
+							){
+								if($arTheme['SHOW_FAVORITE']['VALUE'] !== 'Y'){
+									unset($arItems[$itemKey]);
+									continue;
+								}
+								
+								$wrapCounterClass = " js-favorite-block";
+								$counterClass = " icon-count--favorite";
+								$bShowCounter = true;
+								
+								$arFavoriteItems = \Aspro\Lite\Itemaction\Favorite::getItems();
+								$count = count($arFavoriteItems);
+
+								if($count){
+									$wrapCounterClass .= ' icon-block-with-counter--count';
+								}
+								$svgFromSprite['PATH'] = SITE_TEMPLATE_PATH."/images/svg/catalog/item_icons.svg#favorite-18-16";
+								$svgFromSprite['WIDTH'] = 18;
+								$svgFromSprite['HEIGHT'] = 16;
+							}elseif(
+								$arProperty['XML_ID'] === 'search'
+							){
+								$svgFromSprite['PATH'] = SITE_TEMPLATE_PATH."/images/svg/header_icons.svg#search-18-18";
+								$svgFromSprite['WIDTH'] = 18;
+								$svgFromSprite['HEIGHT'] = 18;
+							}
+						}
+
+						if($arItem['CODE']){
+							$svgFromSprite['PATH'] = SITE_TEMPLATE_PATH."/images/svg/panel_icons.svg#".$arItem['CODE'];
+							$svgSize = Solution::getSvgSizeFromName($arItem['CODE'], ['WIDTH' => 18, 'HEIGHT' => 18]);
+							$svgFromSprite['WIDTH'] = $svgSize['WIDTH'];
+							$svgFromSprite['HEIGHT'] = $svgSize['HEIGHT'];
+						}
+
+						$arItems[$itemKey]['SVG_FROM_SPRITE'] = $svgFromSprite;
+						$arItems[$itemKey]['PROPERTY_TYPE_XML_ID'] = $arItem['PROPERTY_TYPE_VALUE'] ? $arProperty['XML_ID'] : false;
+						$arItems[$itemKey]['DISPLAY_URL'] = $url;
+						$arItems[$itemKey]['DISPLAY_TITLE'] = $title;
+						$arItems[$itemKey]['COUNTER_CLASS'] = $counterClass;
+						$arItems[$itemKey]['WRAP_COUNTER_CLASS'] = $wrapCounterClass;
+						$arItems[$itemKey]['COUNTER_COUNT'] = $count;
+						$arItems[$itemKey]['IS_COUNTER'] = $bShowCounter;
+						$arItems[$itemKey]['IS_REGION'] = $bRegion;
+						$arItems[$itemKey]['IS_BASKET'] = $bBasket;
+					}
+					/**/
+
+					self::showBlockHtml(array(
+						'FILE' => '/panel/bottom.php',
+						'PARAMS' => array(
+							'ITEMS' => $arItems,
+						),
+					));
+					
+				}
+			}
+
+			\Bitrix\Main\Page\Frame::getInstance()->finishDynamicWithID('bottom-panel-block', '');
+		}
+
+		public static function getValueWithSection($arOption = [])
+		{
+			$value = '';
+			if ($arOption['CODE']) {
+				global $arMergeOptions;
+
+				$value = \CLite::GetFrontParametrValue($arOption['CODE']);
+
+				if ($arOption['CUSTOM_VALUE']) {
+					$value = $arOption['CUSTOM_VALUE'];
+				}
+
+				if ($arOption['SECTION_VALUE']) {
+					$value = $arOption['SECTION_VALUE'];
+					if ($_SESSION['THEME'][SITE_ID][$arOption['CODE']]) {
+						$value = $_SESSION['THEME'][SITE_ID][$arOption['CODE']];
+					}
+				}
+				$arMergeOptions[$arOption['CODE']] = $value;
+			}
+			return $value;
+		}
+
+		public static function declOfNum($number, $titles)
+		{
+			$cases = array (2, 0, 1, 1, 1, 2);
+			return $number." ".$titles[ ($number%100>4 && $number%100<20)? 2 : $cases[min($number%10, 5)] ];
+		}
+
+		public static function checkActiveFilterPage($arOptions = ['SEF_URL' => '', 'GLOBAL_FILTER' => ''])
+		{
+			$sefUrl = is_array($arOptions) ? $arOptions['SEF_URL'] : '';
+			if ($sefUrl) {
+				global $APPLICATION;
+				$arParseStr = [];
+				if (isset($sefUrl) && strripos($sefUrl, "#SMART_FILTER_PATH#")) {
+
+					$isSmartFilter = str_replace("#SMART_FILTER_PATH#", "(.*?)", $sefUrl);
+					$isSmartFilter = preg_replace('/^#[a-zA-Z_]+#/i', "", $isSmartFilter);
+					$isSmartFilter = str_replace("/", "\/", $isSmartFilter);
+					preg_match("/".$isSmartFilter."/i", $APPLICATION->GetCurPage(), $arParseStr);
+				}
+				return $arParseStr;
+			}
+			
+			if (is_array($arOptions) && $arOptions['GLOBAL_FILTER']) {
+				$uri = new \Bitrix\Main\Web\Uri(\Bitrix\Main\Context::getCurrent()->getRequest()->getRequestUri());
+				$uri->deleteParams(\Bitrix\Main\HttpRequest::getSystemParameters());
+				$pageURL = $uri->GetUri();
+				return strpos($pageURL, 'set_filter') !== false && strpos($pageURL, $arOptions['GLOBAL_FILTER']) !== false;
+			}
+			return false;
+		}
+		
+		public static function showShareBlock(array $arOptions)
+		{
+			Extensions::init('hover_block');
+
+			$arDefaultOptions = [
+				'INNER_CLASS' => '',
+				'CLASS' => '',
+				'SVG_SIZE' => ['WIDTH' => 16,'HEIGHT' => 16],
+			];
+			$arConfig = array_merge($arDefaultOptions, $arOptions);
+			ob_start();
+			?>
+				<?global $APPLICATION;?>
+				<div class="<?= $arConfig['CLASS'] ? $arConfig['CLASS'].' ' : ''; ?>share fill-theme-hover hover-block">
+					<div class="<?= $arConfig['INNER_CLASS'] ? $arConfig['INNER_CLASS'].' ' : ''; ?>shares-block hover-block__item">
+						<?= Solution::showSpriteIconSvg(SITE_TEMPLATE_PATH.'/images/svg/catalog/item_icons.svg#share-16-16', 'fill-dark-light-block', $arConfig['SVG_SIZE']); ?>
+						<? $APPLICATION->IncludeFile(SITE_DIR . 'include/share_buttons.php', [], [
+							"MODE" => "html", 
+							"NAME" => GetMessage('CT_BCE_CATALOG_SOC_BUTTON')
+						]);?>
+					</div>
+				</div>
+			<?
+			$html = ob_get_contents();
+			ob_end_clean();
+
+			// event for manipulation
+			foreach (GetModuleEvents(self::MODULE_ID, 'OnAspro'.ucfirst(__FUNCTION__), true) as $arEvent) {
+				ExecuteModuleEventEx($arEvent, array($arOptions, &$html));
+			}
+
+			if($arOptions["RETURN"]) {
+				return $html;
+			} else {
+				echo $html;
+			}
+		}
+		
+		public static function showRSSIcon(array $arOptions)
+		{
+			$url = $arOptions['URL'];
+			$innerClass = $arOptions["INNER_CLASS"] ? 'class="'.$arOptions["INNER_CLASS"].'"' : '';
+
+			$GLOBALS['APPLICATION']->AddHeadString('<link rel="alternate" type="application/rss+xml" title="rss" href="'.$url.'" />');
+			ob_start();
+			?>
+			<div class="rss fill-theme-hover"><a <?=$innerClass?> href="<?=$url?>" title="RSS" target="_blank"><?=\TSolution::showSpriteIconSvg(SITE_TEMPLATE_PATH.'/images/svg/catalog/item_icons.svg#rss-14-14', 'fill-dark-light-block colored_theme_hover_bg-el-svg', ['WIDTH' => 14,'HEIGHT' => 14])?></a></div>
+			<?
+			$html = ob_get_contents();
+			ob_end_clean();
+
+			// event for manipulation
+			foreach (GetModuleEvents(self::MODULE_ID, 'OnAspro'.ucfirst(__FUNCTION__), true) as $arEvent) {
+				ExecuteModuleEventEx($arEvent, array($arOptions, &$html));
+			}
+
+			if($arOptions["RETURN"]) {
+				return $html;
+			} else {
+				echo $html;
+			}
+		}
+
+		public static function showBackUrl(array $arOptions)
+		{
+			$arOptions['FILE'] = 'back_url.php';
+			self::showBlockHtml($arOptions);
+			Extensions::init(['back_url']);
+		}
+
+		public static function getCustomBlocks($siteID = SITE_ID) {
+			$arNewOptions = [];
+			$customBlocksIblock = \CLiteCache::$arIBlocks[$siteID]['aspro_lite_mainblocks']['aspro_lite_mainblocks'][0];
+
+			if(!$customBlocksIblock)
+				return;
+
+			$arSectionFilter = array(
+				'IBLOCK_ID' => $customBlocksIblock,
+				'ACTIVE' => 'Y',
+			);
+			$arSectionSelect = array(
+				'ID',
+				'NAME',
+				'CODE',
+			);
+			$arSections = \CLiteCache::CIblockSection_GetList(
+				array(
+					'SORT' => 'ASC',
+					'ID' => 'ASC',
+					"CACHE" => array(
+						"TAG" => \CLiteCache::GetIBlockCacheTag($customBlocksIblock)
+					)
+				),
+				$arSectionFilter,
+				false,
+				$arSectionSelect
+			);
+			if ($arSections) {
+				$arSectionsID = array();
+				foreach ($arSections as $arSection) {
+					$arSectionsID[] = $arSection['ID'];
+				}
+
+				$arElementFilter = array(
+					'IBLOCK_ID' => $customBlocksIblock,
+					'ACTIVE' => 'Y',
+					'IBLOCK_SECTION_ID' => $arSectionsID,
+				);
+				$arElementSelect = array(
+					'ID',
+					'NAME',
+					'CODE',
+					'PREVIEW_PICTURE',
+					'IBLOCK_SECTION_ID',
+				);
+				$arElements = \CLiteCache::CIblockElement_GetList(
+					array(
+						'SORT' => 'ASC',
+						'ID' => 'ASC',
+						"CACHE" => array(
+							"TAG" => \CLiteCache::GetIBlockCacheTag($customBlocksIblock),
+							"MULTI" => "Y",
+							'GROUP' => array('IBLOCK_SECTION_ID')
+						)
+					),
+					$arElementFilter,
+					false,
+					false,
+					$arElementSelect
+				);
+
+				foreach ($arSections as $arSection) {
+					if ($arElements[$arSection['ID']]) {
+						$arElementsTemplate = array(
+							'TITLE' => Loc::getMessage('CUSTOM_BLOCK_SECTION').$arSection['NAME'],
+							'TYPE' => 'selectbox',
+							'IS_ROW' => 'Y',
+							'LIST' => array(),
+							'PREVIEW' => array(
+								'SCROLL_BLOCK' => '.'.strtoupper($arSection['CODE']),
+								'URL' => '',
+							),
+						);
+						$currentTemplate = '';
+						foreach ($arElements[$arSection['ID']] as $arElement) {
+							if (!$currentTemplate) {
+								$currentTemplate = $arElement['CODE'];
+							}
+							$src = '';
+							if ($arElement['PREVIEW_PICTURE']) {
+								$img = \CFile::ResizeImageGet(
+									$arElement['PREVIEW_PICTURE'],
+									array( "width" => 200, "height" => 200 ),
+									BX_RESIZE_IMAGE_PROPORTIONAL,
+									true
+								);
+								$src = $img['src'];
+							}
+							$arElementsTemplate['LIST'][$arElement['CODE']] = array(
+								'TITLE' => $arElement['NAME'],
+								'IMG' => $src,
+								'ROW_CLASS' => 'col-md-4',
+								'POSITION_BLOCK' => 'block',
+								'IN_BLOCK' => 'Y',
+							);
+						}
+
+
+						$newOptionCode = strtoupper($arSection['CODE']);
+						$arNewOptions[$newOptionCode] = array(
+							'TITLE' => $arSection['NAME'],
+							'THEME' => 'Y',
+							'TYPE' => 'checkbox',
+							'DEFAULT' => 'Y',
+							'ONE_ROW' => 'Y',
+							'SMALL_TOGGLE' => 'Y',
+							'FON' => 'N',
+							'TEMPLATE' => $arElementsTemplate,
+							'INDEX_BLOCK_OPTIONS' => array(
+								'TOP' => array(
+									'DELIMITER' => 'Y',
+									'FON' => 'Y',
+								),
+								'BOTTOM' => array(
+									'TOP_OFFSET' => array(
+										'TITLE' => GetMessage('TOP_OFFSET'),
+										'TYPE' => 'selectbox',
+										'LIST' => array(
+											'0' => '0',
+											'40' => '40',
+											'80' => '80',
+											'130' => '130',
+										),
+										'DEFAULT' => '80',
+									),
+									'BOTTOM_OFFSET' => array(
+										'TITLE' => GetMessage('BOTTOM_OFFSET'),
+										'TYPE' => 'selectbox',
+										'LIST' => array(
+											'0' => '0',
+											'40' => '40',
+											'80' => '80',
+											'130' => '130',
+										),
+										'DEFAULT' => '80',
+									),
+									/*'SHOW_TITLE' => array(
+										'TITLE' => GetMessage('SHOW_TITLE'),
+										'TYPE' => 'checkbox',
+										'DEFAULT' => 'N',
+									),
+									'TITLE_POSITION' => array(
+										'TITLE' => GetMessage('TITLE_POSITION'),
+										'TYPE' => 'selectbox',
+										'LIST' => array(
+											'NORMAL' => GetMessage('TITLE_POSITION_NORMAL'),
+											'CENTERED' => GetMessage('TITLE_POSITION_CENTER'),
+											'LEFT' => GetMessage('TITLE_POSITION_LEFT'),
+										),
+										'DEFAULT' => 'NORMAL',
+									),*/
+								)
+							)
+						);
+						$arNewOptions[$newOptionCode]['TEMPLATE']['DEFAULT'] = $currentTemplate;
+					}
+				}
+			}
+			return $arNewOptions;
+		}
+
+		public static function getSolutionOptions($arFrontParametrs = [], $SITE_ID = SITE_ID) {
+			$arResult = [];
+			foreach (\CLite::$arParametrsList as $blockCode => $arBlock) {
+				foreach ($arBlock['OPTIONS'] as $optionCode => $arOption) {
+					$arResult[$optionCode] = $arOption;
+					$arResult[$optionCode]['VALUE'] = $arFrontParametrs[$optionCode];
+					$arResult[$optionCode]['TYPE_BLOCK'] = $blockCode;
+
+					if ($arResult[$optionCode]['LIST']) {
+						foreach ($arResult[$optionCode]['LIST'] as $key => $arListOption) {
+							if (isset($arListOption['ADDITIONAL_OPTIONS']) && $arListOption['ADDITIONAL_OPTIONS']) {
+								foreach ($arListOption['ADDITIONAL_OPTIONS'] as $key2 => $arListOption2) {
+									if ($arListOption2['LIST']) {
+										$bMulti = $arListOption2['TYPE'] == 'multiselectbox';
+										if ($bMulti) {
+											$arFrontParametrs[$key2.'_'.$key] = explode(',', $arFrontParametrs[$key2.'_'.$key]);
+										}
+										foreach ($arListOption2['LIST'] as $key3 => $arListOption3) {
+											if (!is_array($arListOption3)) {
+												$arResult[$optionCode]['LIST'][$key]['ADDITIONAL_OPTIONS'][$key2]['LIST'][$key3] = array('TITLE' => $arListOption3);
+											}
+
+											if ($bMulti) {
+												if ( in_array($key3, $arFrontParametrs[$key2.'_'.$key]) ) {
+													$arResult[$optionCode]['LIST'][$key]['ADDITIONAL_OPTIONS'][$key2]['LIST'][$key3]['CURRENT'] = 'Y';
+													$arResult[$optionCode]['LIST'][$key]['ADDITIONAL_OPTIONS'][$key2]['VALUE'] = $arFrontParametrs[$key2.'_'.$key];
+												}
+											} else {
+												if ($key3 == $arFrontParametrs[$key2.'_'.$key]) {
+													$arResult[$optionCode]['LIST'][$key]['ADDITIONAL_OPTIONS'][$key2]['LIST'][$key3]['CURRENT'] = 'Y';
+													$arResult[$optionCode]['LIST'][$key]['ADDITIONAL_OPTIONS'][$key2]['VALUE'] = $arFrontParametrs[$key2.'_'.$key];
+												}
+											}
+										}
+										if ($bMulti) {
+											$arResult[$optionCode]['LIST'][$key]['ADDITIONAL_OPTIONS'][$key2]['VALUE'] = implode(',', $arResult[$optionCode]['LIST'][$key]['ADDITIONAL_OPTIONS'][$key2]['VALUE']);
+										}
+									} elseif ($arListOption2['TYPE'] == 'checkbox') {
+										$arResult[$optionCode]['LIST'][$key]['ADDITIONAL_OPTIONS'][$key2]['VALUE'] = $arFrontParametrs[$key2.'_'.$key];
+									}
+								}
+							}
+
+							if(isset($arListOption['TOGGLE_OPTIONS']) && $arListOption['TOGGLE_OPTIONS'])
+							{
+								foreach($arListOption['TOGGLE_OPTIONS']['OPTIONS'] as $key2 => $arListOption2)
+								{
+									if($arListOption2['LIST'])
+									{
+										$bMulti = $arListOption2['TYPE'] == 'multiselectbox';
+										if($bMulti) {
+											$arFrontParametrs[$key2.'_'.$key] = explode(',', $arFrontParametrs[$key2.'_'.$key]);
+										}
+										foreach($arListOption2['LIST'] as $key3 => $arListOption3)
+										{
+											if(!is_array($arListOption3))
+												$arResult[$optionCode]['LIST'][$key]['TOGGLE_OPTIONS'][$key2]['LIST'][$key3] = array('TITLE' => $arListOption3);
+
+											if($bMulti) {
+												if( in_array($key3, $arFrontParametrs[$key2.'_'.$key]) )
+												{
+													$arResult[$optionCode]['LIST'][$key]['TOGGLE_OPTIONS'][$key2]['LIST'][$key3]['CURRENT'] = 'Y';
+													$arResult[$optionCode]['LIST'][$key]['TOGGLE_OPTIONS'][$key2]['VALUE'] = $arFrontParametrs[$key2.'_'.$key];
+												}
+											} else {
+												if($key3 == $arFrontParametrs[$key2.'_'.$key])
+												{
+													$arResult[$optionCode]['LIST'][$key]['TOGGLE_OPTIONS'][$key2]['LIST'][$key3]['CURRENT'] = 'Y';
+													$arResult[$optionCode]['LIST'][$key]['TOGGLE_OPTIONS'][$key2]['VALUE'] = $arFrontParametrs[$key2.'_'.$key];
+												}
+											}
+										}
+										if($bMulti) {
+											$arResult[$optionCode]['LIST'][$key]['TOGGLE_OPTIONS'][$key2]['VALUE'] = implode(',', $arResult[$optionCode]['LIST'][$key]['TOGGLE_OPTIONS'][$key2]['VALUE']);
+										}
+									}
+									elseif($arListOption2['TYPE'] == 'checkbox')
+									{
+										$arResult[$optionCode]['LIST'][$key]['TOGGLE_OPTIONS']['OPTIONS'][$key2]['VALUE'] = $arFrontParametrs[$key2.'_'.$key];
+									}
+
+									if($arListOption2['ADDITIONAL_OPTIONS'] && is_array($arListOption2['ADDITIONAL_OPTIONS']))
+									{
+										foreach($arListOption2['ADDITIONAL_OPTIONS'] as $key3 => $arListOption3)
+										{
+											if($arListOption3['LIST'])
+											{
+												foreach($arListOption3['LIST'] as $key3 => $arListOption3)
+												{
+													$arDefaultValues[$key3.'_'.$key] = $arListOption3['DEFAULT'];
+													$arValues[$key3.'_'.$key] = Option::get(self::MODULE_ID, $key3.'_'.$key, $arListOption3['DEFAULT'], $SITE_ID);
+												}
+											}
+											elseif($arListOption3['TYPE'] == 'checkbox')
+											{
+												$arResult[$optionCode]['LIST'][$key]['TOGGLE_OPTIONS']['OPTIONS'][$key2]['ADDITIONAL_OPTIONS'][$key3]['VALUE'] = $arFrontParametrs[$key3.'_'.$key];
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+
+					if (
+						isset($arResult[$optionCode]['SUB_PARAMS']) && $arResult[$optionCode]['SUB_PARAMS']
+					) { //nested params
+						if ($arResult[$optionCode]['LIST']) {
+							foreach ($arResult[$optionCode]['LIST'] as $key => $arListOption) {
+								if ($arResult[$optionCode]['SUB_PARAMS'][$key]) {
+									foreach ($arResult[$optionCode]['SUB_PARAMS'][$key] as $key2 => $arSubOptions) {
+										//show special options for index components
+										if (isset($arSubOptions['INDEX_BLOCK_OPTIONS'])) {
+											if (isset($arSubOptions['INDEX_BLOCK_OPTIONS']['TOP']) && $arSubOptions['INDEX_BLOCK_OPTIONS']['TOP']) {
+												foreach ($arSubOptions['INDEX_BLOCK_OPTIONS']['TOP'] as $topOptionKey => $topOption) {
+													$code_tmp = $topOptionKey.'_'.$key2.'_'.$key;
+													$arResult['INDEX_BLOCK_OPTIONS'][$code_tmp] = $arFrontParametrs[$code_tmp];
+													$arResult[$optionCode]['SUB_PARAMS'][$key][$key2]['INDEX_BLOCK_OPTIONS']['TOP'][$topOptionKey] = $arFrontParametrs[$code_tmp];
+												}
+											}
+											if (isset($arSubOptions['INDEX_BLOCK_OPTIONS']['BOTTOM']) && $arSubOptions['INDEX_BLOCK_OPTIONS']['BOTTOM']) {
+												foreach ($arSubOptions['INDEX_BLOCK_OPTIONS']['BOTTOM'] as $bottomOptionKey => $bottomOption) {
+													$code_tmp = $bottomOptionKey.'_'.$key2.'_'.$key;
+													$arResult['INDEX_BLOCK_OPTIONS'][$code_tmp] = isset($arFrontParametrs[$code_tmp]) ? $arFrontParametrs[$code_tmp] : false;
+													$arResult[$optionCode]['SUB_PARAMS'][$key][$key2]['INDEX_BLOCK_OPTIONS']['BOTTOM'][$bottomOptionKey]['VALUE'] = $arResult['INDEX_BLOCK_OPTIONS'][$code_tmp];
+
+													if (!strlen($arResult['INDEX_BLOCK_OPTIONS'][$code_tmp]) && $bottomOption['DEFAULT']) {
+														$arResult['INDEX_BLOCK_OPTIONS'][$code_tmp] = $bottomOption['DEFAULT'];
+														$arResult[$optionCode]['SUB_PARAMS'][$key][$key2]['INDEX_BLOCK_OPTIONS']['BOTTOM'][$bottomOptionKey]['VALUE'] = $bottomOption['DEFAULT'];
+													}
+												}
+											}
+										}
+
+										//show template index components
+										if (isset($arSubOptions['TEMPLATE']) && $arSubOptions['TEMPLATE']) {
+											$code_tmp = $key.'_'.$key2.'_TEMPLATE';
+											$arResult['TEMPLATE_PARAMS'][$key][$code_tmp] = $arSubOptions['TEMPLATE'];
+											$arResult['TEMPLATE_PARAMS'][$key][$code_tmp]['ACTIVE'] = $arFrontParametrs[$key.'_'.$key2];
+											foreach ($arResult['TEMPLATE_PARAMS'][$key][$code_tmp]['LIST'] as $keyTemplate => $template) {
+												if ($arFrontParametrs[$code_tmp] == $keyTemplate) {
+													$arResult['TEMPLATE_PARAMS'][$key][$code_tmp]['LIST'][$keyTemplate]['CURRENT'] = 'Y';
+													$arResult['TEMPLATE_PARAMS'][$key][$code_tmp]['VALUE'] = $keyTemplate;
+													$arResult[$optionCode]['SUB_PARAMS'][$key][$key2]['TEMPLATE']['VALUE'] = $arFrontParametrs[$code_tmp];
+												}
+
+												if ($template['ADDITIONAL_OPTIONS']) {
+													foreach ($template['ADDITIONAL_OPTIONS'] as $keyS2 => $arListOption2) {
+														$currentVal = $arFrontParametrs[$key.'_'.$key2.'_'.$keyS2.'_'.$keyTemplate];
+														$currentVal = $currentVal ? $currentVal : $arResult[$optionCode]['SUB_PARAMS'][$key][$key2]['TEMPLATE']['LIST'][$keyTemplate]['ADDITIONAL_OPTIONS'][$keyS2]['DEFAULT'];
+
+														$arResult[$optionCode]['SUB_PARAMS'][$key][$key2]['TEMPLATE']['LIST'][$keyTemplate]['ADDITIONAL_OPTIONS'][$keyS2]['VALUE'] = $currentVal;
+														$arResult['TEMPLATE_PARAMS'][$key][$code_tmp]['LIST'][$keyTemplate]['ADDITIONAL_OPTIONS'][$keyS2]['VALUE'] = $currentVal;
+
+														if ($arListOption2['LIST']) {
+															foreach ($arListOption2['LIST'] as $keyS3 => $arListOption3) {
+																;
+															}
+														} elseif($arListOption2['TYPE'] == 'checkbox') {
+															$arResult['TEMPLATE_PARAMS'][$key][$code_tmp]['LIST'][$keyTemplate]['ADDITIONAL_OPTIONS'][$keyS2]['VALUE'] = $currentVal;
+														}
+													}
+												}
+
+												if ($template['TOGGLE_OPTIONS']) {
+													foreach ($template['TOGGLE_OPTIONS']['OPTIONS'] as $keyS2 => $arListOption2) {
+														if ($arListOption2['LIST']) {
+															foreach ($arListOption2['LIST'] as $keyS3 => $arListOption3) {
+																$arResult[$optionCode]['SUB_PARAMS'][$key][$key2]['TEMPLATE']['LIST'][$keyTemplate]['TOGGLE_OPTIONS'][$keyS2]['LIST'][$keyS3] = $arListOption2['DEFAULT'];
+															}
+														} elseif($arListOption2['TYPE'] == 'checkbox') {
+															$arResult[$optionCode]['SUB_PARAMS'][$key][$key2]['TEMPLATE']['LIST'][$keyTemplate]['TOGGLE_OPTIONS'][$keyS2]['VALUE'] = $arFrontParametrs[$key.'_'.$key2.'_'.$keyS2.'_'.$keyTemplate];
+															$arResult['TEMPLATE_PARAMS'][$key][$code_tmp]['LIST'][$keyTemplate]['TOGGLE_OPTIONS'][$keyS2]['VALUE'] = $arFrontParametrs[$key.'_'.$key2.'_'.$keyS2.'_'.$keyTemplate];
+														}
+													}
+												}
+											}
+										}
+
+										if ($arResult[$optionCode]['SUB_PARAMS'][$key][$key2]['TYPE'] == 'selectbox') {
+											foreach ($arResult[$optionCode]['SUB_PARAMS'][$key][$key2]['LIST'] as $key3 => $value) {
+												if($arFrontParametrs[$key.'_'.$key2] == $value)
+													$arResult[$optionCode]['SUB_PARAMS'][$key][$key2]['LIST'][$key3]['CURRENT'] = 'Y';
+											}
+										} else {
+											$arResult[$optionCode]['SUB_PARAMS'][$key][$key2]['VALUE'] = $arFrontParametrs[$key.'_'.$key2];
+										}
+									}
+
+									//sort order prop for main page
+									$param = 'SORT_ORDER_'.$optionCode.'_'.$key;
+									$arResult[$param] = $arFrontParametrs[$param];
+								}
+							}
+						}
+					}
+
+					if (isset($arResult[$optionCode]['DEPENDENT_PARAMS']) && $arResult[$optionCode]['DEPENDENT_PARAMS']) { //dependent params
+						foreach ($arResult[$optionCode]['DEPENDENT_PARAMS'] as $key => $arListOption) {
+							$arResult[$optionCode]['DEPENDENT_PARAMS'][$key]['VALUE'] = $arFrontParametrs[$key];
+							if (isset($arListOption['LIST']) && isset($arListOption['LIST'])) {
+								foreach ($arListOption['LIST'] as $variantCode => $variant) {
+									if (!is_array($variant)) {
+										$arResult[$optionCode]['DEPENDENT_PARAMS'][$key]['LIST'][$variantCode] = array('TITLE' => $variant);
+									}
+									if ($arFrontParametrs[$key] == $variantCode) {
+										$arResult[$optionCode]['DEPENDENT_PARAMS'][$key]['LIST'][$variantCode]['CURRENT'] = 'Y';
+									}
+
+									if (is_array($variant) && $variant['TOGGLE_OPTIONS']) {
+										foreach ($variant['TOGGLE_OPTIONS']['OPTIONS'] as $key2 => $arListOption2) {
+											if ($arListOption2['LIST']) {
+												$bMulti = $arListOption2['TYPE'] == 'multiselectbox';
+												if ($bMulti) {
+													$arFrontParametrs[$key2.'_'.$key] = explode(',', $arFrontParametrs[$key2.'_'.$key]);
+												}
+												foreach ($arListOption2['LIST'] as $key3 => $arListOption3) {
+													if (!is_array($arListOption3)) {
+														$arResult[$optionCode]['DEPENDENT_PARAMS'][$key]['LIST'][$variantCode]['TOGGLE_OPTIONS'][$key2]['LIST'][$key3] = array('TITLE' => $arListOption3);
+													}
+
+													if ($bMulti) {
+														if (in_array($key3, $arFrontParametrs[$key2.'_'.$key])) {
+															$arResult[$optionCode]['DEPENDENT_PARAMS'][$key]['LIST'][$variantCode]['TOGGLE_OPTIONS'][$key2]['LIST'][$key3]['CURRENT'] = 'Y';
+															$arResult[$optionCode]['DEPENDENT_PARAMS'][$key]['LIST'][$variantCode]['TOGGLE_OPTIONS'][$key2]['VALUE'] = $arFrontParametrs[$key2.'_'.$variantCode];
+														}
+													} else {
+														if ($key3 == $arFrontParametrs[$key2.'_'.$key]) {
+															$arResult[$optionCode]['DEPENDENT_PARAMS'][$key]['LIST'][$variantCode]['TOGGLE_OPTIONS'][$key2]['LIST'][$key3]['CURRENT'] = 'Y';
+															$arResult[$optionCode]['DEPENDENT_PARAMS'][$key]['LIST'][$variantCode]['TOGGLE_OPTIONS'][$key2]['VALUE'] = $arFrontParametrs[$key2.'_'.$variantCode];
+														}
+													}
+												}
+												if ($bMulti) {
+													$arResult[$optionCode]['DEPENDENT_PARAMS'][$key]['LIST'][$variantCode]['TOGGLE_OPTIONS'][$key2]['VALUE'] = implode(',', $arResult[$optionCode]['DEPENDENT_PARAMS'][$key]['LIST'][$variantCode]['TOGGLE_OPTIONS'][$key2]['VALUE']);
+												}
+											} elseif($arListOption2['TYPE'] == 'checkbox') {
+												$arResult[$optionCode]['DEPENDENT_PARAMS'][$key]['LIST'][$variantCode]['TOGGLE_OPTIONS']['OPTIONS'][$key2]['VALUE'] = $arFrontParametrs[$key2.'_'.$variantCode];
+											}
+
+											if ($arListOption2['ADDITIONAL_OPTIONS'] && is_array($arListOption2['ADDITIONAL_OPTIONS'])) {
+												foreach ($arListOption2['ADDITIONAL_OPTIONS'] as $key3 => $arListOption3) {
+													if ($arListOption3['LIST']) {
+														foreach($arListOption3['LIST'] as $key3 => $arListOption3)
+														{
+															$arDefaultValues[$key3.'_'.$variantCode] = $arListOption3['DEFAULT'];
+															$arValues[$key3.'_'.$variantCode] = Option::get(self::MODULE_ID, $key3.'_'.$variantCode, $arListOption3['DEFAULT'], $SITE_ID);
+														}
+													} elseif ($arListOption3['TYPE'] == 'checkbox') {
+														$arResult[$optionCode]['DEPENDENT_PARAMS'][$key]['LIST'][$variantCode]['TOGGLE_OPTIONS']['OPTIONS'][$key2]['ADDITIONAL_OPTIONS'][$key3]['VALUE'] = $arFrontParametrs[$key3.'_'.$variantCode];
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+
+					// CURRENT for compatibility with old versions
+					if ($arResult[$optionCode]['LIST']) {
+						$bMulti = $arResult[$optionCode]['TYPE'] == 'multiselectbox';
+						if ($bMulti) {
+							$arValue = explode(',', $arResult[$optionCode]['VALUE']);
+						}
+						foreach ($arResult[$optionCode]['LIST'] as $variantCode => $variantTitle) {
+							if (!is_array($variantTitle)) {
+								$arResult[$optionCode]['LIST'][$variantCode] = array('TITLE' => $variantTitle);
+							}
+
+							if ($bMulti) {
+								if (in_array($variantCode, $arValue)) {
+									$arResult[$optionCode]['LIST'][$variantCode]['CURRENT'] = 'Y';
+								}
+							} else {
+								if ($arResult[$optionCode]['VALUE'] == $variantCode) {
+									$arResult[$optionCode]['LIST'][$variantCode]['CURRENT'] = 'Y';
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if ($arResult) {
+				$arGroups = $arGroups2 = array();
+				foreach ($arResult as $optionCode => $arOption) {
+					if ((isset($arOption['GROUP']) && $arOption['GROUP'])) { //set groups option
+						$arGroups[$arOption['GROUP']]['TITLE'] = GetMessage($arOption['GROUP']);
+						$arGroups[$arOption['GROUP']]['THEME'] = $arOption['THEME'];
+						$arGroups[$arOption['GROUP']]['GROUPS_EXT'] = 'Y';
+						$arGroups[$arOption['GROUP']]['TYPE_BLOCK'] = $arOption['TYPE_BLOCK'];
+						$arGroups[$arOption['GROUP']]['OPTIONS'][$optionCode] = $arOption;
+						unset($arResult[$optionCode]);
+
+						if(isset($arOption['GROUP_HINT']) && $arOption['GROUP_HINT']) //set group hint
+							$arGroups[$arOption['GROUP']]['HINT'] = $arOption['GROUP_HINT'];
+					} elseif((isset($arOption['TAB_GROUP_BLOCK']) && $arOption['TAB_GROUP_BLOCK'])) {
+						$arGroups2['TABS'][$arOption['TYPE_BLOCK']][$arOption['TAB_GROUP_BLOCK']]['OPTIONS'][$optionCode] = $arOption;
+					}
+				}
+
+				if ($arGroups) {
+					$arResult = array_merge($arResult, $arGroups);
+				}
+				if ($arGroups2) {
+					$arResult = array_merge($arResult, $arGroups2);
+				}
+			}
+
+			return $arResult;
+		}
+
+		public static function getComponentCallIndex($componentName = '') {
+			static $arComponents = [];
+
+			if (!isset($arComponents[$componentName])) {
+				$arComponents[$componentName] = 1;
+			} elseif (!Solution::checkAjaxRequest()) {
+				$arComponents[$componentName]++;
+			}
+
+			return $arComponents[$componentName];
+		}
+
+		public static function getCountSites($bFromStatic = true){
+			static $cacheCount;
+
+			if(!isset($cacheCount)){
+				$cacheCount = 0;
+			}
+
+			$countSites =& $cacheCount;
+
+			if(!$bFromStatic){
+				$countSites = array();
+			}
+
+			if(!$countSites){
+				$strSites = \CLite::GetFrontParametrValue('SITES_SHOW_IN_SELECTOR');
+				$arSites = explode(',', $strSites);
+				$countSites = count($arSites);
+			}
+
+			return $countSites;
+		}
+
+		public static function getShowSites($bFromStatic = true){
+			static $cacheSites;
+
+			if(!isset($cacheSites)){
+				$cacheSites = array();
+			}
+
+			$arSites =& $cacheSites;
+
+			if(!$bFromStatic){
+				$arSites = array();
+			}
+
+			if(!$arSites){
+				$strSites = \CLite::GetFrontParametrValue('SITES_SHOW_IN_SELECTOR');
+				$arSites = explode(',', $strSites);
+				$arSites = array_diff($arSites, array(''));
+			}
+
+			return $arSites;
+		}
+
+		public static function afterHeaderAction(){
+			global $arMergeOptions, $sideMenuHeader;
+			?>
+			<script data-skip-moving="true">if(typeof topMenuAction !== 'undefined') topMenuAction()</script>
+			<?if( !$sideMenuHeader && !isset($_COOKIE['side_menu']) ){
+				$arAdminOptions = \CLite::GetBackParametrsValues(SITE_ID);
+				if($arAdminOptions['THEME_SWITCHER'] === 'Y'){
+					$arMergeOptions['SIDE_MENU'] = $arAdminOptions['SIDE_MENU'];
+				}
+			}
+		}
+
+		public static function getCrossLinkedItems(array $arItem, array $arLinkProperties, array $arCrossLinkProperties = array()){
+			static $arDetailPageShowProps;
+
+			$arLinkedIDs = array();
+
+			if($arLinkProperties){
+				$linkProperty = isset($arLinkProperties[0]) ? $arLinkProperties[0] : '';
+				$filterLinkProperty = isset($arLinkProperties[1]) ? $arLinkProperties[1] : '';
+			}
+
+			if($arCrossLinkProperties){
+				$crossLinkProperty = isset($arCrossLinkProperties[0]) ? $arCrossLinkProperties[0] : '';
+				$crossFilterLinkProperty = isset($arCrossLinkProperties[1]) ? $arCrossLinkProperties[1] : '';
+			}
+
+			if(
+				is_array($arItem) &&
+				array_key_exists('DISPLAY_PROPERTIES', $arItem)
+			){
+				$id = $arItem['ID'];
+				$iblockId = $arItem['IBLOCK_ID'];
+
+				// get display properties
+				if(!isset($arDetailPageShowProps)){
+					$arDetailPageShowProps = \Bitrix\Iblock\Model\PropertyFeature::getDetailPageShowProperties(
+						$iblockId,
+						array('CODE' => 'Y')
+					);
+					if($arDetailPageShowProps === null){
+						$arDetailPageShowProps = array();
+					}
+				}
+
+				// LINK_#PROPERTY_CODE#
+				if(
+					strlen($linkProperty) &&
+					array_key_exists($linkProperty, $arItem['PROPERTIES']) &&
+					is_array($arItem['PROPERTIES'][$linkProperty])
+				){
+					$linkIblockId = $arItem['PROPERTIES'][$linkProperty]['LINK_IBLOCK_ID'];
+					if($arItem['DISPLAY_PROPERTIES'][$linkProperty]['VALUE']){
+						$arLinkedIDs = $arItem['DISPLAY_PROPERTIES'][$linkProperty]['VALUE'];
+					}
+				}
+
+				// LINK_#PROPERTY_CODE#_FILTER
+				if(
+					strlen($filterLinkProperty) &&
+					array_key_exists($filterLinkProperty, $arItem['PROPERTIES']) &&
+					is_array($arItem['PROPERTIES'][$filterLinkProperty])
+				){
+					$filterLinkIblockId = $arItem['PROPERTIES'][$filterLinkProperty]['USER_TYPE_SETTINGS']['IBLOCK_ID'];
+
+					if($filterLinkIblockId){
+						try{
+							$arTmpFilter = Json::decode($arItem['DISPLAY_PROPERTIES'][$filterLinkProperty]['~VALUE']);
+						}
+						catch(\Exception $e){
+							$arTmpFilter = array();
+						}
+
+						if(
+							array_key_exists('CHILDREN', $arTmpFilter) &&
+							$arTmpFilter['CHILDREN']
+						){
+							// unset result
+							$arLinkedIDs = array();
+
+							$cond = new \CLiteCondition();
+							try{
+								$arFilter = $cond->parseCondition($arTmpFilter, array());
+							}
+							catch(\Exception $e){
+								$arFilter = array();
+							}
+
+							if(
+								$arFilter &&
+								$filterLinkIblockId
+							){
+								$arFilter = array(
+									'LOGIC' => 'AND',
+									array(
+										'IBLOCK_ID' => $filterLinkIblockId['IBLOCK_ID'],
+									),
+									array(
+										$arFilter
+									),
+								);
+
+								$arLinkedIDs = \CLiteCache::CIBLockElement_GetList(
+									array(
+										'CACHE' => array(
+											'TAG' => \CLiteCache::GetIBlockCacheTag($filterLinkIblockId),
+											'RESULT' => array('ID'),
+											'MULTI' => 'Y',
+										)
+									),
+									$arFilter,
+									false,
+									false,
+									array('ID')
+								);
+							}
+						}
+
+						if(
+							!$linkIblockId &&
+							$filterLinkIblockId
+						){
+							$linkIblockId = $filterLinkIblockId;
+						}
+					}
+				}
+
+				if(
+					$id &&
+					$iblockId &&
+					$linkIblockId
+				){
+					if(
+						array_key_exists($linkProperty, $arItem['DISPLAY_PROPERTIES']) ||
+						array_key_exists($filterLinkProperty, $arItem['DISPLAY_PROPERTIES']) ||
+						in_array($linkProperty, $arDetailPageShowProps) ||
+						in_array($filterLinkProperty, $arDetailPageShowProps)
+					){
+						$arCrossLinkedItemsIDs = array();
+
+						// CROSS LINK_#PROPERTY_CODE#
+						if(strlen($crossLinkProperty)){
+							$arCrossLinkedItemsIDs = \CLiteCache::CIBLockElement_GetList(
+								array(
+									'CACHE' => array(
+										'TAG' => \CLiteCache::GetIBlockCacheTag($linkIblockId),
+										'RESULT' => array('ID'),
+										'MULTI' => 'Y',
+									)
+								),
+								array(
+									'IBLOCK_ID' => $linkIblockId,
+									'PROPERTY_'.$crossLinkProperty => $id,
+								),
+								false,
+								false,
+								array('ID')
+							);
+						}
+
+						// CROSS LINK_#PROPERTY_CODE#_FILTER
+						if(strlen($crossFilterLinkProperty)){
+							$arCrossFilterLinkedItems = \CLiteCache::CIBLockElement_GetList(
+								array(
+									'CACHE' => array(
+										'TAG' => \CLiteCache::GetIBlockCacheTag($linkIblockId),
+										'MULTI' => 'Y',
+									)
+								),
+								array(
+									'IBLOCK_ID' => $linkIblockId,
+									array(
+										'LOGIC' => 'AND',
+										array(
+											'!PROPERTY_'.$crossFilterLinkProperty => false,
+										),
+										array(
+											'!PROPERTY_'.$crossFilterLinkProperty => '[]',
+										),
+									)
+								),
+								false,
+								false,
+								array('ID', 'IBLOCK_ID', 'PROPERTY_'.$crossFilterLinkProperty)
+							);
+
+							if($arCrossFilterLinkedItems){
+								foreach($arCrossFilterLinkedItems as $arCrossLinkedItem){
+									try{
+										$arTmpFilter = Json::decode($arCrossLinkedItem['PROPERTY_'.$crossFilterLinkProperty.'_VALUE']);
+									}
+									catch(\Exception $e){
+										$arTmpFilter = array();
+									}
+
+									if(
+										array_key_exists('CHILDREN', $arTmpFilter) &&
+										$arTmpFilter['CHILDREN']
+									){
+										$p = array_search($arCrossLinkedItem['ID'], $arCrossLinkedItemsIDs);
+										if($p !== false){
+											// unset from result
+											unset($arCrossLinkedItemsIDs[$p]);
+										}
+									}
+
+									$cond = new \CLiteCondition();
+									try{
+										$arFilter = $cond->parseCondition($arTmpFilter, array());
+									}
+									catch(\Exception $e){
+										$arFilter = array();
+									}
+
+									if($arFilter){
+										$arFilter = array(
+											'LOGIC' => 'AND',
+											array(
+												'IBLOCK_ID' => $iblockId,
+												'ID' => $id,
+											),
+											$arFilter
+										);
+
+										if(\CLiteCache::CIBLockElement_GetList(
+											array(
+												'CACHE' => array(
+													'TAG' => \CLiteCache::GetIBlockCacheTag($iblockId),
+													'GROUP' => array('ID'),
+												)
+											),
+											$arFilter,
+											array()
+										)){
+											$arCrossLinkedItemsIDs[] = $arCrossLinkedItem['ID'];
+										}
+									}
+								}
+							}
+						}
+
+						if($arCrossLinkedItemsIDs){
+							$arLinkedIDs = array_merge($arLinkedIDs, $arCrossLinkedItemsIDs);
+						}
+					}
+				}
+			}
+
+			return array(
+				'IBLOCK_ID' => $linkIblockId,
+				'VALUE' => array_unique($arLinkedIDs),
+			);
+		}
+
+		public static function checkProperty($nameDownloadFile, $urlDownloadFile){
+			if($urlDownloadFile){
+				
+				if(!$nameDownloadFile){
+					$nameDownloadFile = GetMessage('NAME_DOWNLOAD_FILE');
+				}
+				ob_start();
+				?>
+				<div class="download fill-theme-hover"><a download href="<?=$urlDownloadFile?>" title="<?=$nameDownloadFile?>"><?=\CLite::showIconSvg('download', SITE_TEMPLATE_PATH.'/images/svg/file_download.svg', '', 'colored_theme_hover_bg-el-svg')?><span class="font_13 title"><?=$nameDownloadFile;?></span></a></div>
+				<?
+				$html = ob_get_contents();
+				ob_end_clean();
+				return $html;
+			}
+		}
+
+		public static function getLinkedItems($arItem = array(), $field = "SERVICES", $arParams = array()){
+			$arResult = [];
+			$arSelect = array("ID", "IBLOCK_ID", "NAME", "DETAIL_PAGE_URL", "PROPERTY_LINK_GOODS_FILTER", "PROPERTY_LINK_GOODS");
+
+			if(!empty($arItem["DISPLAY_PROPERTIES"][$field]["VALUE"]))
+			{
+				$arResult = $arItem["DISPLAY_PROPERTIES"][$field]["VALUE"];
+			}
+
+			if(intVal($arParams["IBLOCK_".$field."_ID"]))
+			{
+				$arItems = \CLiteCache::CIBLockElement_GetList(array('CACHE' => array("TAG" => \CLiteCache::GetIBlockCacheTag($arParams["IBLOCK_".$field."_ID"]), "GROUP" => "ID")), array("IBLOCK_ID" => $arParams["IBLOCK_".$field."_ID"], "ACTIVE"=>"Y", "ACTIVE_DATE" => "Y"), false, false, $arSelect);
+
+				if($arItems)
+				{
+					foreach($arItems as $key => $arItem2)
+					{
+						if($arItem2['~PROPERTY_LINK_GOODS_FILTER_VALUE'])
+						{
+							try{
+								$arTmpGoods = Json::decode($arItem2["~PROPERTY_LINK_GOODS_FILTER_VALUE"]);
+							}
+							catch(\Exception $e){
+								$arTmpGoods = array();
+							}
+
+							if(
+								array_key_exists('CHILDREN', $arTmpGoods) &&
+								$arTmpGoods['CHILDREN']
+							){
+								if($arResult[$key])
+									unset($arResult[$key]);
+
+								$cond = new \CLiteCondition();
+								try{
+									$arExGoodsFilter = $cond->parseCondition($arTmpGoods, $arParams);
+								}
+								catch(\Exception $e){
+									$arExGoodsFilter = array();
+								}
+								$arTmpParams['CUSTOM_FILTER'] = $arExGoodsFilter;
+
+
+								if($arTmpParams['CUSTOM_FILTER'])
+								{
+									$arFilter = array(
+										"LOGIC" => "AND",
+										array(
+											"IBLOCK_ID" => $arParams["IBLOCK_ID"],
+											"ACTIVE"=>"Y",
+											"ID" => $arItem["ID"],
+										),
+										/*array(
+											"ID" => $arItem['~PROPERTY_LINK_GOODS_VALUE']
+										),*/
+										$arTmpParams['CUSTOM_FILTER']
+									);
+									$arTmpItems = \CLiteCache::CIBLockElement_GetList(array('CACHE' => array("TAG" => \CLiteCache::GetIBlockCacheTag($arParams["IBLOCK_ID"]), "GROUP" => "ID")), $arFilter, false, false, array("ID"));
+									
+									if($arTmpItems)
+									{
+										if($arTmpItems[$arItem['ID']])
+											$arResult[$arItem2['ID']] = $arItem2['ID'];
+									}
+								}
+							}
+						}
+						
+						if($arItem2['PROPERTY_LINK_GOODS_VALUE'] && in_array($arItem['ID'], (array)$arItem2['PROPERTY_LINK_GOODS_VALUE']))
+						{
+							$arResult[$arItem2['ID']] = $arItem2['ID'];
+						}
+					}
+				}
+			}
+			return $arResult;
+		}
+
+		public static function getGridClassByCount($arBreakPoints = [], $elementInRow) {
+
+			$strClassGrid = "";
+			if($elementInRow > 2) {
+
+				natsort($arBreakPoints);
+				$arBreakPoints = array_values($arBreakPoints);
+			
+				$arClass = [];
+				for($i = count($arBreakPoints)-1; $i >= 0; $i--){
+					$arClass[] = ' grid-list--items-'. ($elementInRow--) .'-'.$arBreakPoints[$i];
+				}
+				
+				$strClassGrid = implode(' ', $arClass); 
+			}
+
+			$strClassGrid .= ' grid-list--items-2-601';
+
+			return $strClassGrid;
+		}
+
+		public static function showComments($name)
+		{
+			global $BLOG_DATA;
+			$arPosts = [];
+			if ($BLOG_DATA['COMMENT_ID'] && \Bitrix\Main\Loader::includeModule('blog')) {
+				$SORT = ["DATE_PUBLISH" => "DESC", "NAME" => "ASC"];
+				$arFilter = [
+				    "BLOG_ID" => $BLOG_DATA['BLOG_DATA']['BLOG_ID'],
+				    "POST_ID" => $BLOG_DATA['COMMENT_ID'],
+					"!PUBLISH_STATUS" => "K"
+				];
+				$dbPosts = \CBlogComment::GetList(
+					$SORT,
+					$arFilter,
+					false,
+					['nTopCount' => 4],
+					['POST_TEXT', 'AUTHOR_NAME', 'AUTHOR_ID', 'AUTHOR_EMAIL', 'USER_LOGIN', 'USER_EMAIL', 'USER_NAME', 'USER_LAST_NAME', 'DATE_CREATE']
+				);
+
+				while ($arPost = $dbPosts->Fetch()) {
+					if (!$arPost['AUTHOR_NAME']) {
+						if ($arPost['USER_NAME']) {
+							$arPost['AUTHOR_NAME'] = $arPost['USER_NAME'];
+						}
+						if ($arPost['USER_LAST_NAME']) {
+							$arPost['AUTHOR_NAME'] .= ' '.$arPost['USER_LAST_NAME'];
+						}
+						if (!$arPost['AUTHOR_NAME'] && $arPost['AUTHOR_EMAIL']) {
+							$arPost['AUTHOR_NAME'] = $arPost['AUTHOR_EMAIL'];
+						}
+						if (!$arPost['AUTHOR_NAME'] && $arPost['USER_EMAIL']) {
+							$arPost['AUTHOR_NAME'] = $arPost['USER_EMAIL'];
+						}
+						if (!$arPost['AUTHOR_NAME'] && $arPost['USER_LOGIN']) {
+							$arPost['AUTHOR_NAME'] = $arPost['USER_LOGIN'];
+						}
+					}
+				    $arPosts[] = $arPost;
+				}
+			}?>
+			<? if ($arPosts): ?>
+				<? foreach ($arPosts as $arPost): ?>
+					<div class="hidden" itemprop="review" itemscope itemtype="http://schema.org/Review">
+						<meta itemprop="name" content="<?= strip_tags($name); ?>">
+						<span style="display:none" itemprop="author" itemscope itemtype="https://schema.org/Person">
+							<meta itemprop="name" content="<?= $arPost["AUTHOR_NAME"]; ?>">
+						</span>
+						<meta itemprop="datePublished" content="<?= FormatDate('o-m-d', MakeTimeStamp($arPost['DATE_CREATE'])); ?>">
+						<span style="display:none" itemprop="itemReviewed" itemscope itemtype="http://schema.org/Thing">
+							<meta itemprop="name" content="<?= strip_tags($name); ?>" />
+						</span>
+						
+						<div class="hidden" itemprop="reviewBody">
+							<?= $arPost['POST_TEXT']; ?>
+						</div>
+					</div>
+				<? endforeach; ?>
+			<? endif;
+		}
+
+		public static function showHeadingIcons($arConfig)
+		{
+			?>
+			<div class="heading-icons">
+				<div class="item-action item-action--horizontal fill-theme-hover hover-block">
+					<div class="hover-block__item">
+						<?echo $arConfig['CONTENT'];?>
+					</div>
+				</div>
+			</div>
+			<?
+		}
+		
+		/**
+		 * @param $arGallery = [
+		 * 		'src' => string,
+		 * 		'preview' => string,
+		 * 		'alt' => string,
+		 * 		'title' => string
+		 * ]
+		 * 
+		 * @param $arOptions array
+		 * 
+		 * @return mixed
+		 */
+		public static function showGallery($arGallery = [], $arOptions = [])
+		{
+			$arDefaultOptions = [
+				'BREAKPOINTS' => [
+					'xs' => 2,
+					'sm' => 3,
+					'md' => 4,
+					'lg' => 5,
+					'xl' => 6,
+				],
+			];
+			$arConfig = array_merge($arDefaultOptions, $arOptions);
+
+			$totalCount = count($arGallery);
+			$arJSGallery = JSON::encode($arGallery);
+			array_splice($arGallery, (int)$arConfig['BREAKPOINTS']['xl']);
+
+			self::showBlockHtml([
+				'TYPE' => 'IMAGES',
+				'FILE' => 'images/detail_gallery.php',
+				'PARAMS' => [
+					'CONFIG' => $arConfig,
+					'DATA_ITEMS' => $arJSGallery,
+					'ITEMS' => $arGallery,
+					'TOTAL_COUNT' => $totalCount,
+				],
+			]);
+		}
+
+		/**
+		 * Replace catalog and sku props 'LIST_PROPERTY_CODE', 'SKU_IBLOCK_ID', 'SKU_PROPERTY_CODE', 'SKU_TREE_PROPS'
+		 * @param $arParams array
+		 * @return $arParams array
+		 */
+		public static function replacePropsParams(&$arParams, $arReplaceCode = ['PROPERTY_CODE' => 'LIST_PROPERTY_CODE'])
+		{
+			/* COMMON */
+			$arParams["SHOW_HINTS"] = Solution::GetFrontParametrValue('SHOW_HINTS');
+
+			/* CATALOG_PROPS */
+			$arParams[$arReplaceCode["PROPERTY_CODE"]] = explode(',', Solution::GetFrontParametrValue('CATALOG_PROPERTY_CODE'));
+
+			/* SKU */
+			$arParams["SKU_IBLOCK_ID"] = Solution::GetFrontParametrValue('CATALOG_SKU_IBLOCK_ID');
+			$arParams["SKU_PROPERTY_CODE"] = explode(',', Solution::GetFrontParametrValue('CATALOG_SKU_PROPERTY_CODE'));
+			$arParams["SKU_TREE_PROPS"] = explode(',', Solution::GetFrontParametrValue('CATALOG_SKU_TREE_PROPERTY_CODE'));
+		}
+	}
+}?>

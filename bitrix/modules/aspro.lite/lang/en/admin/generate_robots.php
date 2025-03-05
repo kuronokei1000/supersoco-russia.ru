@@ -1,0 +1,31 @@
+<?
+$MESS["LITE_MODULE_CONTROL_CENTER_ERROR"] = "Failed to get solution installation information";
+$MESS["LITE_MODULE_DOMAIN"] = "Domain";
+$MESS["LITE_MODULE_DOMAINS"] = "Domains";
+$MESS["LITE_MODULE_EDIT_ROBOTS"] = "Edit robots.txt";
+$MESS["LITE_MODULE_FILES"] = "Files";
+$MESS["LITE_MODULE_GENERATE_ROBOTS"] = "Rebuild robots.txt";
+$MESS["LITE_MODULE_GENERATE_ROBOTS_SHORT"] = "Re-create";
+$MESS["LITE_MODULE_NOT_INCLUDED"] = "Failed to connect module Aspro: LightShop";
+$MESS["LITE_MODULE_NOT_INSTALLED"] = "Module &laquo;Aspro: LightShop&raquo; not installed. Please <a href=\"/bitrix/admin/partner_modules.php\"> install the module </a> and try again.";
+$MESS["LITE_MODULE_ROBOTS_ERROR"] = "Turn on regionality and select the type \"on subdomains\" to be able to regenerate robots.txt";
+$MESS["LITE_MODULE_ROBOTS_INFO"] = "<p> Clicking the <b> \"Rebuild robots.txt\" button </b> will copy the main file <b> /robots.txt </b> to the <b> /aspro_regions/robots/ </b> directory for each domain of the form <b> robots_DOMAIN.txt </b> in which the site address will be replaced for each domain in the directive <b>Host</b></p> <p> It is also possible to recreate <b> robots.txt </ b > only for a specific domain by clicking <b>\"Recreate\"</b> </p>";
+$MESS["LITE_MODULE_ROBOTS_MAIN"] = "Basic robots.txt";
+$MESS["LITE_NO_RIGHTS_FOR_VIEWING"] = "Access is closed";
+$MESS["LITE_NO_SITE_INSTALLED"] = "No sites found with the installed solution \"Aspro: LightShop\"; <br /> <input type=\"button\" value=\"Setup\" style=\"margin-top: 10px;\" onclick=\"document.location.href='/bitrix/admin/wizard_install.php?lang=ru&wizardName=aspro:lite&#SESSION_ID#'\">";
+$MESS["LITE_PAGE_TITLE"] = "Generating robots.txt";
+$MESS["ERROR_INCLUDE_MODULE"] = "Module connection error";
+$MESS["MAIN_OPTIONS_SITE_TITLE"] = "&laquo;#SITE_NAME#&raquo; (#SITE_ID#)";
+$MESS["MAIN_OPT_APPLY"] = "Apply";
+$MESS["MAIN_OPT_APPLY_TITLE"] = "Apply site settings";
+$MESS["MAIN_OPT_CANCEL"] = "Cancel";
+$MESS["MAIN_OPT_CANCEL_TITLE"] = "Cancel site settings";
+$MESS["NO_RIGHTS_FOR_VIEWING"] = "Insufficient rights to view";
+$MESS["SCOM_BUTTON_DESCRIPTION"] = "Launch the wizard for changing the design and site settings";
+$MESS["SCOM_BUTTON_NAME"] = "Wizard#BR#settings";
+$MESS["STOM_BUTTON_CONFIRM_W2"] = "The Aspro directory installed as a demo directory will be removed. In this case, all your changes inside it will be lost. Delete demo directory?";
+$MESS["STOM_BUTTON_NAME_W1"] = "<b> Store Setup Wizard </b>";
+$MESS["STOM_BUTTON_NAME_W3"] = "Delete demo directory";
+$MESS["STOM_BUTTON_TITLE_W1"] = "Launch the wizard for changing the design and setting up the store";
+$MESS["STOM_BUTTON_TITLE_W3"] = "Deleting the demo directory";
+?>

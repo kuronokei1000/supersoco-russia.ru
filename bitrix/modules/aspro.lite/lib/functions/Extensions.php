@@ -1,0 +1,337 @@
+<? 
+namespace Aspro\Lite\Functions;
+
+use CLite as Solution;
+
+class Extensions extends \CLite {
+    public static function register($templatePath = '') {
+		$path = $templatePath ? $templatePath : SITE_TEMPLATE_PATH;
+
+		if (
+			defined('TEMPLATE_TYPE')
+			&& TEMPLATE_TYPE === 'mobile'
+			&& !$templatePath
+			&& class_exists('\Aspro\Lite\Mobile\General')
+		) {
+			$path = \Aspro\Lite\Mobile\General::$solutionPath;
+		}
+		
+		$arConfig = [
+			'animate' => [
+				'css' => $path.'/css/animation/animation_ext.min.css',
+			],
+			'alphanumeric' => [
+				'js' => $path.'/js/jquery.alphanumeric.min.js',
+			],
+			'back_url' => [
+				'css' => $path.'/css/back-url.min.css',
+			],
+			'banners' => [
+				'css' => $path.'/css/banners.min.css',
+			],
+			'basket' => [
+				'js' => $path.'/js/basket.min.js',
+				'css' => [
+					$path.'/css/basket.sale.min.css'
+				],
+			],
+			'bigdata' => [
+				'js' => $path.'/js/bigdata.js',
+			],
+			'bootstrap' => [
+				'js' => $path.'/vendor/bootstrap.js',
+				'css' => [
+					$path.'/css/bootstrap.css',
+					$path.'/css/theme-elements.min.css',
+				],
+			],
+			'bootstrap.lite' => [
+				'js' => $path.'/js/lite.bootstrap.js',
+			],
+			'catalog' => [
+				'css' => $path.'/css/catalog.min.css',
+			],
+			'catalog_block' => [
+				'css' => $path.'/css/catalog-block.min.css',
+			],
+			'chars' => [
+				'css' => $path.'/css/chars.min.css',
+			],
+			'chip' => [
+				'css' => $path.'/css/chip.min.css',
+			],
+			'contacts' => [
+				'css' => [
+					$path.'/css/yandex-map.min.css',
+					$path.'/css/contacts.min.css'
+				],
+			],
+			'cookie' => [
+				'js' => $path.'/vendor/jquery.cookie.js',
+			],
+			'detail' => [
+				'css' => $path.'/css/detail.min.css',
+			],
+			'docs' => [
+				'css' => [
+					$path.'/css/docs.min.css',
+					$path.'/css/file-type.min.css',
+				]
+			],
+			'drag_scroll' => [
+				'css' => $path.'/css/dragscroll.min.css',
+				'js' => $path.'/js/dragscroll.min.js',
+			],
+			'dropdown_select' => [
+				'css' => $path.'/css/dropdown-select.min.css',
+			],	
+			'easing' => [
+				'js' => $path.'/vendor/jquery.easing.js',
+			],
+			'eye.password' => [
+				'js' => $path.'/js/conditional/eye.password.min.js',
+			],
+			'fancybox' => [
+				'js' => $path.'/js/jquery.fancybox.min.js',
+				'css' => [
+					$path.'/css/jquery.fancybox.min.css',
+					$path.'/css/fancybox-gallery.min.css',
+				],
+			],
+			'filter_panel' => [
+				'css' => $path.'/css/filter-panel.min.css',
+			],
+			'flexbox' => [
+				'css' => $path.'/css/blocks/flexbox.min.css',
+			],
+			'font-awesome' => [
+				'css' => $path.'/css/fonts/font-awesome/css/font-awesome.min.css',
+			],
+			'gallery' => [
+				'css' => $path.'/css/gallery.min.css',
+				'js' => $path.'/js/gallery.min.js',
+			],
+			'header_opacity' => [
+				'css' => $path.'/css/header-opacity.min.css',
+			],
+			'hover_block' => [
+				'js' => $path.'/js/hover-block.min.js',
+			],
+			'index_tabs' => [
+				'js' => $path.'/js/index-tabs.min.js',
+			],
+			'images' => [
+				'css' => $path.'/css/blocks/images.min.css',
+			],
+			'item_action' => [
+				'css' => $path.'/css/item-action.min.css',
+				'js' => $path.'/js/item-action.min.js',
+				'lang' => '/bitrix/modules/'.Solution::moduleID.'/lang/'.LANGUAGE_ID.'/lib/itemaction.php',
+			],
+			'hint' => [
+				'css' => $path.'/css/blocks/hint.min.css',
+				'js' => $path.'/js/blocks/hint.js',
+			],
+			'landings_list' => [
+				'css' => $path.'/css/landings-list.min.css',
+			],
+			'link_scroll' => [
+				'js' => $path.'/js/sectionLinkScroll.min.js',
+			],
+			'logo' => [
+				'js' => $path.'/js/logo.min.js',
+			],
+			'menu_aim' => [
+				'js' => $path.'/vendor/js/jquery.menu-aim.min.js',
+			],
+			'menu_many_items' => [
+				'js' => $path.'/js/menu_many_items.min.js',
+				'css' => $path.'/css/menu_many_items.min.css',
+			],
+			'metrika.goals' => [
+				'js' => [
+					$path.'/js/metrika.goals.min.js'
+				],
+				'rel' => [self::partnerName.'_cookie'],
+			],
+			'notice' => [
+				'js' => $path.'/js/notice.min.js',
+				'css' => $path.'/css/notice.min.css',
+				'lang' => '/bitrix/modules/'.Solution::moduleID.'/lang/'.LANGUAGE_ID.'/lib/notice.php',
+			],
+			'order' => [
+				'js' => $path.'/js/order.min.js',
+				'css' => [
+					$path.'/css/order.min.css'
+				],
+			],
+			'owl_carousel' => [
+				'js' => [
+					$path.'/vendor/js/carousel/owl/owl.carousel.js'
+				],
+				'css' => [
+					$path.'/vendor/css/carousel/owl/owl.carousel.css',
+					$path.'/vendor/css/carousel/owl/owl.theme.default.css',
+					//$path.'/css/owl-styles.css'
+				],
+			],
+			// TODO: remove it
+			'personal_old' => [
+				'css' => $path.'/css/personal.css',
+			],
+			'phonecode' => [
+				'js' => $path.'/js/phonecode.min.js',
+				'css' => $path.'/css/phonecode.min.css',
+			],
+			'phoneorlogin' => [
+				'js' => $path.'/js/phoneorlogin.min.js',
+				'css' => $path.'/css/phoneorlogin.css',
+			],
+			'popover' => [
+				'js' => $path.'/js/popover.js',
+				'css' => $path.'/css/popover.css',
+			],
+			'popover.order_status' => [
+				'css' => $path.'/css/popover_order_status.css',
+			],
+			'prices' => [
+				'css' => $path.'/css/blocks/prices.min.css',
+			],
+			'profile' => [
+				'css' => $path.'/css/profile.min.css',
+			],
+			'rating' => [
+				'css' => $path.'/css/rating.min.css',
+			],
+			'regions' => [
+				'css' => $path.'/css/regions.min.css',
+			],
+			'reviews' => [
+				'css' => $path.'/css/reviews.min.css',
+			],
+			'rounded_columns' => [
+				'css' => $path.'/css/rounded-columns.min.css',
+			],
+			'sale_linked' => [
+				'css' => $path.'/css/sale-linked.min.css',
+			],
+			'scroll_to_top' => [
+				'css' => [
+					$path.'/css/scroll_to_top.min.css',
+				],
+				'js' => [
+					$path.'/js/scroll_to_top.min.js',
+				],
+			],
+			'searchtitle' => [
+				'js' => $path.'/js/searchtitle.min.js',
+				'lang' => '/bitrix/modules/'.self::moduleID.'/lang/'.LANGUAGE_ID.'/lib/searchtitle.php',
+			],
+			'search_page' => [
+				'css' => $path.'/css/search-page.min.css',
+			],
+			'section_gallery' => [
+				'js' => $path.'/js/conditional/section_gallery.min.js',
+			],
+			'select_offer' => [
+				'js' => $path.'/js/select_offer.min.js',
+				'rel' => [self::partnerName.'_select_offer_func'],
+			],
+			'select_offer_func' => [
+				'js' => $path.'/js/select_offer_func.min.js',
+			],
+			'select_offer_load' => [
+				'js' => $path.'/js/select_offer_load.min.js',
+			],
+			'share' => [
+				'css' => $path.'/css/share.min.css',
+			],
+			'smart_filter' => [
+				'css' => $path.'/css/smart-filter.min.css',
+				'js' => [
+					$path.'/js/mobile.min.js',
+					$path.'/js/smart-filter.min.js',
+				],
+				'rel' => [self::partnerName.'_animate'],
+			],
+			'stars' => [
+				'js' => $path.'/js/conditional/stars.min.js',
+			],
+			'stickers' => [
+				'css' => $path.'/css/blocks/sticker.min.css',
+			],
+			'stores_amount' => [
+				'js' => $path.'/js/conditional/stores_amount.min.js',
+			],
+			'swiper_init' => [
+				'js' => $path.'/js/slider.swiper.min.js',
+			],
+			'swiper' => [
+				'js' => $path.'/vendor/js/carousel/swiper/swiper-bundle.min.js',
+				'css' => [
+					$path.'/vendor/css/carousel/swiper/swiper-bundle.min.css',
+					$path.'/css/slider.swiper.min.css',
+					$path.'/css/slider.min.css'
+				],
+				'rel' => [self::partnerName.'_swiper_init'],
+			],
+			'swiper_events' => [
+				'js' => $path.'/js/slider.swiper.galleryEvents.min.js',
+			],
+			'tableScroller' => [
+				'js' => $path.'/js/tableScroller.min.js',
+			],
+			'tabs' => [
+				'css' => $path.'/css/tabs.min.css',
+			],
+			'tabs.history' => [
+				'js' => [
+					$path.'/js/jquery.history.js',
+					$path.'/js/blocks/tabs-history.min.js'
+				],
+			],
+			'toggle_panel' => [
+				'css' => $path.'/css/toggle-panel.min.css',
+			],
+			'ui' => [
+				'js' => $path.'/js/query-ui.min.js',
+			],
+			'uniform' => [
+				'js' => $path.'/js/jquery.uniform.min.js',
+			],
+			'validate' => [
+				'js' => [
+					$path.'/vendor/jquery.validate.min.js',
+					$path.'/js/jquery.inputmask.bundle.min.js',
+					$path.'/js/conditional/validation.min.js',
+				]
+			],
+			'video' => [
+				'css' => $path.'/css/video-block.min.css',
+			],
+			'video_banner' => [
+				'js' => $path.'/js/video_banner.min.js',
+			],
+			'viewed' => [
+				'js' => $path.'/js/viewed.min.js',
+			],
+		];
+
+		foreach ($arConfig as $ext => $arExt) {
+			\CJSCore::RegisterExt(self::partnerName.'_'.$ext, array_merge($arExt, ['skip_core' => true]));
+		}
+	}
+
+	public static function init($arExtensions){
+		$arExtensions = is_array($arExtensions) ? $arExtensions : (array)$arExtensions;
+
+		if($arExtensions){
+            
+			$arExtensions = array_map(function($ext){
+				return strpos($ext, self::partnerName) !== false ? $ext : self::partnerName.'_'.$ext;
+			}, $arExtensions);
+
+			\CJSCore::Init($arExtensions);
+		}
+	}
+}

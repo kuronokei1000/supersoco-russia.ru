@@ -1,0 +1,29 @@
+.subscribe-form {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.subscribe-edit .subscribe-input {
+  margin-right: 8px;
+}
+
+.footer--color-dark .subscribe-edit .subscribe-input {
+  --input_bg_color: var(--d1b_dark_light);
+  --input_bg_color-hover: var(--d1b_dark_light);
+}
+
+.footer--color-dark .subscribe-edit .subscribe-input:not(:focus) {
+  --input_color: #ccc;
+  --input_border_color: rgba(218, 218, 218, 0.15);
+}
+
+.subscribe-block .btn {
+  background-color: var(--d3t9_dark_light);
+  border-color: var(--d3t9_dark_light);
+  color: var(--white_text_black);
+}
+
+.subscribe-edit form .error {
+  position: absolute;
+  top: -22px;
+}

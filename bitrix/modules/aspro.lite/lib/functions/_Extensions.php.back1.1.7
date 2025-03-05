@@ -1,0 +1,255 @@
+<? 
+namespace Aspro\Lite\Functions;
+
+use CLite as Solution;
+
+class Extensions extends \CLite {
+    public static function register() {
+		$arConfig = [
+			'animate' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/animation/animation_ext.css',
+			],
+			'alphanumeric' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/jquery.alphanumeric.js',
+			],
+			'back_url' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/back-url.css',
+			],
+			'banners' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/banners.css',
+			],
+			'basket' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/basket.js',
+				'css' => [
+					SITE_TEMPLATE_PATH.'/css/basket.sale.css'
+				],
+			],
+			'bootstrap' => [
+				'js' => SITE_TEMPLATE_PATH.'/vendor/bootstrap.js',
+				'css' => [
+					SITE_TEMPLATE_PATH.'/css/bootstrap.css',
+					SITE_TEMPLATE_PATH.'/css/theme-elements.css',
+				],
+			],
+			'catalog' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/catalog.css',
+			],
+			'catalog_block' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/catalog-block.css',
+			],
+			'chars' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/chars.css',
+			],
+			'chip' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/chip.css',
+			],
+			'contacts' => [
+				'css' => [
+					SITE_TEMPLATE_PATH.'/css/yandex-map.css',
+					SITE_TEMPLATE_PATH.'/css/contacts.css'
+				],
+			],
+			'detail' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/detail.css',
+			],
+			'docs' => [
+				'css' => [
+					SITE_TEMPLATE_PATH.'/css/docs.css',
+					SITE_TEMPLATE_PATH.'/css/file-type.css',
+				]
+			],
+			'drag_scroll' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/dragscroll.css',
+				'js' => SITE_TEMPLATE_PATH.'/js/dragscroll.js',
+			],
+			'dropdown_select' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/dropdown-select.css',
+			],	
+			'easing' => [
+				'js' => SITE_TEMPLATE_PATH.'/vendor/jquery.easing.js',
+			],
+			'fancybox' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/jquery.fancybox.js',
+				'css' => [
+					SITE_TEMPLATE_PATH.'/css/jquery.fancybox.css',
+					SITE_TEMPLATE_PATH.'/css/fancybox-gallery.css',
+				],
+			],
+			'filter_panel' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/filter-panel.css',
+			],
+			'font-awesome' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/fonts/font-awesome/css/font-awesome.min.css',
+			],
+			'gallery' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/gallery.css',
+				'js' => SITE_TEMPLATE_PATH.'/js/gallery.js',
+			],
+			'header_opacity' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/header-opacity.css',
+			],
+			'hover_block' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/hover-block.js',
+			],
+			'index_tabs' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/index-tabs.js',
+			],
+			'item_action' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/item-action.css',
+				'js' => SITE_TEMPLATE_PATH.'/js/item-action.js',
+				'lang' => '/bitrix/modules/'.Solution::moduleID.'/lang/'.LANGUAGE_ID.'/lib/itemaction.php',
+			],
+			'landings_list' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/landings-list.css',
+			],
+			'link_scroll' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/sectionLinkScroll.min.js',
+			],
+			'logo' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/logo.js',
+			],
+			'menu_aim' => [
+				'js' => SITE_TEMPLATE_PATH.'/vendor/js/jquery.menu-aim.min.js',
+			],
+			'menu_many_items' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/menu_many_items.js',
+				'css' => SITE_TEMPLATE_PATH.'/css/menu_many_items.css',
+			],
+			'metrika.goals' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/metrika.goals.js',
+			],
+			'notice' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/notice.js',
+				'css' => SITE_TEMPLATE_PATH.'/css/notice.css',
+				'lang' => '/bitrix/modules/'.Solution::moduleID.'/lang/'.LANGUAGE_ID.'/lib/notice.php',
+			],
+			'order' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/order.js',
+				'css' => [
+					SITE_TEMPLATE_PATH.'/css/order.css'
+				],
+			],
+			'owl_carousel' => [
+				'js' => [
+					SITE_TEMPLATE_PATH.'/vendor/js/carousel/owl/owl.carousel.js'
+				],
+				'css' => [
+					SITE_TEMPLATE_PATH.'/vendor/css/carousel/owl/owl.carousel.css',
+					SITE_TEMPLATE_PATH.'/vendor/css/carousel/owl/owl.theme.default.css',
+					//SITE_TEMPLATE_PATH.'/css/owl-styles.css'
+				],
+			],
+			'personal' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/personal.css',
+			],
+			'phonecode' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/phonecode.js',
+				'css' => SITE_TEMPLATE_PATH.'/css/phonecode.css',
+			],
+			'phoneorlogin' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/phoneorlogin.js',
+			],
+			'profile' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/profile.css',
+			],
+			'rating' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/rating.css',
+			],
+			'reviews' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/reviews.css',
+			],
+			'rounded_columns' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/rounded-columns.css',
+			],
+			'sale_linked' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/sale-linked.css',
+			],
+			'scroll_to_top' => [
+				'css' => [
+					SITE_TEMPLATE_PATH.'/css/scroll_to_top.css',
+				],
+				'js' => [
+					SITE_TEMPLATE_PATH.'/js/scroll_to_top.js',
+				],
+			],
+			'searchtitle' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/searchtitle.js',
+				'lang' => '/bitrix/modules/'.self::moduleID.'/lang/'.LANGUAGE_ID.'/lib/searchtitle.php',
+			],
+			'search_page' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/search-page.css',
+			],
+			'select_offer' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/select_offer.js',
+				'rel' => [self::partnerName.'_select_offer_func'],
+			],
+			'select_offer_func' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/select_offer_func.js',
+			],
+			'select_offer_load' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/select_offer_load.js',
+			],
+			'share' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/share.css',
+			],
+			'smart_filter' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/smart-filter.css',
+				'js' => [
+					SITE_TEMPLATE_PATH.'/js/mobile.js',
+					SITE_TEMPLATE_PATH.'/js/smart-filter.js',
+				],
+				'rel' => [self::partnerName.'_animate'],
+			],
+			'swiper_init' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/slider.swiper.min.js',
+			],
+			'swiper' => [
+				'js' => SITE_TEMPLATE_PATH.'/vendor/js/carousel/swiper/swiper-bundle.min.js',
+				'css' => [
+					SITE_TEMPLATE_PATH.'/vendor/css/carousel/swiper/swiper-bundle.min.css',
+					SITE_TEMPLATE_PATH.'/css/slider.swiper.min.css',
+					SITE_TEMPLATE_PATH.'/css/slider.min.css'
+				],
+				'rel' => [self::partnerName.'_swiper_init'],
+			],
+			'swiper_events' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/slider.swiper.galleryEvents.min.js',
+			],
+			'tableScroller' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/tableScroller.js',
+			],
+			'tabs' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/tabs.css',
+			],
+			'toggle_panel' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/toggle-panel.css',
+			],
+			'uniform' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/jquery.uniform.min.js',
+			],
+			'video' => [
+				'css' => SITE_TEMPLATE_PATH.'/css/video-block.css',
+			],
+			'viewed' => [
+				'js' => SITE_TEMPLATE_PATH.'/js/viewed.js',
+			],
+		];
+
+		foreach ($arConfig as $ext => $arExt) {
+			\CJSCore::RegisterExt(self::partnerName.'_'.$ext, array_merge($arExt, ['skip_core' => true]));
+		}
+	}
+
+	public static function init($arExtensions){
+		$arExtensions = is_array($arExtensions) ? $arExtensions : (array)$arExtensions;
+
+		if($arExtensions){
+            
+			$arExtensions = array_map(function($ext){
+				return strpos($ext, self::partnerName) !== false ? $ext : self::partnerName.'_'.$ext;
+			}, $arExtensions);
+
+			\CJSCore::Init($arExtensions);
+		}
+	}
+}

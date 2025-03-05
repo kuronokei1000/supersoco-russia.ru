@@ -1,0 +1,34 @@
+.banner.TOP_HEADER img,
+.banner.CONTENT_TOP img,
+.banner.CONTENT_BOTTOM img,
+.banner.TOP_HEADER img,
+.banner.TOP_UNDERHEADER img,
+.banner.FOOTER img {
+  margin: auto;
+}
+
+.banner.CONTENT_TOP {
+  margin-bottom: 37px;
+}
+.banner.CROP {
+  overflow: hidden;
+}
+.banner.CROP.TOP_HEADER {
+  position: relative;
+  z-index: 2;
+}
+.banner.CROP img {
+  margin-left: 50%;
+  transform: translateX(-50%);
+}
+
+body > .body:not(.index) > .main .banner.FOOTER {
+  margin-bottom: -80px;
+}
+.banner.CONTENT_BOTTOM {
+  /* margin-bottom: 40px; */
+  margin-top: 40px;
+}
+.body:not(.index) .banner.FOOTER {
+  margin-top: 40px;
+}

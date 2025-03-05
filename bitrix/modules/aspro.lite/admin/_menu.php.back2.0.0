@@ -1,0 +1,229 @@
+<?
+use Bitrix\Main\Localization\Loc,
+	Bitrix\Main\Loader;
+
+AddEventHandler('main', 'OnBuildGlobalMenu', 'OnBuildGlobalMenuHandlerLite');
+function OnBuildGlobalMenuHandlerLite(&$arGlobalMenu, &$arModuleMenu){
+	if(!defined('LITE_MENU_INCLUDED')){
+		define('LITE_MENU_INCLUDED', true);
+
+		IncludeModuleLangFile(__FILE__);
+		$moduleID = 'aspro.lite';
+
+		$GLOBALS['APPLICATION']->SetAdditionalCss('/bitrix/css/'.$moduleID.'/menu.css');
+
+		if($GLOBALS['APPLICATION']->GetGroupRight($moduleID) >= 'R'){
+			$arGenerate = array(
+				'text' => GetMessage('LITE_MENU_GENERATE_FILES_TEXT'),
+				'title' => GetMessage('LITE_MENU_GENERATE_FILES_TITLE'),
+				'sort' => 20,
+				'icon' => 'seo_menu_icon',
+				'page_icon' => 'pi_typography',
+				'items_id' => 'gfiles',
+				'items' => array(
+					array(
+						'text' => GetMessage('LITE_MENU_GENERATE_ROBOTS_TEXT'),
+						'title' => GetMessage('LITE_MENU_GENERATE_ROBOTS_TITLE'),
+						'sort' => 20,
+						'url' => '/bitrix/admin/'.$moduleID.'_generate_robots.php?mid=main&lang='.LANGUAGE_ID,
+						'icon' => '',
+						'page_icon' => 'pi_typography',
+						'items_id' => 'grobots',
+					)
+				)
+			);
+
+			if(Loader::includeModule('seo')){
+				$arGenerate['items'][] = array(
+					'text' => GetMessage('LITE_MENU_GENERATE_SITEMAP_TEXT'),
+					'title' => GetMessage('LITE_MENU_GENERATE_SITEMAP_TITLE'),
+					'sort' => 20,
+					'url' => '/bitrix/admin/'.$moduleID.'_generate_sitemap.php?mid=main&lang='.LANGUAGE_ID,
+					'icon' => '',
+					'page_icon' => 'pi_typography',
+					'items_id' => 'gsitemap',
+				);
+			}
+			$arGenerate['items'][] = array(
+				'text' => 'mobile',
+				'title' => 'mobile',
+				'sort' => 20,
+				'url' => '/bitrix/admin/'.$moduleID.'_mobile.php?mid=main&lang='.LANGUAGE_ID,
+				'icon' => '',
+				'page_icon' => 'pi_typography',
+				'items_id' => 'gmobile',
+			);
+
+			$arMenu = array(
+				'menu_id' => 'global_menu_aspro_lite',
+				'text' => GetMessage('LITE_GLOBAL_MENU_TEXT'),
+				'title' => GetMessage('LITE_GLOBAL_MENU_TITLE'),
+				'sort' => 1000,
+				'items_id' => 'global_menu_aspro_lite_items',
+				'icon' => 'imi_light',
+				'items' => array(
+					array(
+						'text' => GetMessage('LITE_MENU_CONTROL_CENTER_TEXT'),
+						'title' => GetMessage('LITE_MENU_CONTROL_CENTER_TITLE'),
+						'sort' => 10,
+						'url' => '/bitrix/admin/'.$moduleID.'_mc.php?lang='.LANGUAGE_ID,
+						'icon' => 'imi_control_center',
+						'page_icon' => 'pi_control_center',
+						'items_id' => 'control_center',
+					),
+					array(
+						'text' => GetMessage('LITE_MENU_WIZARD_TEXT'),
+						'title' => GetMessage('LITE_MENU_WIZARD_TITLE'),
+						'sort' => 10,
+						'url' => '/bitrix/admin/'.$moduleID.'_wizard.php?lang='.LANGUAGE_ID,
+						'icon' => 'imi_wizard',
+						'page_icon' => 'pi_wizard',
+						'items_id' => 'wizard',
+					),
+					array(
+						'text' => GetMessage('LITE_MENU_TYPOGRAPHY_TEXT'),
+						'title' => GetMessage('LITE_MENU_TYPOGRAPHY_TITLE'),
+						'sort' => 20,
+						'url' => '/bitrix/admin/'.$moduleID.'_options.php?mid=main&lang='.LANGUAGE_ID,
+						'icon' => 'imi_typography',
+						'page_icon' => 'pi_typography',
+						'items_id' => 'main',
+						'more_url' => array(
+							'/bitrix/admin/'.$moduleID.'_options_tabs.php',
+						),
+					),
+					array(
+						'text' => Loc::getMessage('LITE_MENU_PWA_TEXT'),
+						'title' => Loc::getMessage('LITE_MENU_PWA_TITLE'),
+						'sort' => 40,
+						'url' => '/bitrix/admin/'.$moduleID.'_pwa.php?lang='.urlencode(LANGUAGE_ID),
+						'icon' => 'imi_pwa',
+						'page_icon' => 'pi_pwa',
+						'items_id' => 'pwa',
+					),
+					array(
+						'text' => GetMessage('LITE_MENU_CRM_TEXT'),
+						'title' => GetMessage('LITE_MENU_CRM_TITLE'),
+						'sort' => 20,
+						'icon' => 'imi_marketing',
+						'page_icon' => 'pi_typography',
+						'items_id' => 'ncrm',
+						'items' => array(
+							array(
+								'text' => GetMessage('LITE_MENU_AMO_CRM_TEXT'),
+								'title' => GetMessage('LITE_MENU_AMO_CRM_TITLE'),
+								'sort' => 20,
+								'url' => '/bitrix/admin/'.$moduleID.'_crm_amo.php?mid=main&lang='.LANGUAGE_ID,
+								'icon' => '',
+								'page_icon' => 'pi_typography',
+								'items_id' => 'grobots',
+							),
+							array(
+								'text' => GetMessage('LITE_MENU_FLOWLU_CRM_TEXT'),
+								'title' => GetMessage('LITE_MENU_FLOWLU_CRM_TITLE'),
+								'sort' => 20,
+								'url' => '/bitrix/admin/'.$moduleID.'_crm_flowlu.php?mid=main&lang='.LANGUAGE_ID,
+								'icon' => '',
+								'page_icon' => 'pi_typography',
+								'items_id' => 'gsitemap',
+							),
+							array(
+								'text' => GetMessage('LITE_MENU_ACLOUD_CRM_TEXT'),
+								'title' => GetMessage('LITE_MENU_ACLOUD_CRM_TITLE'),
+								'sort' => 20,
+								'url' => '/bitrix/admin/'.$moduleID.'_crm_acloud.php?mid=main&lang='.LANGUAGE_ID,
+								'icon' => '',
+								'page_icon' => 'pi_typography',
+								'items_id' => 'gsitemap',
+							),
+						)
+					),
+					array(
+						'text' => Loc::getMessage('LITE_MENU_MARKETPLACE'),
+						'title' => Loc::getMessage('LITE_MENU_MARKETPLACE'),
+						'sort' => 50,
+						'icon' => 'imi_marketing',
+						'page_icon' => 'pi_typography',
+						'items_id' => 'gfiles',
+						"items" => array(
+							array(
+								'text' => Loc::getMessage('LITE_MENU_MARKETPLACE_WB'),
+								'title' => Loc::getMessage('LITE_MENU_MARKETPLACE_WB'),
+								'sort' => 10,
+								'url' => '/bitrix/admin/'.$moduleID.'_mp_wildberries.php?lang='.urlencode(LANGUAGE_ID),
+								'icon' => '',
+								'page_icon' => 'pi_typography',
+								'items_id' => 'grobots',
+							),
+							array(
+								'text' => Loc::getMessage('LITE_MENU_MARKETPLACE_OZON'),
+								'title' => Loc::getMessage('LITE_MENU_MARKETPLACE_OZON'),
+								'sort' => 10,
+								'url' => '/bitrix/admin/'.$moduleID.'_mp_ozon.php?lang='.urlencode(LANGUAGE_ID),
+								'icon' => '',
+								'page_icon' => 'pi_typography',
+								'items_id' => 'grobots',
+							),
+						)
+					),
+					array(
+						'text' => GetMessage('LITE_MENU_DEVELOP_TEXT'),
+						'title' => GetMessage('LITE_MENU_DEVELOP_TITLE'),
+						'sort' => 20,
+						'url' => '/bitrix/admin/'.$moduleID.'_develop.php?mid=main',
+						'icon' => 'util_menu_icon',
+						'page_icon' => 'pi_typography',
+						'items_id' => 'develop',
+					),
+					$arGenerate,
+					array(
+						'text' => Loc::getMessage('ASPRO_MAX_MENU_CAMPAIGN_MASTER_TEXT'),
+						'title' => Loc::getMessage('ASPRO_MAX_MENU_CAMPAIGN_MASTER_TITLE'),
+						'sort' => 10,
+						'url' => 'javascript:window.open("https://aspro.ru/cabinet/yamaster/", "_blank");void(0);',
+						'icon' => 'imi_campaign_master',
+					),
+				),
+			);
+
+			// 		$arGenerate,
+			// 		// array(
+			// 		// 	'text' => Loc::getMessage('ASPRO_LITE_MENU_GS_TEXT'),
+			// 		// 	'title' => Loc::getMessage('ASPRO_LITE_MENU_GS_TITLE'),
+			// 		// 	'sort' => 1000,
+			// 		// 	'url' => '/bitrix/admin/'.$moduleID.'_gs.php?lang='.urlencode(LANGUAGE_ID),
+			// 		// 	'icon' => 'imi_gs',
+			// 		// 	'page_icon' => 'pi_gs',
+			// 		// 	'items_id' => 'gs',
+			// 		// ),
+			// 	),
+			// );
+
+			if(
+				Loader::includeModule('sale') &&
+				!Loader::includeModule('aspro.smartseo')
+			){
+				$arMenu['items'][] = array(
+					'text' => Loc::getMessage('ASPRO_LITE_SMARTSEO__DOWNLOAD_TEXT'),
+					'title' => Loc::getMessage('ASPRO_LITE_SMARTSEO__DOWNLOAD_TITLE'),
+					'sort' => 1000,
+					'url' => '/bitrix/admin/'.$moduleID.'_smartseo_load.php?lang='.urlencode(LANGUAGE_ID),
+					'icon' => 'imi_smartseo',
+				);
+			}
+
+			if(!isset($arGlobalMenu['global_menu_aspro'])){
+				$arGlobalMenu['global_menu_aspro'] = array(
+					'menu_id' => 'global_menu_aspro',
+					'text' => GetMessage('ASPRO_LITE_GLOBAL_ASPRO_MENU_TEXT'),
+					'title' => GetMessage('ASPRO_LITE_GLOBAL_ASPRO_MENU_TITLE'),
+					'sort' => 1000,
+					'items_id' => 'global_menu_aspro_items',
+				);
+			}
+
+			$arGlobalMenu['global_menu_aspro']['items'][$moduleID] = $arMenu;
+		}
+	}
+}
+?>

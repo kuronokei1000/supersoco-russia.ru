@@ -1,0 +1,517 @@
+<?php
+
+namespace Aspro\Lite\Marketplace;
+
+use Aspro\Lite\Marketplace\Traits\Summary;
+use \Aspro\Lite\Marketplace\Config\Base as ConfigBase;
+
+class Finder
+{
+    const DEFAULT_MAX_RESULT = 50;
+
+    use Summary;
+
+    protected $iblock = null;
+    protected $site = null;
+    protected $sectionIds = [];
+
+    protected $allProperties = [];
+    protected $allPropertyIds = [];
+    protected $userTypeProperties = [];
+    protected $allPriceTypes = [];
+
+    protected $elements = [];
+    protected $elementIds = [];
+    protected $elementStores = [];
+
+    protected $options = [];
+
+    public function __construct(int $iblockId)
+    {
+        $this->initIblock($iblockId);
+
+        if ($this->hasErrors()) {
+            return;
+        }
+
+        $this->getSite();
+        $this->getAllProperties();
+        $this->getUserTypeProperties();
+        $this->getAllPriceTypes();
+    }
+
+    /**
+     * @param array $options =  [
+     *      'checkPermission' => 'Y',
+     *      'isAvailable' => 'Y',
+     *      'serverName' => 'my-site.ru',
+     *      'isAllResult' => true,
+     *      'filter' => [
+     *          'SECTION_ID' => [1,2,3]
+     *      ]
+     *  ]
+     */
+    public function setOptions(array $options)
+    {
+        $this->options = [
+            'isAvailable' => $options['isAvailable'] === 'Y' ?? false,
+            'checkPermission' => $options['checkPermission'] === 'Y' ?? false,
+            'serverName' => $options['serverName'] ?? '',
+            'isAllResult' => $options['isAllResult'] === 'Y' ?? false,
+            'getPropValueId' => $options['getPropValueId'] === 'Y' ?? false,
+            'maxResult' => $options['maxResult'] ?: self::DEFAULT_MAX_RESULT,
+            'filter' => array_filter($options['filter']) ?? [],
+        ];
+    }
+
+    public function getElements($getOnlyIds = false): array
+    {
+        if ($this->elementIds) {
+            return $getOnlyIds ? $this->elementIds : $this->elements;
+        }
+
+        $arFilter = [
+            'IBLOCK_ID' => $this->iblock['ID'],
+            'ACTIVE' => 'Y',
+            'ACTIVE_DATE' => 'Y',
+            'TYPE' => \Bitrix\Catalog\ProductTable::TYPE_PRODUCT,
+        ];
+
+        if ($this->getSectionIds()) {
+            $arFilter['INCLUDE_SUBSECTIONS'] = 'Y';
+            $arFilter['SECTION_ID'] = $this->getSectionIds();
+        }
+
+        if ($this->options['isAvailable']) {
+            $arFilter['AVAILABLE'] = 'Y';
+        }
+
+        if ($this->options['checkPermission']) {
+            $arFilter = array_merge($arFilter, [
+                'CHECK_PERMISSIONS' => 'Y',
+                'MIN_PERMISSION' => 'R',
+                'PERMISSIONS_BY' => 0
+            ]);
+        } else {
+            $arFilter = array_merge($arFilter, [
+                'CHECK_PERMISSIONS' => 'N',
+            ]);
+        }
+
+        $arFilter = array_merge($arFilter, $this->options['filter']);
+
+        $arSelect = array_filter(array_merge([
+            'ID', 'IBLOCK_ID', 'IBLOCK_SECTION_ID', 'NAME', 'DETAIL_PICTURE', 'PREVIEW_PICTURE',
+            'PREVIEW_PICTURE', 'PREVIEW_TEXT', 'PREVIEW_TEXT_TYPE', 'DETAIL_TEXT', 'DETAIL_TEXT_TYPE', 'DETAIL_PAGE_URL',
+            'AVAILABLE', 'TYPE', 'VAT_ID', 'VAT_INCLUDED', 'WEIGHT', 'WIDTH', 'HEIGHT', 'LENGTH'
+        ], array_values($this->getAllPriceTypes())));
+
+        $rsElements = \CIBlockElement::GetList(
+            ['ID' => 'ASC'],
+            $arFilter,
+            false,
+            !$this->options['isAllResult'] ? [
+                'nTopCount' => $this->options['maxResult'] ?? self::DEFAULT_MAX_RESULT
+            ] : [],
+            $arSelect
+        );
+
+        while ($arElement = $rsElements->Fetch()) {
+            $elementId = (int)$arElement['ID'];
+
+            if (!$elementId) {
+                continue;
+            }
+
+            $arElement['URL_IN_ADMIN'] = "/bitrix/admin/iblock_element_edit.php?IBLOCK_ID={$this->iblock['ID']}&type={$this->iblock['CODE']}&lang=ru&ID={$arElement['ID']}&find_section_section={$arElement['IBLOCK_SECTION_ID']}";
+            $arElement['DETAIL_PICTURE'] = $this->getFileUrl($arElement['DETAIL_PICTURE']);
+            $arElement['PREVIEW_PICTURE'] = $this->getFileUrl($arElement['PREVIEW_PICTURE']);
+            $arElement['FILELD_WEIGHT_KG'] = $arElement['WEIGHT']/1000;
+            $arElement['FILELD_WIDTH_CM'] = $arElement['WIDTH']/10;
+            $arElement['FILELD_HEIGHT_CM'] = $arElement['HEIGHT']/10;
+            $arElement['FILELD_LENGTH_CM'] = $arElement['LENGTH']/10;
+            $arElement['FILELD_WEIGHT'] = $arElement['WEIGHT'];
+            $arElement['FILELD_WIDTH'] = $arElement['WIDTH'];
+            $arElement['FILELD_HEIGHT'] = $arElement['HEIGHT'];
+            $arElement['FILELD_LENGTH'] = $arElement['LENGTH'];
+            unset($arElement['WEIGHT']);
+            unset($arElement['WIDTH']);
+            unset($arElement['HEIGHT']);
+            unset($arElement['LENGTH']);
+            $arElement['TYPE'] = (int)$arElement['TYPE'];
+
+            $this->elements[$elementId] = $arElement;
+            $this->elements[$elementId]['PROPERTIES'] = [];
+
+            $this->elementIds[] = $elementId;
+        }
+
+        $this->appendPropertyValues();
+
+        foreach ($this->elementIds as $elementId) {
+            $arElement = &$this->elements[$elementId];
+            $properties = $arElement['PROPERTIES'] ?? [];
+
+            foreach ($properties as $arPropertyValue) {
+                $arElement[$arPropertyValue['CODE']] = $this->getPropertyDisplayValue($arPropertyValue);
+            }
+
+            unset($arElement['PROPERTIES']);
+        }
+
+        return $getOnlyIds ? $this->elementIds : $this->elements;
+    }
+
+    public function getElementStores(): array
+    {
+        if(!ConfigBase::isCatalogModule()) {
+            return [];
+        }
+
+        if($this->elementStores) {
+            return $this->elementStores;
+        }
+
+        $rs = \Bitrix\Catalog\StoreProductTable::getList([
+            'filter' => ['=PRODUCT_ID'=> $this->getElements(true), '=STORE.ACTIVE'=>'Y'],
+            'select' => ['AMOUNT','STORE_ID','STORE_TITLE' => 'STORE.TITLE', 'PRODUCT_ID'],
+        ]);
+
+        $this->elementStores = [];
+        while($arStore = $rs->fetch())
+        {
+            $this->elementStores[$arStore['PRODUCT_ID']][$arStore['STORE_ID']] = $arStore;
+        }
+
+        return $this->elementStores;
+    }
+
+    protected function initIblock(int $iblockId)
+    {
+        if ($this->iblock) {
+            return $this->iblock;
+        }
+
+        $this->iblock = \CIBlock::GetByID($iblockId)->Fetch();
+
+        if (!$this->iblock) {
+            $this->addError('Wrong Iblock');
+        }
+
+        return $this->iblock;
+    }
+
+    protected function getSite()
+    {
+        if ($this->site) {
+            return $this->site;
+        }
+
+        if (!$this->iblock) {
+            return [];
+        }
+
+        $this->site = \Bitrix\Main\SiteTable::getList([
+            'select' => ['LID', 'SERVER_NAME', 'SITE_NAME', 'DIR'],
+            'filter' => ['=LID' => $this->iblock['LID'], '=ACTIVE' => 'Y']
+        ])->fetch();
+
+        $this->site['PROTOCOL'] = (isset($USE_HTTPS) && $USE_HTTPS == 'Y' ? 'https://' : 'http://');
+
+        $this->site['SERVER_NAME'] = $this->options['serverName'] ?: $this->site['SERVER_NAME'];
+
+        return $this->site;
+    }
+
+    protected function getSectionIds(): array
+    {
+        return $this->sectionIds;
+    }
+
+    protected function getAllProperties($getOnlyIds = false): array
+    {
+        if ($this->allPropertyIds) {
+            return $getOnlyIds ? $this->allPropertyIds : $this->allProperties;
+        }
+
+        $rsProperties = \CIBlockProperty::GetList(
+            ['SORT' => 'ASC', 'NAME' => 'ASC'],
+            ['IBLOCK_ID' => $this->iblock['ID'], 'ACTIVE' => 'Y', 'CHECK_PERMISSIONS' => 'N']
+        );
+
+        while ($arProperty = $rsProperties->Fetch()) {
+            $arItem = $arProperty;
+
+            $this->allProperties[$arProperty['CODE']] = $arItem;
+            $this->allPropertyIds[] = $arProperty['ID'];
+        }
+
+        return $getOnlyIds ? $this->allPropertyIds : $this->allProperties;
+    }
+
+    protected function getUserTypeProperties(): array
+    {
+        if ($this->userTypeProperties) {
+            return $this->userTypeProperties;
+        }
+
+        if (!$this->getAllProperties()) {
+            return [];
+        }
+
+        foreach ($this->getAllProperties() as $propertyCode => $arProperty) {
+            if ($arProperty['USER_TYPE'] == '') {
+                continue;
+            }
+
+            $arUserType = \CIBlockProperty::GetUserType($arProperty['USER_TYPE']);
+
+            if (isset($arUserType['GetPublicViewHTML'])) {
+                $this->userTypeProperties[$propertyCode] = $arUserType['GetPublicViewHTML'];
+            }
+        }
+
+        return $this->userTypeProperties;
+    }
+
+    protected function getAllPriceTypes(): array
+    {
+        if(!ConfigBase::isCatalogModule()) {
+            return [];
+        }
+
+        if ($this->allPriceTypes) {
+            return $this->allPriceTypes;
+        }
+
+        $priceIterator = \Bitrix\Catalog\GroupAccessTable::getList([
+            'select' => ['CATALOG_GROUP_ID'],
+            'filter' => ['=GROUP_ID' => 2],
+            'order' => ['CATALOG_GROUP_ID' => 'ASC']
+        ]);
+
+        while ($priceType = $priceIterator->fetch()) {
+            $priceTypeId = (int)$priceType['CATALOG_GROUP_ID'];
+            $this->allPriceTypes[$priceTypeId] = 'CATALOG_PRICE_' . $priceTypeId;
+        }
+
+        return $this->allPriceTypes;
+    }
+
+    protected function appendPropertyValues()
+    {
+        if (!$this->elementIds) {
+            return;
+        }
+
+        $arPropertyFields = [
+            'ID', 'PROPERTY_TYPE', 'MULTIPLE', 'USER_TYPE', 'NAME', 'CODE'
+        ];
+
+        \CIBlockElement::GetPropertyValuesArray(
+            $this->elements,
+            $this->iblock['ID'],
+            [
+                'ID' => $this->elementIds,
+                'IBLOCK_ID' => $this->iblock['ID'],
+            ],
+            ['ID' => $this->allPropertyIds],
+            ['USE_PROPERTY_ID' => 'Y', 'PROPERTY_FIELDS' => $arPropertyFields]
+        );
+    }
+
+    protected function getPropertyDisplayValue($arPropertyValue)
+    {
+        $propertyCode = $arPropertyValue['CODE'];
+        $propertyType = isset($this->userTypeProperties[$propertyCode]) && $this->userTypeProperties[$propertyCode]
+            ? 'USER_TYPE'
+            : $arPropertyValue['PROPERTY_TYPE'];
+        $propertyParams = $this->allProperties[$propertyCode];
+
+        $value = null;
+        switch ($propertyType) {
+            case 'USER_TYPE':
+                if ($propertyParams['MULTIPLE'] == 'Y') {
+                    if (!empty($arPropertyValue['~VALUE'])) {
+                        $arValues = [];
+                        foreach ($arPropertyValue['~VALUE'] as $oneValue) {
+                            $isArray = is_array($oneValue);
+                            if (
+                                ($isArray && !empty($oneValue))
+                                || (!$isArray && $oneValue != '')
+                            ) {
+                                $arValues[] = call_user_func_array($this->userTypeProperties[$propertyCode],
+                                    [
+                                        $propertyParams,
+                                        ['VALUE' => $oneValue],
+                                        ['MODE' => 'SIMPLE_TEXT'],
+                                    ]
+                                );
+                            }
+                        }
+
+                        if ($propertyParams['MULTIPLE'] === 'Y') {
+                            $value[] = $arValues;
+                        } else {
+                            $value = implode(', ', $arValues);
+                        }
+                    }
+                } else {
+                    $isArray = is_array($arPropertyValue['~VALUE']);
+                    if (
+                        ($isArray && !empty($arPropertyValue['~VALUE']))
+                        || (!$isArray && $arPropertyValue['~VALUE'] != '')
+                    ) {
+                        $value = call_user_func_array($this->userTypeProperties[$propertyCode],
+                            [
+                                $propertyParams,
+                                ['VALUE' => $arPropertyValue['~VALUE']],
+                                ['MODE' => 'SIMPLE_TEXT'],
+                            ]
+                        );
+                    }
+                }
+                break;
+            case \Bitrix\Iblock\PropertyTable::TYPE_ELEMENT:
+                if ($this->options['getPropValueId']) {
+                    return $arPropertyValue['VALUE'];
+                }
+
+                if (!empty($arPropertyValue['VALUE'])) {
+                    $arCheckValue = [];
+                    if (!is_array($arPropertyValue['VALUE'])) {
+                        $arPropertyValue['VALUE'] = (int)$arPropertyValue['VALUE'];
+                        if ($arPropertyValue['VALUE'] > 0)
+                            $arCheckValue[] = $arPropertyValue['VALUE'];
+                    } else {
+                        foreach ($arPropertyValue['VALUE'] as $intValue) {
+                            $intValue = (int)$intValue;
+                            if ($intValue > 0)
+                                $arCheckValue[] = $intValue;
+                        }
+                        unset($intValue);
+                    }
+                    if (!empty($arCheckValue)) {
+                        $filter = [
+                            '@ID' => $arCheckValue,
+                        ];
+                        if ($propertyParams['LINK_IBLOCK_ID'] > 0)
+                            $filter['=IBLOCK_ID'] = $propertyParams['LINK_IBLOCK_ID'];
+
+                        $iterator = \Bitrix\Iblock\ElementTable::getList([
+                            'select' => ['ID', 'NAME'],
+                            'filter' => [$filter]
+                        ]);
+
+                        while ($row = $iterator->fetch()) {
+                            if ($propertyParams['MULTIPLE'] === 'Y') {
+                                $value[] = $row['NAME'];
+                            } else {
+                                $value .= ($value ? ', ' : '') . $row['NAME'];
+                            }
+                        }
+
+                        unset($row, $iterator);
+                    }
+                }
+                break;
+            case \Bitrix\Iblock\PropertyTable::TYPE_SECTION:
+                if ($this->options['getPropValueId']) {
+                    return $arPropertyValue['VALUE'];
+                }
+
+                if (!empty($arPropertyValue['VALUE'])) {
+                    $arCheckValue = [];
+                    if (!is_array($arPropertyValue['VALUE'])) {
+                        $arPropertyValue['VALUE'] = (int)$arPropertyValue['VALUE'];
+                        if ($arPropertyValue['VALUE'] > 0)
+                            $arCheckValue[] = $arPropertyValue['VALUE'];
+                    } else {
+                        foreach ($arPropertyValue['VALUE'] as $intValue) {
+                            $intValue = (int)$intValue;
+                            if ($intValue > 0)
+                                $arCheckValue[] = $intValue;
+                        }
+                        unset($intValue);
+                    }
+                    if (!empty($arCheckValue)) {
+                        $filter = [
+                            '@ID' => $arCheckValue
+                        ];
+                        if ($propertyParams['LINK_IBLOCK_ID'] > 0)
+                            $filter['=IBLOCK_ID'] = $propertyParams['LINK_IBLOCK_ID'];
+
+                        $iterator = \Bitrix\Iblock\SectionTable::getList([
+                            'select' => ['ID', 'NAME'],
+                            'filter' => [$filter]
+                        ]);
+                        while ($row = $iterator->fetch()) {
+                            if ($propertyParams['MULTIPLE'] === 'Y') {
+                                $value[] = $row['NAME'];
+                            } else {
+                                $value = $row['NAME'];
+                            }
+                        }
+                        unset($row, $iterator);
+                    }
+                }
+                break;
+            case \Bitrix\Iblock\PropertyTable::TYPE_LIST:
+                if ($this->options['getPropValueId']) {
+                    return $arPropertyValue['VALUE_ENUM_ID'];
+                } 
+
+                if (!empty($arPropertyValue['~VALUE'])) {
+                    if (is_array($arPropertyValue['~VALUE'])) {
+                        foreach ($arPropertyValue['~VALUE'] as $_value) {
+                            $value[] = $_value;
+                        }
+                    } else {
+                        $value = $arPropertyValue['~VALUE'];
+                    }
+                }
+                break;
+            case \Bitrix\Iblock\PropertyTable::TYPE_FILE:
+                if (!empty($arPropertyValue['VALUE'])) {
+                    if (is_array($arPropertyValue['VALUE'])) {
+                        foreach ($arPropertyValue['VALUE'] as $intValue) {
+                            $intValue = (int)$intValue;
+                            if ($intValue > 0) {
+                                if ($fileUrl = $this->getFileUrl($intValue)) {
+                                    $value[] = $fileUrl;
+                                }
+                            }
+                        }
+                        unset($intValue);
+                    } else {
+                        $arPropertyValue['VALUE'] = (int)$arPropertyValue['VALUE'];
+                        if ($arPropertyValue['VALUE'] > 0) {
+                            if ($fileUrl = $this->getFileUrl($arPropertyValue['VALUE'])) {
+                                $value = $fileUrl;
+                            }
+                        }
+                    }
+                }
+                break;
+            default:
+                if (is_array($arPropertyValue['~VALUE'])) {
+                    foreach ($arPropertyValue['~VALUE'] as $_value) {
+                        $value[] = $_value;
+                    }
+                } else {
+                    $value = $arPropertyValue['~VALUE'];
+                }
+        }
+
+        return $value;
+    }
+
+    protected function getFileUrl($fileId): string
+    {
+        if ($arFile = \CFile::GetFileArray($fileId)) {
+            return $this->site['PROTOCOL'] . $this->site['SERVER_NAME'] . \CHTTP::urnEncode($arFile['SRC'], 'utf-8');
+        }
+
+        return '';
+    }
+}

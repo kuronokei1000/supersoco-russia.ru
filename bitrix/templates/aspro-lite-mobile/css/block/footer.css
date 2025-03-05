@@ -1,0 +1,349 @@
+/*vars*/
+.footer {
+  --d2d_dark_light: var(--light, #2d2d2d) var(--dark, #121212);
+  --d3_dark_light: var(--light, #222) var(--dark, #121212);
+  --d1b_dark_light: var(--light, #222) var(--dark, #1b1b1b);
+  --d6t9_dark_light: var(--light, #666) var(--dark, #999);
+  --d3t9_dark_light: var(--light, #f4f4f4) var(--dark, #343434);
+  --df_opacity_dark_light: var(--light, #ffffff1a) var(--dark, #3a3a3a);
+  --dff_opacity_dark_light: var(--light, #00000026) var(--dark, #ffffff26);
+  --df4_dark_light: var(--light, #fff) var(--dark, --d1b_dark_light);
+}
+/**/
+
+.footer {
+  border-top: 1px solid #ffffff1a;
+  border-top-color: var(--df_opacity_dark_light);
+  background: #333;
+  background: var(--d1b_dark_light);
+}
+
+#bx-composite-banner:empty {
+  display: none;
+}
+
+.footer__main-part-inner {
+  padding: 24px 0 16px;
+}
+.footer__top-part {
+  padding-bottom: 28px;
+}
+.footer__bottom-part-inner {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--df_opacity_dark_light);
+  padding: 23px 0;
+}
+.footer__bottom-part .footer__part-item {
+  margin: 8px;
+}
+.footer__bottom-part .footer__bottom-part-items-wrapper {
+  margin: -8px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+.footer__part-item-confidentiality {
+  display: flex;
+}
+
+.footer__info {
+  margin-top: 30px;
+}
+
+/*phones*/
+.more-arrow {
+  display: flex;
+  margin-left: 8px;
+}
+.phones__inner {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.phones__dropdown {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+  position: absolute;
+  top: -20px;
+  left: -16px;
+  z-index: 2;
+}
+.phones__dropdown--top {
+  bottom: -34px;
+  left: -16px;
+  top: auto;
+  display: flex;
+  flex-direction: column-reverse;
+}
+.phones__inner:hover .phones__dropdown {
+  opacity: 1;
+  visibility: visible;
+}
+.phones__phone-link {
+  font-weight: 600;
+  line-height: calc(1em + 3px);
+  font-size: 0.9375em;
+}
+
+.dropdown {
+  -webkit-box-shadow: 0px 5px 30px rgba(34, 34, 34, 0.1);
+  box-shadow: 0px 5px 30px rgba(34, 34, 34, 0.1);
+  background: #fff;
+  background-color: var(--card_bg_black);
+  border-radius: 8px;
+  border-radius: var(--border-radius);
+  position: absolute;
+  top: 100%;
+  left: 0;
+}
+.dropdown--relative {
+  position: relative;
+}
+
+.phones__dropdown .dropdown {
+  padding: 15px 16px;
+  min-width: 240px;
+}
+.phones__dropdown .dropdown + .dropdown {
+  margin-top: 4px;
+}
+.phones__dropdown--top .dropdown + .dropdown {
+  margin: 0 0 4px;
+}
+.phones__dropdown--top .dropdown {
+  display: flex;
+  flex-direction: column-reverse;
+}
+.phones__dropdown .dropdown__item {
+  padding: 3.5px 0px;
+}
+.phones__dropdown .dropdown__item--first {
+  padding-top: 0px;
+}
+.phones__dropdown--top .dropdown__item--first {
+  padding-top: 3.5px;
+  padding-bottom: 0;
+}
+.phones__dropdown-title {
+  font-size: 12px;
+  line-height: calc(1em + 4px);
+  color: #999;
+}
+
+.phones__phone-descript {
+  display: block;
+  font-weight: normal;
+}
+
+.phones__dropdown-item {
+  padding: 5px 0 7px;
+}
+.phones__dropdown--top .phones__dropdown-item:last-child {
+  padding-top: 0;
+  padding-bottom: 5px;
+}
+.phones__dropdown--top .dropdown__item--last + .phones__dropdown-item {
+  padding-top: 5px;
+  padding-bottom: 12px;
+}
+.phones__dropdown-value {
+  margin-top: 5px;
+  font-size: 0.9375em;
+  line-height: calc(1em + 3px);
+}
+.footer__phone .phones .phones__inner > .phones__phone-link {
+  color: #fff;
+}
+/**/
+
+.footer__info-item {
+  margin: 17px 0 0 0;
+}
+.footer__address .address__text,
+.footer__email a {
+  color: #fff;
+}
+
+/*social*/
+.footer__social .social__items.social__items--md.social__items--grid {
+  grid-template-columns: repeat(auto-fit, 40px);
+}
+.footer__info .footer__social {
+  margin-top: 25px;
+  margin-bottom: 7px;
+}
+/**/
+
+/*pays*/
+.footer__bottom-part .footer__pays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  margin: 11px 8px 17px;
+}
+.footer__pays i {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0px;
+  background: url("../../images/svg/payment.svg") 0px 0px no-repeat;
+}
+.footer__pays i.cacsh {
+  width: 20px;
+  height: 20px;
+  background-position: 0px 0px;
+}
+.footer__pays i.mastercard {
+  width: 27px;
+  height: 20px;
+  background-position-x: -67px;
+}
+.footer__pays i.visa {
+  width: 39px;
+  height: 20px;
+  background-position-x: -24px;
+}
+.footer__pays i.yandex_money {
+  width: 25px;
+  height: 19px;
+  background-position: -626px -198px;
+}
+.footer__pays i.webmoney {
+  width: 20px;
+  height: 20px;
+  background-position-x: -322px;
+}
+.footer__pays i.qiwi {
+  width: 18px;
+  height: 20px;
+  background-position-x: -278px;
+}
+.footer__pays i.sbrf {
+  width: 20px;
+  height: 20px;
+  background-position-x: -346px;
+}
+.footer__pays i.alfa {
+  width: 16px;
+  height: 20px;
+  background-position-x: -370px;
+}
+.footer__pays i.mir {
+  width: 51px;
+  height: 20px;
+  background-position-x: -165px;
+}
+.footer__pays i.jcb {
+  width: 26px;
+  height: 20px;
+  background-position-x: -220px;
+}
+.footer__pays i.paypal {
+  width: 18px;
+  height: 20px;
+  background-position-x: -300px;
+}
+.footer__pays i.maestro {
+  width: 27px;
+  height: 20px;
+  background-position-x: -98px;
+}
+.footer__pays i.yoomoney {
+  width: 28px;
+  height: 20px;
+  background-position-x: -455px;
+}
+.footer__pays i.yookassa {
+  width: 28px;
+  height: 20px;
+  background-position-x: -487px;
+}
+.footer__pays i.belkart {
+  width: 20px;
+  height: 20px;
+  background-position-x: -519px;
+}
+.footer__pays i.halva {
+  width: 20px;
+  height: 20px;
+  background-position-x: -543px;
+}
+.footer__pays i.tinkoff {
+  width: 61px;
+  height: 20px;
+  background-position-x: -390px;
+}
+.footer__pays i.applepay {
+  width: 46px;
+  height: 20px;
+  background-position-x: -567px;
+}
+.footer__pays i.google_pay {
+  width: 46px;
+  height: 20px;
+  background-position-x: -617px;
+}
+.footer__pays i.yandex_pay {
+  width: 38px;
+  height: 20px;
+  background-position-x: -667px;
+}
+.footer__pays i.samsung_pay {
+  width: 20px;
+  height: 20px;
+  background-position-x: -710px;
+}
+.footer__pays i.assist {
+  width: 24px;
+  height: 20px;
+  background-position-x: -250px;
+}
+.footer__pays i.robokassa {
+  width: 20px;
+  height: 20px;
+  background-position-x: -734px;
+}
+.footer__pays i.pay_anyway {
+  width: 20px;
+  height: 20px;
+  background-position-x: -758px;
+}
+.footer__pays i.sbp {
+  width: 15px;
+  height: 20px;
+  background-position-x: -782px;
+}
+/**/
+
+/*light*/
+.footer.footer--color-light {
+  border-color: #e5e5e5;
+  border-color: var(--stroke_black);
+  background: var(--df4_dark_light);
+}
+.footer--color-light .footer__bottom-part-inner {
+  border-top-color: #e5e5e5;
+  border-color: var(--stroke_black);
+}
+.footer--color-light .subscribe-block__text,
+.footer--color-light .footer__address .address__text,
+.footer--color-light .footer__email a {
+  color: #333;
+  color: var(--white_text_black);
+}
+
+.footer--color-light .footer__phone .phones .phones__inner > .phones__phone-link {
+  color: #333;
+  color: var(--white_text_black);
+}
+/**/
+
+/*dark*/
+.footer--color-dark .footer__phone .phones .more-arrow svg * {
+  fill: #fff;
+}
+.footer--color-dark .btn {
+  --d3t9_dark_light: #343434;
+  --white_text_black: #fff;
+}

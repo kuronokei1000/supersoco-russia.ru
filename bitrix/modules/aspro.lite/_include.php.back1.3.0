@@ -1,0 +1,55 @@
+<?
+CModule::AddAutoloadClasses(
+	'aspro.lite',
+	array(
+		'lite' => 'install/index.php',
+		'CLite' => 'classes/general/CLite.php',
+		'CLiteCache' => 'classes/general/CLiteCache.php',
+		'CLiteTools' => 'classes/general/CLiteTools.php',
+		'CLiteEvents' => 'classes/general/CLiteEvents.php',
+		'CLiteCondition' => 'classes/general/CLiteCondition.php',
+		'CInstargramLite' => 'classes/general/CInstargramLite.php',
+		'CVKLite' => 'classes/general/CVKLite.php',
+		'CLiteRegionality' => 'classes/general/CLiteRegionality.php',
+		'Aspro\Solution\CAsproMarketing' => 'classes/general/CAsproMarketing.php',
+		'Aspro\Functions\CAsproLite' => 'lib/functions/CAsproLite.php',
+		'Aspro\Functions\CAsproLiteAdmin' => 'lib/functions/CAsproLiteAdmin.php',
+		'Aspro\Functions\CAsproLiteSwitcher' => 'lib/functions/CAsproLiteSwitcher.php',
+		'Aspro\Functions\CAsproLiteCRM' => 'lib/functions/CAsproLiteCRM.php',
+		'Aspro\Functions\CAsproLiteCustom' => 'lib/functions/CAsproLiteCustom.php',
+		'Aspro\Functions\CAsproLiteReCaptcha' => 'lib/functions/CAsproLiteReCaptcha.php',
+		'Aspro\Lite\GS' => 'lib/gs.php',
+		'Aspro\Lite\CrossSales' => 'lib/crosssales.php',
+		'Aspro\Lite\MarketingPopup' => 'lib/marketingpopup.php',
+		'Aspro\Lite\Property\ListUsersGroups' => 'lib/property/listusersgroups.php',
+		'Aspro\Lite\Property\ListWebForms' => 'lib/property/listwebforms.php',
+		'Aspro\Lite\Property\CustomFilter' => 'lib/property/customfilter.php',
+		'Aspro\Lite\Property\CustomFilter\CondCtrl' => 'lib/property/customfilter/condctrl.php',
+		'Aspro\Lite\Property\CustomFilter\CCatalogCondCtrlGroup' => 'lib/property/customfilter/condctrl.php',
+		'Aspro\Lite\Property\ConditionType' => 'lib/property/conditiontype.php',
+		'Aspro\Lite\Property\ModalConditions' => 'lib/property/modalconditions.php',
+		'Aspro\Lite\Property\ModalConditions\CondCtrl' => 'lib/property/modalconditions/condctrl.php',
+		'Aspro\Lite\Property\ModalConditions\CCatalogCondCtrlGroup' => 'lib/property/modalconditions/condctrl.php',
+		'Aspro\Lite\Functions\ExtComponentParameter' => 'lib/functions/ExtComponentParameter.php',
+		'Aspro\Lite\Functions\CSKU' => 'lib/functions/CSKU.php',
+		'Aspro\Lite\Functions\CSKUTemplate' => 'lib/functions/CSKUTemplate.php',
+		'Aspro\Lite\Functions\Extensions' => 'lib/functions/Extensions.php',
+		'Aspro\Lite\Functions\ExtensionsMobile' => 'lib/functions/ExtensionsMobile.php',
+		'Aspro\Lite\ShareBasketTable' => 'lib/sharebasket.php',
+		'Aspro\Lite\ShareBasketItemTable' => 'lib/sharebasketitem.php',
+		'Aspro\Lite\PhoneAuth' => 'lib/phoneauth.php',
+		'Aspro\Lite\Traits\Serialize' => 'lib/traits/serialize.php',
+	)
+);
+
+if(!CJSCore::IsExtRegistered('aspro_core_condtree')){
+	CJSCore::RegisterExt(
+		'aspro_core_condtree',
+		array(
+			'js' => '/bitrix/js/aspro.lite/core_tree.js',
+			'css' => '/bitrix/css/aspro.lite/catalog_cond.css',
+			'lang' => '/bitrix/modules/aspro.lite/lang/'.LANGUAGE_ID.'/lib/js_core_tree.php',
+			'rel' => array('core', 'date', 'window')
+		)
+	);
+}

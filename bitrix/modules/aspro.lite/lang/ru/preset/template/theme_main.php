@@ -1,0 +1,22 @@
+<?
+$MESS['MAIL_GREETINGS'] = 'Здравствуйте, #NAME#';
+$MESS['CONTACTS_TEXT'] = 'Если возникнут вопросы, то вы всегда можете к нам обратиться:';
+$MESS['SOCIAL_VK'] = 'ВКонтакте';
+$MESS['SOCIAL_FACEBOOK'] = 'Facebook';
+$MESS['SOCIAL_TWITTER'] = 'Twitter';
+$MESS['SOCIAL_INSTAGRAM'] = 'Instagram';
+$MESS['SOCIAL_TELEGRAM'] = 'Telegram';
+$MESS['SOCIAL_ODNOKLASSNIKI'] = 'Одноклассники';
+$MESS['SOCIAL_MAILRU'] = 'Mail.ru';
+$MESS['SOCIAL_MAIL'] = 'Mail.ru';
+$MESS['SOCIAL_LIVEJOURNAL'] = 'Livejournal';
+$MESS['SOCIAL_YOUTUBE'] = 'YouTube';
+$MESS['SOCIAL_GOOGLEPLUS'] = 'Google Plus';
+$MESS['SOCIAL_VIBER'] = 'Viber';
+$MESS['SOCIAL_WHATS'] = 'WhatsApp';
+$MESS['SOCIAL_TIKTOK'] = 'TikTok';
+$MESS['SOCIAL_PINTEREST'] = 'Pinterest';
+$MESS['SOCIAL_SNAPCHAT'] = 'Snapchat';
+$MESS['SOCIAL_ZEN'] = 'Яндекс Дзен';
+$MESS['SOCIAL_LINKEDIN'] = 'LinkedIn';
+$MESS['SOCIAL_ASPRO_LINK'] = 'Аспро.Link';

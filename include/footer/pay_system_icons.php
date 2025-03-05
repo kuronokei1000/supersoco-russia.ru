@@ -1,0 +1,9 @@
+<span class="hover_blink"><i title="Cash" class="cacsh shine"></i></span>
+<span class="hover_blink"><i title="MasterCard" class="mastercard shine"></i></span>
+<span class="hover_blink"><i title="Visa" class="visa shine"></i></span>
+<span class="hover_blink"><i title="Sberbank" class="sbrf shine"></i></span>
+<span class="hover_blink"><i title="Alfa" class="alfa shine"></i></span>
+<span class="hover_blink"><i title="Mir" class="mir shine"></i></span>
+<span class="hover_blink"><i title="Yoomoney" class="yoomoney shine"></i></span>
+<span class="hover_blink"><i title="Halva" class="halva shine"></i></span>
+<span class="hover_blink"><i title="Tinkoff" class="tinkoff shine"></i></span>

@@ -1,0 +1,1 @@
+В стоимость заказа может быть включена <a href="<?=SITE_DIR?>delivery-terms/" target="_blank">цена доставки</a>

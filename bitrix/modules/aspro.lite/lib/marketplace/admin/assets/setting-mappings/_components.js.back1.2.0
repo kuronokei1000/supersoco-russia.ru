@@ -1,0 +1,758 @@
+BX.BitrixVue.component('mpm-app', {
+    props: {
+        state: {
+            type: Object,
+        }
+    },
+    computed: {
+        sections() {
+            let sections = [];
+
+            for (const [sectionId, sectionObject] of Object.entries(this.state.sections)) {
+                let isSelected = this.state.selectedSectionIds.findIndex(id => Number(id) === Number(sectionId)) > -1;
+
+                let section = {
+                    id: sectionId,
+                    name: sectionObject['NAME'],
+                    children: [],
+                }
+
+                if (sectionObject['CHILDREN']) {
+                    for (const [subSectionId, subSectionName] of Object.entries(sectionObject['CHILDREN'])) {
+                        if (!isSelected) {
+                            isSelected = this.state.selectedSectionIds.findIndex(id => Number(id) === Number(subSectionId)) > -1;
+                        }
+
+                        section.children.push({
+                            id: subSectionId,
+                            name: subSectionName,
+                            mapData: this.state.map[subSectionId] || {}
+                        })
+                    }
+                }
+
+                section.isSelected = isSelected;
+
+                sections.push(section);
+            }
+
+            return sections;
+        }
+    },
+    template: `
+        <div class="mpm-setting">
+            <div class="mpm-setting__post" v-if="state.map">
+                <span v-for="(map,  bxSectionId) in state.map">
+                    <input 
+                        type="hidden" 
+                        :name="'MAP[' + bxSectionId + '][BX_SECTION]'" 
+                        :value="bxSectionId"
+                    />
+                    
+                    <input 
+                        type="hidden" 
+                        :name="'MAP[' + bxSectionId + '][WB_SECTION]'" 
+                        :value="map['WB_SECTION']"
+                    />
+                    
+                    <span
+                         v-for="(property, index) in map['PROPERTIES']"
+                    >
+                        <input                    
+                            type="hidden" 
+                            :name="'MAP[' + bxSectionId + '][PROPERTIES][' + index + '][BX_PROPERTY]'" 
+                            :value="property['BX_PROPERTY']"
+                        />
+                        <input                    
+                            type="hidden" 
+                            :name="'MAP[' + bxSectionId + '][PROPERTIES][' + index + '][WB_PROPERTY]'" 
+                            :value="property['WB_PROPERTY'] || ''"
+                        />
+                        <input                    
+                            type="hidden" 
+                            :name="'MAP[' + bxSectionId + '][PROPERTIES][' + index + '][DEFAULT_VALUE]'" 
+                            :value="property['DEFAULT_VALUE'] || ''"
+                        />
+                    </span>               
+                </span>            
+            </div>
+
+            <mpm-bx-group
+                v-for="section in sections"
+                :key="section.id"    
+                v-bind="section"    
+            />
+        </div>    
+    `
+});
+
+BX.BitrixVue.component('mpm-app-stores', {
+    props: {
+        state: {
+            type: Object,
+        }
+    },
+    methods: {
+        onSelectStore(payload) {
+            this.$root.updateMapStore(payload.bxStoreId, payload.wbStoreId);
+        }
+    },
+    template: `
+        <div class="mpm-setting-stores">
+            <div class="mpm-setting__post" v-if="state.map">
+                <span v-for="(map,  bxStoreId) in state.map">
+                    <input 
+                        type="hidden" 
+                        :name="'MAP_STORE[' + bxStoreId + '][BX_STORE_ID]'" 
+                        :value="map['BX_STORE_ID']"
+                    />
+                    
+                    <input 
+                        type="hidden" 
+                        :name="'MAP_STORE[' + bxStoreId + '][WB_STORE_ID]'" 
+                        :value="map['WB_STORE_ID']"
+                    />
+                </span>            
+            </div>
+           <table width="100%" class="mpm__table" style="text-align: center;">
+                <thead>
+                    <tr>
+                        <th>{{ BX.message('AS_STORE_BX') }}</th>
+                        <th>{{ BX.message('AS_STORE_WB') }}</th>
+                    </tr>    
+                </thead>
+                <tbody v-if="state.stores.length > 0">                    
+                   <mpm-store                                   
+                        v-for="store in state.stores"
+                        :key="store.ID"
+                        :id="store.ID"
+                        :name="store.TITLE"
+                        :address="store.ADDRESS"
+                        :map-data="state.map[store.ID] || null"
+                        @on-select="onSelectStore"
+                   />                    
+                </tbody>
+                <tbody v-else>
+                    <tr>
+                        <td colspan="2">
+                            <div class="mpm__empty">
+                                {{ BX.message('AS_EMPTY_STORES') }}
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `
+});
+
+BX.BitrixVue.component('mpm-bx-group', {
+    props: {
+        name: String,
+        isSelected: Boolean,
+        children: {
+            type: Array,
+            default() {
+                return [];
+            }
+        }
+    },
+    data() {
+        return {
+            isOpened: false,
+        }
+    },
+    mounted() {
+        this.$nextTick(() => {
+            if (this.isSelected) {
+                this.isOpened = true;
+            }
+        })
+    },
+    methods: {
+        toggleBody() {
+            if (this.isOpened) {
+                this.closeBody()
+            } else {
+                this.openBody()
+            }
+        },
+
+        openBody() {
+            this.isOpened = true;
+        },
+
+        closeBody() {
+            this.isOpened = false;
+        }
+    },
+    template: `
+        <div class="mpm__group">
+            <div 
+                class="mpm__group-head"
+                @dblclick="toggleBody"
+            >
+                <span class="mpm__group-head-check" >
+                    <input 
+                        title="Select to Customize" 
+                        type="checkbox"
+                        :checked="isOpened"
+                        @click="toggleBody"
+                    />
+                </span>
+                <span class="mpm__group-head-title">
+                    <strong>{{ name }}</strong>
+                </span>
+            </div>
+            <div 
+                class="mpm__group-body"
+                v-if="isOpened"
+            >
+                <mpm-bx-sections
+                    :sections="children"
+                />
+            </div>
+        </div>
+    `
+});
+
+BX.BitrixVue.component('mpm-bx-sections', {
+    props: {
+        sections: {
+            type: Array,
+            default() {
+                return [];
+            }
+        }
+    },
+    template: `
+        <table width="100%" class="mpm__table" style="text-align: center;">
+            <thead>
+                <tr>
+                    <th class="mpm__td-section-id">ID</th>
+                    <th class="mpm__td-section-name">{{ BX.message('AS_SECTION_IN_BX') }}</th>
+                    <th>{{ BX.message('AS_SECTION_IN_WB') }}</th>
+                </tr>    
+            </thead>
+            <tbody>
+               <tr>
+                    <td colspan="3">
+                         <mpm-bx-section
+                            v-for="section in sections"
+                            :key="section.id"
+                            v-bind="section"
+                         />
+                    </td>
+               </tr>               
+            </tbody>
+        </table>
+    `
+});
+
+BX.BitrixVue.component('mpm-bx-section', {
+    props: {
+        id: {
+            type: Number,
+            request: true,
+        },
+        name: {
+            type: String,
+            request: true,
+        },
+        mapData: {
+            type: Object,
+        }
+    },
+    data() {
+        return {
+            isPropertyOpened: false,
+            categoryCode: null,
+            categoryProperties: [],
+            isLoading: false,
+        }
+    },
+    mounted() {
+        if (this.mapData && Object.keys(this.mapData).length) {
+            this.categoryCode = this.mapData['WB_SECTION'];
+        }
+    },
+    methods: {
+        toggleProperties() {
+            if (this.isPropertyOpened) {
+                this.closeProperties()
+            } else {
+                this.openProperties()
+            }
+        },
+        openProperties() {
+            this.isPropertyOpened = true;
+
+            if (!this.categoryProperties.length && this.categoryCode) {
+                this.loadProperties();
+            }
+        },
+        closeProperties() {
+            this.isPropertyOpened = false;
+        },
+        loadProperties() {
+            if (!this.categoryCode) {
+                return;
+            }
+
+            this.isLoading = true;
+
+            BX.ajax({
+                url: this.$root.ajaxUrl,
+                data: {
+                    ajax: true,
+                    IBLOCK_ID: this.$root.iblockId,
+                    sessid: this.$root.sessid,
+                    action: 'find_category_properties',
+                    category: this.categoryCode,
+                    controller: 'wildberries'
+                },
+                method: 'POST',
+                dataType: 'json',
+                onsuccess: (data) => {
+                    this.categoryProperties = data;
+
+                    this.isLoading = false;
+                },
+                onfailure: () => {
+                    this.isLoading = false;
+                }
+            });
+        },
+        onSelectCategory(categoryCode) {
+            if (categoryCode) {
+                this.categoryCode = categoryCode;
+
+                this.$root.updateMapSection(this.id, this.categoryCode);
+
+                this.loadProperties();
+            }
+        },
+        onUnselectCategory() {
+            this.categoryCode = null;
+
+            this.categoryProperties = [];
+
+            this.$root.deleteMapSection(this.id);
+        }
+    },
+    template: `
+        <table width="100%" border="0">        
+            <tr>
+                <td class="mpm__td-section-id">{{ id }}</td>
+                <td class="mpm__td-section-name">{{ name }}</td>
+                <td>
+                    <div class="mpm__row">
+                        <div class="mpm__col mpm__col--mr">
+                            <mpm-control-select-service-category 
+                                :value="categoryCode"
+                                @on-select="onSelectCategory"
+                                @on-unselect="onUnselectCategory"
+                            />
+                        </div>
+                        <div>
+                            <a 
+                                href="#"
+                                @click.prevent="toggleProperties"
+                            >
+                                {{ isPropertyOpened ? BX.message('AS_HIDE') : BX.message('AS_OPEN') }} {{ BX.message('AS_PROPERTIES') }}
+                            </a>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3" v-if="isPropertyOpened">
+                
+                    <div 
+                        class="mpm__properties"
+                        v-if="isLoading && !categoryProperties.length"
+                    >
+                        <div class="mpm__empty">
+                            {{ BX.message('AS_LOADING') }}
+                        </div>
+                    </div>                   
+                   <template v-else>
+                        <mpm-properties
+                            :properties="categoryProperties"
+                            :bx-section-id="id"
+                            :map-data="mapData['PROPERTIES']"
+                        />
+                    </template>               
+                </td>
+            </tr> 
+        </table>
+    `
+});
+
+BX.BitrixVue.component('mpm-properties', {
+    props: {
+        bxSectionId: {
+            type: Number,
+            required: true,
+        },
+        properties: {
+            type: Array,
+            default: [],
+        },
+        mapData: {
+            type: Array,
+            default: [],
+        }
+    },
+    mounted() {
+
+    },
+    data() {
+        return {
+            isOnlyRequired: true,
+        }
+    },
+    computed: {
+        computedProperties() {
+            return this.properties.sort((a, b) => {
+                return b.isRequired - a.isRequired;
+            }).map(property => {
+                const findValue = this.mapData.find(item => item.WB_PROPERTY === property.code);
+
+                property.mapData = {};
+
+                if (findValue) {
+                    property.mapData = findValue;
+                }
+
+                return property;
+            })
+        }
+    },
+    methods: {
+        toggleVisible() {
+            this.isOnlyRequired = !this.isOnlyRequired;
+        }
+    },
+    template: `
+        <div class="mpm__properties">        
+             <div 
+                class="mpm__empty"
+                v-if="!properties.length"
+            >
+                {{ BX.message('AS_CHOOSE_A_SECTION') }}
+            </div>            
+            <template 
+                v-else
+            >
+                <div class="mpm__properties-tools">
+                    <div class="mpm__row">
+                        <div class="mpm__col">
+                            <a 
+                                href="#" 
+                                class="mpm__link-tool"                                
+                                :class="{
+                                    'active': isOnlyRequired,
+                                }"
+                                @click.prevent="toggleVisible"
+                            >
+                                {{  BX.message('AS_ONLY_REQUIRED') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <table class="mpm__table-properties" cellspacing="0" cellpadding="0">
+                    <thead>
+                        <tr>
+                            <th>{{  BX.message('AS_PROPERTY_IN_WB') }}</th>
+                            <th>{{  BX.message('AS_PROPERTY_IN_BX') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>      
+                          <mpm-property
+                            v-for="(property, index) in computedProperties"
+                            :key="index"                            
+                            :visible="(isOnlyRequired && property.isRequired) || !isOnlyRequired"
+                            :bx-section-id="bxSectionId"
+                            v-bind="property"
+                          />             
+                    </tbody>
+                </table>            
+            </template>
+        </div>
+    `
+});
+
+BX.BitrixVue.component('mpm-property', {
+    props: {
+        bxSectionId: {
+            type: Number,
+            required: true
+        },
+        code: {
+            type: String,
+            default: 'undefined',
+        },
+        name: {
+            type: String,
+            default: 'undefined',
+        },
+        isRequired: {
+            type: Boolean,
+            default: false,
+        },
+        visible: {
+            type: Boolean,
+            default: false,
+        },
+        mapData: {
+            type: Object,
+        }
+    },
+    data() {
+        return {
+            defaultValue: '',
+            bxPropertyCode: '',
+        }
+    },
+    mounted() {
+        if (this.mapData) {
+            if(this.mapData['DEFAULT_VALUE']) {
+                this.defaultValue = this.mapData['DEFAULT_VALUE'];
+            }
+
+            if(this.mapData['BX_PROPERTY']) {
+                this.bxPropertyCode = this.mapData['BX_PROPERTY'];
+            }
+        }
+    },
+    methods: {
+        onBxSelectProperty(bxPropertyCode) {
+            this.bxPropertyCode = bxPropertyCode || '';
+
+            this.$root.updateMapProperty(
+                Number(this.bxSectionId),
+                bxPropertyCode,
+                this.code,
+                this.defaultValue
+            )
+        },
+        onChangeDefaultValue() {
+            this.$root.updateMapProperty(
+                Number(this.bxSectionId),
+                this.bxPropertyCode,
+                this.code,
+                this.defaultValue
+            )
+        }
+    },
+    template: `
+        <tr v-show="visible">
+            <td class="mpm__td-property-name">
+                {{ name }}
+                <span v-if="isRequired" style="color: red;">*</span>
+            </td>
+            <td>
+                <div class="mpm__row mpm__row--center">
+                    <div class="mpm__col">
+                        <mpm-control-select-property
+                            :value="mapData['BX_PROPERTY']"
+                            @on-select="onBxSelectProperty"
+                        />
+                    </div>
+                    <div>
+                        {{ BX.message('AS_OR') }}
+                    </div>
+                    <div class="mpm__col">
+                        <input 
+                            v-model="defaultValue"                            
+                            class="mpm__control mpm__control-input" 
+                            type="text"
+                            @change="onChangeDefaultValue"
+                        />
+                    </div>
+                </div>
+            </td>
+        </tr>  
+    `
+});
+
+BX.BitrixVue.component('mpm-store', {
+    props: {
+        id: Number,
+        name: String,
+        address: String,
+        mapData: {
+            type: Object,
+        }
+    },
+    data() {
+
+    },
+    methods: {
+        onSelectWarehouse(wbStoreId) {
+            this.$emit('on-select', {
+                bxStoreId: Number(this.id),
+                wbStoreId: Number(wbStoreId),
+            });
+        }
+    },
+    mounted() {
+
+    },
+    template: `
+       <tr>
+            <td>            
+               <span style="font-weight: bold;">{{ name }}</span>      
+               <span style="">{{ address ? '- ' + address : '' }}</span>        
+            </td>
+            <td>
+                <mpm-control-select-warehouses
+                    :value="mapData && mapData['WB_STORE_ID'] ? mapData['WB_STORE_ID'] : ''"
+                    @on-select="onSelectWarehouse"
+                />
+            </td>
+       </tr> 
+    `
+});
+
+BX.BitrixVue.component('mpm-control-select-property', {
+    props: {
+        value: {
+            type: String,
+        }
+    },
+    data() {
+        return {
+            select2: null,
+        }
+    },
+    mounted() {
+        setTimeout(() => {
+            this.select2 = $(this.$refs.elSelect).select2({
+                dropdownParent: '.mpm-setting',
+                data: this.$root.propertySelectOptions,
+            })
+                .on('select2:select', (event) => {
+                    this.$emit('on-select', event.params.data.id)
+                });
+
+            this.select2.val(this.value).trigger('change');
+        }, 0);
+    },
+
+    template: `
+        <span class="mpm__wrapper mpm__wrapper--flex"> 
+            <select class="mpm__select" ref="elSelect">
+                <option value="">-</option>
+            </select>
+        </span>        
+    `
+});
+
+BX.BitrixVue.component('mpm-control-select-service-category', {
+    props: {
+        value: {
+            type: String,
+        }
+    },
+    data() {
+        return {
+            select2: null,
+            isDropdownVisible: false,
+        }
+    },
+    methods: {
+        click() {
+            this.isDropdownVisible = !this.isDropdownVisible;
+        },
+        unselected() {
+            this.$emit('on-unselect')
+
+            this.select2.val(null).trigger('change');
+        }
+    },
+    mounted() {
+        this.select2 = $(this.$refs.elSelect).select2({
+            minimumInputLength: 3,
+            dropdownParent: '.mpm-setting',
+            ajax: {
+                url: this.$root.ajaxUrl,
+                delay: 250,
+                dataType: 'json',
+                type: 'POST',
+                data: (params) => {
+                    return {
+                        ajax: true,
+                        sessid: this.$root.sessid,
+                        IBLOCK_ID: this.$root.iblockId,
+                        search: params.term,
+                        action: 'find_category',
+                        controller: 'wildberries'
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data
+                    };
+                }
+            }
+        })
+            .on('select2:select', (event) => {
+                this.$emit('on-select', event.params.data.id)
+            });
+    },
+    template: `
+        <span class="mpm__wrapper mpm__wrapper--flex mpm__control-service-category"> 
+            <select class="mpm__select" ref="elSelect">
+                <option>-</option>
+                <option
+                    v-if="value"
+                    selected="selected"
+                >
+                    {{ value }}
+                </option>
+            </select>
+             <span 
+                title="Remove" 
+                class="mpm__remove"
+                @click="unselected"
+             />
+        </span>        
+    `
+});
+
+BX.BitrixVue.component('mpm-control-select-warehouses', {
+    props: {
+        value: {
+            type: String,
+        }
+    },
+    data() {
+        return {
+            select2: null,
+        }
+    },
+    mounted() {
+        setTimeout(() => {
+            this.select2 = $(this.$refs.elSelect).select2({
+                dropdownParent: '.mpm-setting-stores',
+                data: this.$root.wbStoreSelectOptions,
+                minimumResultsForSearch: 10,
+            })
+                .on('select2:select', (event) => {
+                    this.$emit('on-select', event.params.data.id)
+                });
+
+            this.select2.val(this.value).trigger('change');
+        }, 0);
+    },
+
+    template: `
+        <span class="mpm__wrapper mpm__wrapper--flex"> 
+            <select class="mpm__select" ref="elSelect">
+                <option value="">-</option>
+            </select>
+        </span>        
+    `
+});

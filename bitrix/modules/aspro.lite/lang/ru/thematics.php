@@ -1,0 +1,5 @@
+<?
+$MESS['THEMATIC_SHOP_TITLE'] = 'Интернет-магазин';
+$MESS['THEMATIC_SHOP_DESCRIPTION'] = '';
+$MESS['THEMATIC_START_TITLE'] = 'Корпоративный сайт';
+$MESS['THEMATIC_START_DESCRIPTION'] = '';

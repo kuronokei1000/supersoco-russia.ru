@@ -1,0 +1,10 @@
+<?
+$PERM["admin"]["11"]="R";
+$PERM["admin"]["10"]="R";
+$PERM["admin"]["6"]="R";
+$PERM["admin"]["7"]="R";
+$PERM["admin"]["9"]="R";
+$PERM["admin"]["*"]="D";
+$PERM["wizards"]["*"]="D";
+$PERM["routing_index.php"]["2"]="R";
+?>

@@ -1,0 +1,4744 @@
+<?php
+/**
+ * Aspro:Lite module params presets
+ * @copyright 2022 Aspro
+ */
+
+IncludeModuleLangFile(__FILE__);
+$moduleClass = 'CLite';
+
+// initialize module parametrs list and default values
+$moduleClass::$arPresetsList = array(
+	894 => array(
+		'ID' => 894,
+		'TITLE' => GetMessage('PRESET_894_TITLE'),
+		'DESCRIPTION' => GetMessage('PRESET_894_DESCRIPTION'),
+		'PREVIEW_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_894_preview.jpg',
+		'DETAIL_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_894_detail.jpg',
+		'BANNER_INDEX' => '1',
+		'OPTIONS' => array(
+			'BASE_COLOR' => 'CUSTOM',
+			'BASE_COLOR_CUSTOM' => '5b7fff',
+			'USE_MORE_COLOR' => 'N',
+			'PAGE_WIDTH' => '1500px',
+			'FONT_STYLE' => '1',
+			'TITLE_FONT' => 'N',
+			'MAX_DEPTH_MENU' => '5',
+			'SIDE_MENU' => 'LEFT',
+			'PAGE_TITLE' => '1',
+			'STICKY_SIDEBAR' => 'Y',
+			'SHOW_LICENCE' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+				),
+			),
+			'INDEX_TYPE' => array(
+				'VALUE' => 'index1',
+				'SUB_PARAMS' => array(
+					'BIG_BANNER_INDEX' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'NARROW_BANNER' => 'Y',
+							'NO_OFFSET_BANNER' => 'N',
+							'WIDE_TEXT' => 'N',
+							'HEIGHT_BANNER' => 'LOW',
+						),
+					),
+					'TIZERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+							'IMAGES_POSITION' => 'LEFT',
+						),
+					),
+					'CATALOG_SECTIONS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '40',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'Y',
+							'IMAGES' => 'PICTURES',
+						),
+					),
+					'CATALOG_TAB' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'N',
+							'IMG_CORNER' => 'N',
+							'ELEMENTS_COUNT' => '5',
+							'LINES_COUNT' => '2',
+						),
+					),
+					'YOUTUBE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+						),
+					),
+					'MIDDLE_ADV' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ELEMENTS_COUNT' => '3',
+							'LINES_COUNT' => '2',
+							'TEXT_POSITION' => 'LEFT',
+						),
+					),
+					'SALE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '3',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'BOTTOM_BANNERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+						),
+					),
+					'BLOG' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '5',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'COMPANY_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'IMAGE' => 'Y',
+							'BORDERED' => 'Y',
+						),
+					),
+					'BRANDS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'ITEMS_BORDER' => 'N',
+						),
+					),
+					'INSTAGRAMM' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+								'TITLE_POSITION' => 'NORMAL',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'VK' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+						),
+					),
+					'CUSTOM_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'text',
+					),
+				),
+				'ORDER' => 'BIG_BANNER_INDEX,CATALOG_SECTIONS,CATALOG_TAB,BRANDS,MIDDLE_ADV,TIZERS,BOTTOM_BANNERS,SALE,YOUTUBE,COMPANY_TEXT,BLOG,VK,INSTAGRAMM,CUSTOM_TEXT,CUSTOM_CATALOG,CUSTOM_CATALOG_3,CUSTOM_CATALOG_2',
+			),
+			'TOP_MENU_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_FIXED' => array(
+						'VALUE' => '1',
+						'TOGGLE_OPTIONS' => array(
+						),
+					),
+				),
+			),
+			'HEADER_TYPE' => array(
+				'VALUE' => '3',
+				'ADDITIONAL_OPTIONS' => array(
+					'HEADER_NARROW' => 'Y',
+					'CATALOG_IN_BTN' => 'Y',
+					'SHOW_TOP_SECTIONS' => 'Y',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'HEADER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'HEADER_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'HEADER_TOGGLE_THEME_SELECTOR' => 'Y',
+				),
+			),
+			'MEGA_MENU_TYPE' => array(
+				'VALUE' => '1',
+				'DEPENDENT_PARAMS' => array(
+					'REPLACE_TYPE' => 'REPLACE',
+				),
+			),
+			'SHOW_RIGHT_SIDE' => 'Y',
+			'TOP_MENU_COLOR' => 'LIGHT BG_NONE',
+			'MENU_COLOR' => 'LIGHT',
+			'MENU_LOWERCASE' => 'N',
+			'IMAGES_WIDE_MENU' => 'PICTURES',
+			'IMAGES_WIDE_MENU_POSITION' => 'LEFT',
+			'WIDE_MENU_CONTENT' => array(
+				'VALUE' => 'CHILDS',
+				'DEPENDENT_PARAMS' => array(
+					'CHILDS_VIEW' => 'ROWS',
+				),
+			),
+			'USE_REGIONALITY' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'REGIONALITY_TYPE' => 'ONE_DOMAIN',
+					'REGIONALITY_VIEW' => 'POPUP_REGIONS',
+					'REGIONALITY_CONFIRM' => 'NORMAL',
+				),
+			),
+			'ORDER_VIEW' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'SHOW_BASKET_PRINT' => 'Y',
+					'SHOW_SHARE_BASKET' => 'Y',
+					'SHOW_DOWNLOAD_BASKET' => 'Y',
+					'BASKET_FILE_DOWNLOAD_TEMPLATE' => 'pdf',
+				),
+			),
+			'SHOW_ONE_CLICK_BUY' => 'Y',
+			'USE_FAST_VIEW_PAGE_DETAIL' => 'fast_view_1',
+			'SHOW_CATALOG_GALLERY_IN_LIST' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'MAX_GALLERY_ITEMS' => '5',
+				),
+			),
+			'LEFT_BLOCK_CATALOG_ROOT' => 'N',
+			'SECTIONS_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_ELEMENTS_COUNT' => '5',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'LEFT_BLOCK_CATALOG_SECTIONS' => 'Y',
+			'SECTION_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'ELEMENTS_TABLE_TYPE_VIEW' => array(
+				'VALUE' => 'catalog_table',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ITEM_LIST_BORDERED' => 'Y',
+					'SECTION_ITEM_LIST_IMG_CORNER' => 'N',
+				),
+			),
+			'SHOW_PROPS_BLOCK' => 'Y',
+			'SHOW_TABLE_PROPS' => 'NOT',
+			'SHOW_SMARTFILTER' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'FILTER_VIEW' => 'COMPACT',
+					'AJAX_FILTER' => 'Y',
+				),
+			),
+			'LEFT_BLOCK_CATALOG_DETAIL' => 'N',
+			'CATALOG_PAGE_DETAIL' => 'element_1',
+			'USE_DETAIL_TABS' => 'Y',
+			'LEFT_BLOCK_SERVICES_ROOT' => 'Y',
+			'SECTIONS_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'LEFT_BLOCK_SERVICES_SECTIONS' => 'Y',
+			'SECTION_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'ELEMENTS_PAGE_SERVICES' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'LEFT_BLOCK_SERVICES_DETAIL' => 'N',
+			'USE_DETAIL_TABS_SERVICES' => 'Y',
+			'SERVICES_PAGE_DETAIL' => 'element_1',
+			'PROJECT_PAGE_LEFT_BLOCK' => 'N',
+			'SHOW_PROJECTS_MAP' => 'Y',
+			'PROJECTS_SHOW_HEAD_BLOCK' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'SHOW_HEAD_BLOCK_TYPE' => 'sections_mix',
+				),
+			),
+			'PROJECTS_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_OFFSET_PROJECT' => 'Y',
+					'ELEMENTS_COUNT_PROJECT' => '3',
+				),
+			),
+			'PROJECT_DETAIL_LEFT_BLOCK' => 'N',
+			'SHOW_PROJECTS_MAP_DETAIL' => 'Y',
+			'USE_DETAIL_TABS_PROJECTS' => 'Y',
+			'PROJECTS_PAGE_DETAIL' => 'element_1',
+			'DETAIL_LINKED_PROJECTS' => 'list',
+			'GALLERY_LIST_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_OFFSET_GALLERY' => 'Y',
+					'ELEMENTS_COUNT_GALLERY' => '3',
+					'ITEMS_TYPE_GALLERY' => 'ALBUM',
+				),
+			),
+			'GALLERY_DETAIL_PAGE' => 'element_1',
+			'PAGE_CONTACTS' => '2',
+			'CONTACTS_USE_FEEDBACK' => 'Y',
+			'CONTACTS_USE_MAP' => 'Y',
+			'CONTACTS_USE_TABS' => 'N',
+			'BLOG_PAGE_LEFT_BLOCK' => 'Y',
+			'BLOG_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_BLOG' => '3',
+				),
+			),
+			'LANDINGS_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_LANDINGS' => '3',
+				),
+			),
+			'SALE_PAGE_LEFT_BLOCK' => 'N',
+			'SALE_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SALE' => '3',
+				),
+			),
+			'NEWS_PAGE_LEFT_BLOCK' => 'N',
+			'NEWS_PAGE' => array(
+				'VALUE' => 'list_elements_2',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_OFFSET_NEWS' => 'Y',
+				),
+			),
+			'STAFF_PAGE' => 'list_elements_1',
+			'DETAIL_LINKED_STAFF' => 'list',
+			'FOOTER_TYPE' => array(
+				'VALUE' => '1',
+				'ADDITIONAL_OPTIONS' => array(
+					'FOOTER_COLOR' => 'LIGHT',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'FOOTER_TOGGLE_SUBSCRIBE' => 'Y',
+					'FOOTER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+						),
+					),
+					'FOOTER_TOGGLE_EMAIL' => 'Y',
+					'FOOTER_TOGGLE_ADDRESS' => 'Y',
+					'FOOTER_TOGGLE_SOCIAL' => 'Y',
+					'FOOTER_TOGGLE_PAY_SYSTEMS' => 'Y',
+					'FOOTER_TOGGLE_DEVELOPER' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'FOOTER_TOGGLE_DEVELOPER_PARTNER' => 'N',
+						),
+					),
+				),
+			),
+			'ADV_TOP_HEADER' => 'N',
+			'ADV_TOP_UNDERHEADER' => 'N',
+			'ADV_SIDE' => 'N',
+			'ADV_CONTENT_TOP' => 'N',
+			'ADV_CONTENT_BOTTOM' => 'N',
+			'ADV_FOOTER' => 'N',
+			'HEADER_MOBILE_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_MOBILE_SHOW' => 'ALWAYS',
+				),
+			),
+			'HEADER_MOBILE' => array(
+				'VALUE' => '1',
+				'TOGGLE_OPTIONS' => array(
+					'HEADER_MOBILE_TOGGLE_BURGER' => 'Y',
+					'HEADER_MOBILE_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'HEADER_MOBILE_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'HEADER_MOBILE_TOGGLE_SEARCH' => 'Y',
+				),
+			),
+			'HEADER_MOBILE_MENU' => array(
+				'VALUE' => '1',
+				'TOGGLE_OPTIONS' => array(
+					'MOBILE_MENU_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_EMAIL' => 'Y',
+					'MOBILE_MENU_TOGGLE_ADDRESS' => 'Y',
+					'MOBILE_MENU_TOGGLE_SCHEDULE' => 'Y',
+					'MOBILE_MENU_TOGGLE_SOCIAL' => 'Y',
+					'MOBILE_MENU_TOGGLE_REGION' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_REGION_UP' => 'Y',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_PERSONAL' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_PERSONAL_UP' => 'Y',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_COMPARE' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_COMPARE_UP' => 'N',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_CART' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_CART_UP' => 'N',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_FAVORITE' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_FAVORITE_UP' => 'N',
+						),
+					),
+				),
+			),
+			'HEADER_MOBILE_MENU_OPEN' => '1',
+			'COMPACT_FOOTER_MOBILE' => 'Y',
+			'MOBILE_LIST_SECTIONS_COMPACT_IN_SECTIONS' => 'N',
+			'MOBILE_LIST_ELEMENTS_COMPACT_IN_SECTIONS' => 'N',
+			'CABINET' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'PERSONAL_ONEFIO' => 'Y',
+					'LOGIN_EQUAL_EMAIL' => 'Y',
+				),
+			),
+			'CLICK_TO_SHOW_4DEPTH' => 'Y',
+			'VIEW_LINKED_GOODS' => 'catalog_slider',
+			'CATALOG_PAGE_DETAIL_SKU' => 'TYPE_1',
+			'DETAIL_LINKED_TARIFFS' => array(
+				'VALUE' => 'type_2',
+				'ADDITIONAL_OPTIONS' => array(
+					'LINKED_OFFSET_TARIFFS' => 'N',
+					'LINKED_IMAGES_TARIFFS' => 'ROUND_PICTURES',
+				),
+			),
+			'LEFT_BLOCK_TARIFFS_ROOT' => 'N',
+			'SECTIONS_TYPE_VIEW_TARIFFS' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_ITEMS_OFFSET_TARIFFS' => 'Y',
+					'SECTIONS_ELEMENTS_COUNT_TARIFFS' => '2',
+					'SECTIONS_IMAGES_TARIFFS' => 'ROUND_PICTURES',
+					'SECTIONS_IMAGE_POSITION_TARIFFS' => 'LEFT',
+				),
+			),
+			'LEFT_BLOCK_TARIFFS_SECTIONS' => 'N',
+			'SECTION_TYPE_VIEW_TARIFFS' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ITEMS_OFFSET_TARIFFS' => 'Y',
+					'SECTION_ELEMENTS_COUNT_TARIFFS' => '2',
+					'SECTION_IMAGES_TARIFFS' => 'ROUND_PICTURES',
+					'SECTION_IMAGE_POSITION_TARIFFS' => 'LEFT',
+				),
+			),
+			'ELEMENTS_PAGE_TARIFFS' => array(
+				'VALUE' => 'list_elements_2',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_OFFSET_TARIFFS' => 'N',
+					'ELEMENTS_IMAGES_TARIFFS' => 'ROUND_PICTURES',
+				),
+			),
+			'LEFT_BLOCK_TARIFFS_DETAIL' => 'N',
+			'USE_DETAIL_TABS_TARIFFS' => 'Y',
+			'BRANDS_DETAIL_PAGE' => 'element_1',
+			'BOTTOM_ICONS_PANEL' => 'Y',
+			'THEME_VIEW_COLOR' => 'LIGHT',
+			'SELF_HOSTED_FONTS' => 'Y',
+			'LEFT_BLOCK_BLOG_DETAIL' => 'Y',
+			'LEFT_BLOCK_SALE_DETAIL' => 'N',
+			'LEFT_BLOCK_NEWS_DETAIL' => 'Y',
+			'MORE_COLOR' => '8',
+			'MORE_COLOR_CUSTOM' => '',
+			'OUTER_BORDER_RADIUS' => '8px',
+			'CATALOG_COMPARE' => 'Y',
+			'SHOW_FAVORITE' => 'Y',
+			'USE_BIG_MENU' => 'N',
+			'CATALOG_DETAIL_SHOW_AMOUNT_STORES' => 'Y',
+			'FONT_TITLE_WEIGHT' => '500',
+			'SHOW_OFFER' => 'Y',
+		),
+	),
+	923 => array(
+		'ID' => 923,
+		'TITLE' => GetMessage('PRESET_923_TITLE'),
+		'DESCRIPTION' => GetMessage('PRESET_923_DESCRIPTION'),
+		'PREVIEW_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_923_preview.jpg',
+		'DETAIL_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_923_detail.jpg',
+		'BANNER_INDEX' => '1',
+		'OPTIONS' => array(
+			'USE_MORE_COLOR' => 'N',
+			'TITLE_FONT' => 'N',
+			'SELF_HOSTED_FONTS' => 'Y',
+			'SHOW_LICENCE' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+				),
+			),
+			'TOP_MENU_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_FIXED' => array(
+						'VALUE' => '1',
+						'TOGGLE_OPTIONS' => array(
+						),
+					),
+				),
+			),
+			'USE_BIG_MENU' => 'N',
+			'SHOW_RIGHT_SIDE' => 'Y',
+			'CLICK_TO_SHOW_4DEPTH' => 'Y',
+			'USE_REGIONALITY' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'REGIONALITY_TYPE' => 'ONE_DOMAIN',
+					'REGIONALITY_VIEW' => 'POPUP_REGIONS',
+					'REGIONALITY_CONFIRM' => 'NORMAL',
+				),
+			),
+			'ORDER_VIEW' => 'N',
+			'CATALOG_COMPARE' => 'Y',
+			'SHOW_FAVORITE' => 'Y',
+			'SHOW_CATALOG_GALLERY_IN_LIST' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'MAX_GALLERY_ITEMS' => '5',
+				),
+			),
+			'LEFT_BLOCK_CATALOG_ROOT' => 'N',
+			'LEFT_BLOCK_CATALOG_SECTIONS' => 'Y',
+			'SHOW_SMARTFILTER' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'FILTER_VIEW' => 'COMPACT',
+					'AJAX_FILTER' => 'Y',
+				),
+			),
+			'CATALOG_DETAIL_SHOW_AMOUNT_STORES' => 'Y',
+			'LEFT_BLOCK_SERVICES_ROOT' => 'Y',
+			'LEFT_BLOCK_SERVICES_SECTIONS' => 'Y',
+			'LEFT_BLOCK_SERVICES_DETAIL' => 'N',
+			'CONTACTS_USE_FEEDBACK' => 'Y',
+			'CONTACTS_USE_MAP' => 'Y',
+			'CONTACTS_USE_TABS' => 'N',
+			'BLOG_PAGE_LEFT_BLOCK' => 'Y',
+			'LEFT_BLOCK_BLOG_DETAIL' => 'Y',
+			'ADV_TOP_HEADER' => 'N',
+			'ADV_TOP_UNDERHEADER' => 'N',
+			'ADV_SIDE' => 'N',
+			'ADV_CONTENT_TOP' => 'N',
+			'ADV_CONTENT_BOTTOM' => 'N',
+			'ADV_FOOTER' => 'N',
+			'HEADER_MOBILE_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_MOBILE_SHOW' => 'ALWAYS',
+				),
+			),
+			'MOBILE_LIST_SECTIONS_COMPACT_IN_SECTIONS' => 'N',
+			'MOBILE_LIST_ELEMENTS_COMPACT_IN_SECTIONS' => 'N',
+			'BOTTOM_ICONS_PANEL' => 'Y',
+			'CABINET' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'PERSONAL_ONEFIO' => 'Y',
+					'LOGIN_EQUAL_EMAIL' => 'Y',
+				),
+			),
+			'BASE_COLOR' => 'CUSTOM',
+			'BASE_COLOR_CUSTOM' => '5b7fff',
+			'THEME_VIEW_COLOR' => 'LIGHT',
+			'PAGE_WIDTH' => '1500px',
+			'FONT_STYLE' => '1',
+			'OUTER_BORDER_RADIUS' => '12px',
+			'SIDE_MENU' => 'LEFT',
+			'FONT_TITLE_WEIGHT' => '500',
+			'STICKY_SIDEBAR' => 'Y',
+			'INDEX_TYPE' => array(
+				'VALUE' => 'index1',
+				'SUB_PARAMS' => array(
+					'BIG_BANNER_INDEX' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE_TEXT' => 'Y',
+							'HEIGHT_BANNER' => 'HIGH',
+						),
+					),
+					'TIZERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+							'IMAGES_POSITION' => 'LEFT',
+						),
+					),
+					'CATALOG_SECTIONS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'N',
+							'ELEMENTS_COUNT' => '5',
+							'LINES_COUNT' => '2',
+							'IMAGES' => 'PICTURES',
+						),
+					),
+					'CATALOG_TAB' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'N',
+							'IMG_CORNER' => 'N',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => 'SHOW_MORE',
+						),
+					),
+					'YOUTUBE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '3',
+						),
+					),
+					'MIDDLE_ADV' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ELEMENTS_COUNT' => '3',
+							'LINES_COUNT' => '1',
+							'TEXT_POSITION' => 'LEFT',
+						),
+					),
+					'SALE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'BOTTOM_BANNERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+						),
+					),
+					'BLOG' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'COMPANY_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'IMAGE' => 'Y',
+							'BORDERED' => 'Y',
+						),
+					),
+					'BRANDS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'ITEMS_BORDER' => 'N',
+						),
+					),
+					'INSTAGRAMM' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+								'TITLE_POSITION' => 'NORMAL',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'VK' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'Y',
+							'ELEMENTS_COUNT' => '3',
+						),
+					),
+					'CUSTOM_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'text',
+					),
+				),
+				'ORDER' => 'BIG_BANNER_INDEX,TIZERS,CATALOG_SECTIONS,BOTTOM_BANNERS,CATALOG_TAB,BRANDS,MIDDLE_ADV,SALE,YOUTUBE,COMPANY_TEXT,VK,BLOG,INSTAGRAMM,CUSTOM_TEXT,CUSTOM_CATALOG,CUSTOM_CATALOG_3,CUSTOM_CATALOG_2',
+			),
+			'HEADER_TYPE' => array(
+				'VALUE' => '1',
+				'ADDITIONAL_OPTIONS' => array(
+					'HEADER_NARROW' => 'Y',
+					'CATALOG_IN_BTN' => 'Y',
+					'SHOW_TOP_SECTIONS' => 'N',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'HEADER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'HEADER_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'HEADER_TOGGLE_THEME_SELECTOR' => 'Y',
+				),
+			),
+			'MEGA_MENU_TYPE' => array(
+				'VALUE' => '1',
+				'DEPENDENT_PARAMS' => array(
+					'REPLACE_TYPE' => 'REPLACE',
+				),
+			),
+			'IMAGES_WIDE_MENU' => 'PICTURES',
+			'IMAGES_WIDE_MENU_POSITION' => 'LEFT',
+			'MAX_DEPTH_MENU' => '5',
+			'VIEW_LINKED_GOODS' => 'catalog_slider',
+			'SECTIONS_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_ELEMENTS_COUNT' => '5',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'SECTION_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'ELEMENTS_TABLE_TYPE_VIEW' => array(
+				'VALUE' => 'catalog_table',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ITEM_LIST_BORDERED' => 'Y',
+					'SECTION_ITEM_LIST_IMG_CORNER' => 'N',
+				),
+			),
+			'SHOW_TABLE_PROPS' => 'NOT',
+			'CATALOG_PAGE_DETAIL' => 'element_1',
+			'USE_DETAIL_TABS' => 'Y',
+			'CATALOG_PAGE_DETAIL_SKU' => 'TYPE_1',
+			'SECTIONS_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'SECTION_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'ELEMENTS_PAGE_SERVICES' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'USE_DETAIL_TABS_SERVICES' => 'Y',
+			'PAGE_CONTACTS' => '2',
+			'BLOG_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_BLOG' => '3',
+				),
+			),
+			'LANDINGS_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_LANDINGS' => '3',
+				),
+			),
+			'SALE_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SALE' => '3',
+				),
+			),
+			'FOOTER_TYPE' => array(
+				'VALUE' => '1',
+				'ADDITIONAL_OPTIONS' => array(
+					'FOOTER_COLOR' => 'LIGHT',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'FOOTER_TOGGLE_SUBSCRIBE' => 'Y',
+					'FOOTER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+						),
+					),
+					'FOOTER_TOGGLE_EMAIL' => 'Y',
+					'FOOTER_TOGGLE_ADDRESS' => 'Y',
+					'FOOTER_TOGGLE_SOCIAL' => 'Y',
+					'FOOTER_TOGGLE_PAY_SYSTEMS' => 'Y',
+					'FOOTER_TOGGLE_DEVELOPER' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'FOOTER_TOGGLE_DEVELOPER_PARTNER' => 'N',
+						),
+					),
+				),
+			),
+			'HEADER_MOBILE_MENU_OPEN' => '1',
+			'SHOW_OFFER' => 'Y',
+		),
+	),
+	319 => array(
+		'ID' => 319,
+		'TITLE' => GetMessage('PRESET_319_TITLE'),
+		'DESCRIPTION' => GetMessage('PRESET_319_DESCRIPTION'),
+		'PREVIEW_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_319_preview.jpg',
+		'DETAIL_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_319_detail.jpg',
+		'BANNER_INDEX' => '2',
+		'OPTIONS' => array(
+			'USE_MORE_COLOR' => 'N',
+			'TITLE_FONT' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'TITLE_FONT_STYLE' => 'NUNITO_SANS',
+				),
+			),
+			'SELF_HOSTED_FONTS' => 'Y',
+			'SHOW_LICENCE' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+				),
+			),
+			'TOP_MENU_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_FIXED' => array(
+						'VALUE' => '1',
+						'TOGGLE_OPTIONS' => array(
+						),
+					),
+				),
+			),
+			'USE_BIG_MENU' => 'N',
+			'SHOW_RIGHT_SIDE' => 'Y',
+			'CLICK_TO_SHOW_4DEPTH' => 'Y',
+			'USE_REGIONALITY' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'REGIONALITY_TYPE' => 'ONE_DOMAIN',
+					'REGIONALITY_VIEW' => 'POPUP_REGIONS',
+					'REGIONALITY_CONFIRM' => 'NORMAL',
+				),
+			),
+			'ORDER_VIEW' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'SHOW_BASKET_PRINT' => 'Y',
+					'SHOW_SHARE_BASKET' => 'Y',
+					'SHOW_DOWNLOAD_BASKET' => 'Y',
+					'BASKET_FILE_DOWNLOAD_TEMPLATE' => 'pdf',
+				),
+			),
+			'CATALOG_COMPARE' => 'Y',
+			'SHOW_FAVORITE' => 'Y',
+			'SHOW_CATALOG_GALLERY_IN_LIST' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'MAX_GALLERY_ITEMS' => '5',
+				),
+			),
+			'LEFT_BLOCK_CATALOG_ROOT' => 'N',
+			'LEFT_BLOCK_CATALOG_SECTIONS' => 'Y',
+			'SHOW_SMARTFILTER' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'FILTER_VIEW' => 'COMPACT',
+					'AJAX_FILTER' => 'Y',
+				),
+			),
+			'CATALOG_DETAIL_SHOW_AMOUNT_STORES' => 'Y',
+			'LEFT_BLOCK_SERVICES_ROOT' => 'Y',
+			'LEFT_BLOCK_SERVICES_SECTIONS' => 'Y',
+			'LEFT_BLOCK_SERVICES_DETAIL' => 'N',
+			'CONTACTS_USE_FEEDBACK' => 'Y',
+			'CONTACTS_USE_MAP' => 'Y',
+			'CONTACTS_USE_TABS' => 'N',
+			'BLOG_PAGE_LEFT_BLOCK' => 'Y',
+			'LEFT_BLOCK_BLOG_DETAIL' => 'Y',
+			'ADV_TOP_HEADER' => 'N',
+			'ADV_TOP_UNDERHEADER' => 'N',
+			'ADV_SIDE' => 'N',
+			'ADV_CONTENT_TOP' => 'N',
+			'ADV_CONTENT_BOTTOM' => 'N',
+			'ADV_FOOTER' => 'N',
+			'HEADER_MOBILE_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_MOBILE_SHOW' => 'ALWAYS',
+				),
+			),
+			'MOBILE_LIST_SECTIONS_COMPACT_IN_SECTIONS' => 'N',
+			'MOBILE_LIST_ELEMENTS_COMPACT_IN_SECTIONS' => 'N',
+			'BOTTOM_ICONS_PANEL' => 'Y',
+			'CABINET' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'PERSONAL_ONEFIO' => 'Y',
+					'LOGIN_EQUAL_EMAIL' => 'Y',
+				),
+			),
+			'BASE_COLOR' => 'CUSTOM',
+			'BASE_COLOR_CUSTOM' => 'f6863b',
+			'THEME_VIEW_COLOR' => 'LIGHT',
+			'PAGE_WIDTH' => '1500px',
+			'FONT_STYLE' => '1',
+			'OUTER_BORDER_RADIUS' => '16px',
+			'SIDE_MENU' => 'LEFT',
+			'FONT_TITLE_WEIGHT' => '600',
+			'STICKY_SIDEBAR' => 'Y',
+			'INDEX_TYPE' => array(
+				'VALUE' => 'index1',
+				'SUB_PARAMS' => array(
+					'BIG_BANNER_INDEX' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE_TEXT' => 'Y',
+							'HEIGHT_BANNER' => 'NORMAL',
+						),
+					),
+					'TIZERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+							'IMAGES_POSITION' => 'LEFT',
+						),
+					),
+					'CATALOG_SECTIONS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_3',
+						'ADDITIONAL_OPTIONS' => array(
+							'IMAGE_ON_FON' => 'Y',
+							'IMAGES' => 'PICTURES',
+						),
+					),
+					'CATALOG_TAB' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'N',
+							'IMG_CORNER' => 'N',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '2',
+						),
+					),
+					'YOUTUBE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+						),
+					),
+					'MIDDLE_ADV' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '40',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+							'TEXT_POSITION' => 'LEFT',
+						),
+					),
+					'SALE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '3',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'BOTTOM_BANNERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+						),
+					),
+					'BLOG' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'COMPANY_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'IMAGE' => 'N',
+							'BORDERED' => 'Y',
+						),
+					),
+					'BRANDS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'ITEMS_BORDER' => 'N',
+						),
+					),
+					'INSTAGRAMM' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+								'TITLE_POSITION' => 'NORMAL',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'VK' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+						),
+					),
+					'CUSTOM_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'text',
+					),
+				),
+				'ORDER' => 'BIG_BANNER_INDEX,MIDDLE_ADV,CATALOG_SECTIONS,CATALOG_TAB,TIZERS,BRANDS,BOTTOM_BANNERS,SALE,YOUTUBE,VK,COMPANY_TEXT,BLOG,INSTAGRAMM,CUSTOM_TEXT,CUSTOM_CATALOG,CUSTOM_CATALOG_3,CUSTOM_CATALOG_2',
+			),
+			'HEADER_TYPE' => array(
+				'VALUE' => '1',
+				'ADDITIONAL_OPTIONS' => array(
+					'HEADER_NARROW' => 'Y',
+					'CATALOG_IN_BTN' => 'Y',
+					'SHOW_TOP_SECTIONS' => 'Y',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'HEADER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'HEADER_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'HEADER_TOGGLE_THEME_SELECTOR' => 'Y',
+				),
+			),
+			'MEGA_MENU_TYPE' => array(
+				'VALUE' => '1',
+				'DEPENDENT_PARAMS' => array(
+					'REPLACE_TYPE' => 'REPLACE',
+				),
+			),
+			'IMAGES_WIDE_MENU' => 'PICTURES',
+			'IMAGES_WIDE_MENU_POSITION' => 'LEFT',
+			'MAX_DEPTH_MENU' => '5',
+			'VIEW_LINKED_GOODS' => 'catalog_slider',
+			'SECTIONS_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_ELEMENTS_COUNT' => '5',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'SECTION_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'ELEMENTS_TABLE_TYPE_VIEW' => array(
+				'VALUE' => 'catalog_table',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ITEM_LIST_BORDERED' => 'Y',
+					'SECTION_ITEM_LIST_IMG_CORNER' => 'N',
+				),
+			),
+			'SHOW_TABLE_PROPS' => 'NOT',
+			'CATALOG_PAGE_DETAIL' => 'element_1',
+			'USE_DETAIL_TABS' => 'Y',
+			'CATALOG_PAGE_DETAIL_SKU' => 'TYPE_1',
+			'SECTIONS_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'SECTION_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'ELEMENTS_PAGE_SERVICES' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'USE_DETAIL_TABS_SERVICES' => 'Y',
+			'PAGE_CONTACTS' => '2',
+			'BLOG_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_BLOG' => '3',
+				),
+			),
+			'LANDINGS_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_LANDINGS' => '3',
+				),
+			),
+			'SALE_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SALE' => '3',
+				),
+			),
+			'FOOTER_TYPE' => array(
+				'VALUE' => '1',
+				'ADDITIONAL_OPTIONS' => array(
+					'FOOTER_COLOR' => 'LIGHT',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'FOOTER_TOGGLE_SUBSCRIBE' => 'Y',
+					'FOOTER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+						),
+					),
+					'FOOTER_TOGGLE_EMAIL' => 'Y',
+					'FOOTER_TOGGLE_ADDRESS' => 'Y',
+					'FOOTER_TOGGLE_SOCIAL' => 'Y',
+					'FOOTER_TOGGLE_PAY_SYSTEMS' => 'Y',
+					'FOOTER_TOGGLE_DEVELOPER' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'FOOTER_TOGGLE_DEVELOPER_PARTNER' => 'N',
+						),
+					),
+				),
+			),
+			'HEADER_MOBILE_MENU_OPEN' => '1',
+			'SHOW_OFFER' => 'Y',
+		),
+	),
+	382 => array(
+		'ID' => 382,
+		'TITLE' => GetMessage('PRESET_382_TITLE'),
+		'DESCRIPTION' => GetMessage('PRESET_382_DESCRIPTION'),
+		'PREVIEW_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_382_preview.jpg',
+		'DETAIL_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_382_detail.jpg',
+		'BANNER_INDEX' => '0',
+		'OPTIONS' => array(
+			'BASE_COLOR' => '1',
+			'BASE_COLOR_CUSTOM' => '3fbf73',
+			'USE_MORE_COLOR' => 'N',
+			'THEME_VIEW_COLOR' => 'LIGHT',
+			'PAGE_WIDTH' => '1500px',
+			'FONT_STYLE' => '4',
+			'TITLE_FONT' => 'N',
+			'SELF_HOSTED_FONTS' => 'Y',
+			'OUTER_BORDER_RADIUS' => '12px',
+			'SIDE_MENU' => 'LEFT',
+			'FONT_TITLE_WEIGHT' => '600',
+			'STICKY_SIDEBAR' => 'Y',
+			'SHOW_LICENCE' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+				),
+			),
+			'INDEX_TYPE' => array(
+				'VALUE' => 'index1',
+				'SUB_PARAMS' => array(
+					'BIG_BANNER_INDEX' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'NARROW_BANNER' => 'Y',
+							'NO_OFFSET_BANNER' => 'Y',
+							'WIDE_TEXT' => 'N',
+							'HEIGHT_BANNER' => 'NORMAL',
+						),
+					),
+					'TIZERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+							'IMAGES_POSITION' => 'LEFT',
+						),
+					),
+					'CATALOG_SECTIONS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'N',
+							'ELEMENTS_COUNT' => '8',
+							'LINES_COUNT' => '1',
+							'IMAGES' => 'PICTURES',
+						),
+					),
+					'CATALOG_TAB' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'N',
+							'IMG_CORNER' => 'N',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '2',
+						),
+					),
+					'YOUTUBE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+						),
+					),
+					'MIDDLE_ADV' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '40',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'Y',
+							'ELEMENTS_COUNT' => '2',
+							'LINES_COUNT' => '1',
+							'TEXT_POSITION' => 'LEFT',
+						),
+					),
+					'SALE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '3',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'BOTTOM_BANNERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'Y',
+							'ITEMS_OFFSET' => 'Y',
+						),
+					),
+					'BLOG' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '5',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'COMPANY_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'IMAGE' => 'Y',
+							'BORDERED' => 'Y',
+						),
+					),
+					'BRANDS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ITEMS_BORDER' => 'N',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'INSTAGRAMM' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+								'TITLE_POSITION' => 'NORMAL',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'VK' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+						),
+					),
+					'CUSTOM_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'text',
+					),
+				),
+				'ORDER' => 'BIG_BANNER_INDEX,MIDDLE_ADV,BRANDS,CATALOG_TAB,CATALOG_SECTIONS,BOTTOM_BANNERS,TIZERS,SALE,YOUTUBE,COMPANY_TEXT,BLOG,VK,INSTAGRAMM,CUSTOM_TEXT,CUSTOM_CATALOG,CUSTOM_CATALOG_3,CUSTOM_CATALOG_2',
+			),
+			'TOP_MENU_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_FIXED' => array(
+						'VALUE' => '1',
+						'TOGGLE_OPTIONS' => array(
+						),
+					),
+				),
+			),
+			'HEADER_TYPE' => array(
+				'VALUE' => '3',
+				'ADDITIONAL_OPTIONS' => array(
+					'HEADER_NARROW' => 'Y',
+					'CATALOG_IN_BTN' => 'N',
+					'SHOW_TOP_SECTIONS' => 'N',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'HEADER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'HEADER_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'HEADER_TOGGLE_THEME_SELECTOR' => 'Y',
+				),
+			),
+			'MEGA_MENU_TYPE' => array(
+				'VALUE' => '1',
+				'DEPENDENT_PARAMS' => array(
+					'REPLACE_TYPE' => 'REPLACE',
+				),
+			),
+			'USE_BIG_MENU' => 'N',
+			'SHOW_RIGHT_SIDE' => 'Y',
+			'IMAGES_WIDE_MENU' => 'PICTURES',
+			'IMAGES_WIDE_MENU_POSITION' => 'LEFT',
+			'MAX_DEPTH_MENU' => '5',
+			'CLICK_TO_SHOW_4DEPTH' => 'Y',
+			'USE_REGIONALITY' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'REGIONALITY_TYPE' => 'ONE_DOMAIN',
+					'REGIONALITY_VIEW' => 'POPUP_REGIONS',
+					'REGIONALITY_CONFIRM' => 'NORMAL',
+				),
+			),
+			'ORDER_VIEW' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'SHOW_BASKET_PRINT' => 'Y',
+					'SHOW_SHARE_BASKET' => 'Y',
+					'SHOW_DOWNLOAD_BASKET' => 'Y',
+					'BASKET_FILE_DOWNLOAD_TEMPLATE' => 'pdf',
+				),
+			),
+			'CATALOG_COMPARE' => 'Y',
+			'SHOW_FAVORITE' => 'Y',
+			'SHOW_CATALOG_GALLERY_IN_LIST' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'MAX_GALLERY_ITEMS' => '5',
+				),
+			),
+			'VIEW_LINKED_GOODS' => 'catalog_slider',
+			'LEFT_BLOCK_CATALOG_ROOT' => 'N',
+			'SECTIONS_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_ELEMENTS_COUNT' => '5',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'LEFT_BLOCK_CATALOG_SECTIONS' => 'Y',
+			'SECTION_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'ELEMENTS_TABLE_TYPE_VIEW' => array(
+				'VALUE' => 'catalog_table',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ITEM_LIST_BORDERED' => 'Y',
+					'SECTION_ITEM_LIST_IMG_CORNER' => 'N',
+				),
+			),
+			'SHOW_TABLE_PROPS' => 'NOT',
+			'SHOW_SMARTFILTER' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'FILTER_VIEW' => 'VERTICAL',
+					'AJAX_FILTER' => 'Y',
+				),
+			),
+			'CATALOG_PAGE_DETAIL' => 'element_1',
+			'USE_DETAIL_TABS' => 'Y',
+			'CATALOG_PAGE_DETAIL_SKU' => 'TYPE_1',
+			'CATALOG_DETAIL_SHOW_AMOUNT_STORES' => 'Y',
+			'LEFT_BLOCK_SERVICES_ROOT' => 'Y',
+			'SECTIONS_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'LEFT_BLOCK_SERVICES_SECTIONS' => 'Y',
+			'SECTION_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'ELEMENTS_PAGE_SERVICES' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'LEFT_BLOCK_SERVICES_DETAIL' => 'N',
+			'USE_DETAIL_TABS_SERVICES' => 'Y',
+			'PAGE_CONTACTS' => '2',
+			'CONTACTS_USE_FEEDBACK' => 'Y',
+			'CONTACTS_USE_MAP' => 'Y',
+			'CONTACTS_USE_TABS' => 'N',
+			'BLOG_PAGE_LEFT_BLOCK' => 'Y',
+			'LEFT_BLOCK_BLOG_DETAIL' => 'Y',
+			'BLOG_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_BLOG' => '3',
+				),
+			),
+			'LANDINGS_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_LANDINGS' => '3',
+				),
+			),
+			'SALE_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SALE' => '3',
+				),
+			),
+			'FOOTER_TYPE' => array(
+				'VALUE' => '1',
+				'ADDITIONAL_OPTIONS' => array(
+					'FOOTER_COLOR' => 'DARK',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'FOOTER_TOGGLE_SUBSCRIBE' => 'Y',
+					'FOOTER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+						),
+					),
+					'FOOTER_TOGGLE_EMAIL' => 'Y',
+					'FOOTER_TOGGLE_ADDRESS' => 'Y',
+					'FOOTER_TOGGLE_SOCIAL' => 'Y',
+					'FOOTER_TOGGLE_PAY_SYSTEMS' => 'Y',
+					'FOOTER_TOGGLE_DEVELOPER' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'FOOTER_TOGGLE_DEVELOPER_PARTNER' => 'N',
+						),
+					),
+				),
+			),
+			'ADV_TOP_HEADER' => 'N',
+			'ADV_TOP_UNDERHEADER' => 'N',
+			'ADV_SIDE' => 'N',
+			'ADV_CONTENT_TOP' => 'N',
+			'ADV_CONTENT_BOTTOM' => 'N',
+			'ADV_FOOTER' => 'N',
+			'HEADER_MOBILE_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_MOBILE_SHOW' => 'ALWAYS',
+				),
+			),
+			'HEADER_MOBILE_MENU_OPEN' => '1',
+			'MOBILE_LIST_SECTIONS_COMPACT_IN_SECTIONS' => 'N',
+			'MOBILE_LIST_ELEMENTS_COMPACT_IN_SECTIONS' => 'N',
+			'BOTTOM_ICONS_PANEL' => 'Y',
+			'CABINET' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'PERSONAL_ONEFIO' => 'Y',
+					'LOGIN_EQUAL_EMAIL' => 'Y',
+				),
+			),
+			'SHOW_OFFER' => 'Y',
+		),
+	),
+	663 => array(
+		'ID' => 663,
+		'TITLE' => GetMessage('PRESET_663_TITLE'),
+		'DESCRIPTION' => GetMessage('PRESET_663_DESCRIPTION'),
+		'PREVIEW_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_663_preview.jpg',
+		'DETAIL_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_663_detail.jpg',
+		'BANNER_INDEX' => '3',
+		'OPTIONS' => array(
+			'BASE_COLOR' => 'CUSTOM',
+			'BASE_COLOR_CUSTOM' => '3ea344',
+			'USE_MORE_COLOR' => 'N',
+			'THEME_VIEW_COLOR' => 'DARK',
+			'PAGE_WIDTH' => '1500px',
+			'FONT_STYLE' => '1',
+			'TITLE_FONT' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'TITLE_FONT_STYLE' => 'ROBOTO_SLAB',
+				),
+			),
+			'SELF_HOSTED_FONTS' => 'Y',
+			'OUTER_BORDER_RADIUS' => '12px',
+			'SIDE_MENU' => 'LEFT',
+			'FONT_TITLE_WEIGHT' => '500',
+			'STICKY_SIDEBAR' => 'Y',
+			'SHOW_LICENCE' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+				),
+			),
+			'INDEX_TYPE' => array(
+				'VALUE' => 'index1',
+				'SUB_PARAMS' => array(
+					'BIG_BANNER_INDEX' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'NARROW_BANNER' => 'N',
+							'NO_OFFSET_BANNER' => 'N',
+							'WIDE_TEXT' => 'N',
+							'HEIGHT_BANNER' => 'NORMAL',
+						),
+					),
+					'TIZERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+							'IMAGES_POSITION' => 'LEFT',
+						),
+					),
+					'CATALOG_SECTIONS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'N',
+							'ELEMENTS_COUNT' => '5',
+							'LINES_COUNT' => '2',
+							'IMAGES' => 'PICTURES',
+						),
+					),
+					'CATALOG_TAB' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'N',
+							'IMG_CORNER' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '2',
+						),
+					),
+					'YOUTUBE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+						),
+					),
+					'MIDDLE_ADV' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+							'TEXT_POSITION' => 'LEFT',
+						),
+					),
+					'SALE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '3',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'BOTTOM_BANNERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'Y',
+							'ITEMS_OFFSET' => 'Y',
+						),
+					),
+					'BLOG' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'COMPANY_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'IMAGE' => 'Y',
+							'BORDERED' => 'N',
+						),
+					),
+					'BRANDS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ITEMS_BORDER' => 'N',
+							'LINES_COUNT' => '2',
+						),
+					),
+					'INSTAGRAMM' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+								'TITLE_POSITION' => 'NORMAL',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'VK' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+						),
+					),
+					'CUSTOM_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'text',
+					),
+				),
+				'ORDER' => 'BIG_BANNER_INDEX,MIDDLE_ADV,TIZERS,CATALOG_TAB,CATALOG_SECTIONS,BOTTOM_BANNERS,SALE,YOUTUBE,BRANDS,COMPANY_TEXT,BLOG,VK,INSTAGRAMM,CUSTOM_TEXT,CUSTOM_CATALOG,CUSTOM_CATALOG_3,CUSTOM_CATALOG_2',
+			),
+			'TOP_MENU_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_FIXED' => array(
+						'VALUE' => '1',
+						'TOGGLE_OPTIONS' => array(
+						),
+					),
+				),
+			),
+			'HEADER_TYPE' => array(
+				'VALUE' => '2',
+				'ADDITIONAL_OPTIONS' => array(
+					'HEADER_NARROW' => 'N',
+					'CATALOG_IN_BTN' => 'Y',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'HEADER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'HEADER_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'HEADER_TOGGLE_SEARCH' => 'Y',
+					'HEADER_TOGGLE_THEME_SELECTOR' => 'Y',
+				),
+			),
+			'MEGA_MENU_TYPE' => array(
+				'VALUE' => '1',
+				'DEPENDENT_PARAMS' => array(
+					'REPLACE_TYPE' => 'REPLACE',
+				),
+			),
+			'USE_BIG_MENU' => 'N',
+			'SHOW_RIGHT_SIDE' => 'Y',
+			'IMAGES_WIDE_MENU' => 'PICTURES',
+			'IMAGES_WIDE_MENU_POSITION' => 'LEFT',
+			'MAX_DEPTH_MENU' => '5',
+			'CLICK_TO_SHOW_4DEPTH' => 'Y',
+			'USE_REGIONALITY' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'REGIONALITY_TYPE' => 'ONE_DOMAIN',
+					'REGIONALITY_VIEW' => 'POPUP_REGIONS',
+					'REGIONALITY_CONFIRM' => 'NORMAL',
+				),
+			),
+			'ORDER_VIEW' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'SHOW_BASKET_PRINT' => 'Y',
+					'SHOW_SHARE_BASKET' => 'Y',
+					'SHOW_DOWNLOAD_BASKET' => 'Y',
+					'BASKET_FILE_DOWNLOAD_TEMPLATE' => 'pdf',
+				),
+			),
+			'CATALOG_COMPARE' => 'Y',
+			'SHOW_FAVORITE' => 'Y',
+			'SHOW_CATALOG_GALLERY_IN_LIST' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'MAX_GALLERY_ITEMS' => '5',
+				),
+			),
+			'VIEW_LINKED_GOODS' => 'catalog_slider',
+			'LEFT_BLOCK_CATALOG_ROOT' => 'N',
+			'SECTIONS_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_ELEMENTS_COUNT' => '5',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'LEFT_BLOCK_CATALOG_SECTIONS' => 'Y',
+			'SECTION_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'ELEMENTS_TABLE_TYPE_VIEW' => array(
+				'VALUE' => 'catalog_table',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ITEM_LIST_BORDERED' => 'Y',
+					'SECTION_ITEM_LIST_IMG_CORNER' => 'N',
+				),
+			),
+			'SHOW_TABLE_PROPS' => 'NOT',
+			'SHOW_SMARTFILTER' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'FILTER_VIEW' => 'COMPACT',
+					'AJAX_FILTER' => 'Y',
+				),
+			),
+			'CATALOG_PAGE_DETAIL' => 'element_1',
+			'USE_DETAIL_TABS' => 'Y',
+			'CATALOG_PAGE_DETAIL_SKU' => 'TYPE_1',
+			'CATALOG_DETAIL_SHOW_AMOUNT_STORES' => 'Y',
+			'LEFT_BLOCK_SERVICES_ROOT' => 'Y',
+			'SECTIONS_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'LEFT_BLOCK_SERVICES_SECTIONS' => 'Y',
+			'SECTION_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'ELEMENTS_PAGE_SERVICES' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'LEFT_BLOCK_SERVICES_DETAIL' => 'N',
+			'USE_DETAIL_TABS_SERVICES' => 'Y',
+			'PAGE_CONTACTS' => '2',
+			'CONTACTS_USE_FEEDBACK' => 'Y',
+			'CONTACTS_USE_MAP' => 'Y',
+			'CONTACTS_USE_TABS' => 'N',
+			'BLOG_PAGE_LEFT_BLOCK' => 'Y',
+			'LEFT_BLOCK_BLOG_DETAIL' => 'Y',
+			'BLOG_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_BLOG' => '3',
+				),
+			),
+			'LANDINGS_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_LANDINGS' => '3',
+				),
+			),
+			'SALE_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SALE' => '3',
+				),
+			),
+			'FOOTER_TYPE' => array(
+				'VALUE' => '1',
+				'ADDITIONAL_OPTIONS' => array(
+					'FOOTER_COLOR' => 'LIGHT',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'FOOTER_TOGGLE_SUBSCRIBE' => 'Y',
+					'FOOTER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+						),
+					),
+					'FOOTER_TOGGLE_EMAIL' => 'Y',
+					'FOOTER_TOGGLE_ADDRESS' => 'Y',
+					'FOOTER_TOGGLE_SOCIAL' => 'Y',
+					'FOOTER_TOGGLE_PAY_SYSTEMS' => 'Y',
+					'FOOTER_TOGGLE_DEVELOPER' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'FOOTER_TOGGLE_DEVELOPER_PARTNER' => 'N',
+						),
+					),
+				),
+			),
+			'ADV_TOP_HEADER' => 'N',
+			'ADV_TOP_UNDERHEADER' => 'N',
+			'ADV_SIDE' => 'N',
+			'ADV_CONTENT_TOP' => 'N',
+			'ADV_CONTENT_BOTTOM' => 'N',
+			'ADV_FOOTER' => 'N',
+			'HEADER_MOBILE_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_MOBILE_SHOW' => 'ALWAYS',
+				),
+			),
+			'HEADER_MOBILE_MENU_OPEN' => '1',
+			'MOBILE_LIST_SECTIONS_COMPACT_IN_SECTIONS' => 'N',
+			'MOBILE_LIST_ELEMENTS_COMPACT_IN_SECTIONS' => 'N',
+			'BOTTOM_ICONS_PANEL' => 'Y',
+			'CABINET' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'PERSONAL_ONEFIO' => 'Y',
+					'LOGIN_EQUAL_EMAIL' => 'Y',
+				),
+			),
+			'SHOW_OFFER' => 'Y',
+		),
+	),
+	836 => array(
+		'ID' => 836,
+		'TITLE' => GetMessage('PRESET_836_TITLE'),
+		'DESCRIPTION' => GetMessage('PRESET_836_DESCRIPTION'),
+		'PREVIEW_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_836_preview.jpg',
+		'DETAIL_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_836_detail.jpg',
+		'BANNER_INDEX' => '3',
+		'OPTIONS' => array(
+			'BASE_COLOR' => 'CUSTOM',
+			'BASE_COLOR_CUSTOM' => '1b8a1c',
+			'USE_MORE_COLOR' => 'N',
+			'THEME_VIEW_COLOR' => 'LIGHT',
+			'PAGE_WIDTH' => '1500px',
+			'FONT_STYLE' => '4',
+			'TITLE_FONT' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'TITLE_FONT_STYLE' => 'MANROPE',
+				),
+			),
+			'SELF_HOSTED_FONTS' => 'Y',
+			'OUTER_BORDER_RADIUS' => '8px',
+			'SIDE_MENU' => 'LEFT',
+			'FONT_TITLE_WEIGHT' => '600',
+			'STICKY_SIDEBAR' => 'Y',
+			'SHOW_LICENCE' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+				),
+			),
+			'SHOW_OFFER' => 'Y',
+			'INDEX_TYPE' => array(
+				'VALUE' => 'index1',
+				'SUB_PARAMS' => array(
+					'BIG_BANNER_INDEX' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'NARROW_BANNER' => 'N',
+							'NO_OFFSET_BANNER' => 'N',
+							'WIDE_TEXT' => 'N',
+							'HEIGHT_BANNER' => 'HIGH',
+						),
+					),
+					'TIZERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+							'IMAGES_POSITION' => 'LEFT',
+						),
+					),
+					'CATALOG_SECTIONS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '40',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'Y',
+							'IMAGES' => 'PICTURES',
+						),
+					),
+					'CATALOG_TAB' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '40',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'N',
+							'IMG_CORNER' => 'N',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '2',
+						),
+					),
+					'YOUTUBE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '3',
+						),
+					),
+					'MIDDLE_ADV' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ELEMENTS_COUNT' => '3',
+							'LINES_COUNT' => '1',
+							'TEXT_POSITION' => 'LEFT',
+						),
+					),
+					'SALE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'BOTTOM_BANNERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+						),
+					),
+					'BLOG' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'COMPANY_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'IMAGE' => 'Y',
+							'BORDERED' => 'Y',
+						),
+					),
+					'BRANDS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'ITEMS_BORDER' => 'N',
+						),
+					),
+					'INSTAGRAMM' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+								'TITLE_POSITION' => 'NORMAL',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'VK' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'Y',
+							'ELEMENTS_COUNT' => '3',
+						),
+					),
+					'CUSTOM_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'text',
+					),
+				),
+				'ORDER' => 'BIG_BANNER_INDEX,CATALOG_SECTIONS,BOTTOM_BANNERS,CATALOG_TAB,BRANDS,MIDDLE_ADV,SALE,YOUTUBE,TIZERS,COMPANY_TEXT,VK,BLOG,INSTAGRAMM,CUSTOM_TEXT,CUSTOM_CATALOG,CUSTOM_CATALOG_3,CUSTOM_CATALOG_2',
+			),
+			'TOP_MENU_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_FIXED' => array(
+						'VALUE' => '1',
+						'TOGGLE_OPTIONS' => array(
+						),
+					),
+				),
+			),
+			'HEADER_TYPE' => array(
+				'VALUE' => '3',
+				'ADDITIONAL_OPTIONS' => array(
+					'HEADER_NARROW' => 'N',
+					'CATALOG_IN_BTN' => 'N',
+					'SHOW_TOP_SECTIONS' => 'N',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'HEADER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'HEADER_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'HEADER_TOGGLE_THEME_SELECTOR' => 'Y',
+				),
+			),
+			'MEGA_MENU_TYPE' => array(
+				'VALUE' => '1',
+				'DEPENDENT_PARAMS' => array(
+					'REPLACE_TYPE' => 'REPLACE',
+				),
+			),
+			'USE_BIG_MENU' => 'N',
+			'SHOW_RIGHT_SIDE' => 'Y',
+			'IMAGES_WIDE_MENU' => 'PICTURES',
+			'IMAGES_WIDE_MENU_POSITION' => 'LEFT',
+			'MAX_DEPTH_MENU' => '5',
+			'CLICK_TO_SHOW_4DEPTH' => 'Y',
+			'USE_REGIONALITY' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'REGIONALITY_TYPE' => 'ONE_DOMAIN',
+					'REGIONALITY_VIEW' => 'POPUP_REGIONS',
+					'REGIONALITY_CONFIRM' => 'NORMAL',
+				),
+			),
+			'ORDER_VIEW' => 'N',
+			'CATALOG_COMPARE' => 'Y',
+			'SHOW_FAVORITE' => 'Y',
+			'SHOW_CATALOG_GALLERY_IN_LIST' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'MAX_GALLERY_ITEMS' => '5',
+				),
+			),
+			'VIEW_LINKED_GOODS' => 'catalog_slider',
+			'LEFT_BLOCK_CATALOG_ROOT' => 'N',
+			'SECTIONS_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_ELEMENTS_COUNT' => '5',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'LEFT_BLOCK_CATALOG_SECTIONS' => 'Y',
+			'SECTION_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'ELEMENTS_TABLE_TYPE_VIEW' => array(
+				'VALUE' => 'catalog_table',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ITEM_LIST_BORDERED' => 'Y',
+					'SECTION_ITEM_LIST_IMG_CORNER' => 'N',
+				),
+			),
+			'SHOW_TABLE_PROPS' => 'NOT',
+			'SHOW_SMARTFILTER' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'FILTER_VIEW' => 'COMPACT',
+					'AJAX_FILTER' => 'Y',
+				),
+			),
+			'CATALOG_PAGE_DETAIL' => 'element_1',
+			'USE_DETAIL_TABS' => 'Y',
+			'CATALOG_PAGE_DETAIL_SKU' => 'TYPE_1',
+			'CATALOG_DETAIL_SHOW_AMOUNT_STORES' => 'Y',
+			'LEFT_BLOCK_SERVICES_ROOT' => 'Y',
+			'SECTIONS_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'LEFT_BLOCK_SERVICES_SECTIONS' => 'Y',
+			'SECTION_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'ELEMENTS_PAGE_SERVICES' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'LEFT_BLOCK_SERVICES_DETAIL' => 'N',
+			'USE_DETAIL_TABS_SERVICES' => 'Y',
+			'PAGE_CONTACTS' => '2',
+			'CONTACTS_USE_FEEDBACK' => 'Y',
+			'CONTACTS_USE_MAP' => 'Y',
+			'CONTACTS_USE_TABS' => 'N',
+			'BLOG_PAGE_LEFT_BLOCK' => 'Y',
+			'LEFT_BLOCK_BLOG_DETAIL' => 'Y',
+			'BLOG_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_BLOG' => '3',
+				),
+			),
+			'LANDINGS_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_LANDINGS' => '3',
+				),
+			),
+			'SALE_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SALE' => '3',
+				),
+			),
+			'FOOTER_TYPE' => array(
+				'VALUE' => '1',
+				'ADDITIONAL_OPTIONS' => array(
+					'FOOTER_COLOR' => 'LIGHT',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'FOOTER_TOGGLE_SUBSCRIBE' => 'Y',
+					'FOOTER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+						),
+					),
+					'FOOTER_TOGGLE_EMAIL' => 'Y',
+					'FOOTER_TOGGLE_ADDRESS' => 'Y',
+					'FOOTER_TOGGLE_SOCIAL' => 'Y',
+					'FOOTER_TOGGLE_PAY_SYSTEMS' => 'Y',
+					'FOOTER_TOGGLE_DEVELOPER' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'FOOTER_TOGGLE_DEVELOPER_PARTNER' => 'N',
+						),
+					),
+				),
+			),
+			'ADV_TOP_HEADER' => 'N',
+			'ADV_TOP_UNDERHEADER' => 'N',
+			'ADV_SIDE' => 'N',
+			'ADV_CONTENT_TOP' => 'N',
+			'ADV_CONTENT_BOTTOM' => 'N',
+			'ADV_FOOTER' => 'N',
+			'HEADER_MOBILE_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_MOBILE_SHOW' => 'ALWAYS',
+				),
+			),
+			'HEADER_MOBILE_MENU_OPEN' => '1',
+			'MOBILE_LIST_SECTIONS_COMPACT_IN_SECTIONS' => 'N',
+			'MOBILE_LIST_ELEMENTS_COMPACT_IN_SECTIONS' => 'N',
+			'BOTTOM_ICONS_PANEL' => 'Y',
+			'CABINET' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'PERSONAL_ONEFIO' => 'Y',
+					'LOGIN_EQUAL_EMAIL' => 'Y',
+				),
+			),
+		),
+	),
+	757 => array(
+		'ID' => 757,
+		'TITLE' => GetMessage('PRESET_757_TITLE'),
+		'DESCRIPTION' => GetMessage('PRESET_757_DESCRIPTION'),
+		'PREVIEW_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_757_preview.jpg',
+		'DETAIL_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_757_detail.jpg',
+		'BANNER_INDEX' => '2',
+		'OPTIONS' => array(
+			'BASE_COLOR' => 'CUSTOM',
+			'BASE_COLOR_CUSTOM' => 'ee6f6f',
+			'USE_MORE_COLOR' => 'N',
+			'THEME_VIEW_COLOR' => 'LIGHT',
+			'PAGE_WIDTH' => '1500px',
+			'FONT_STYLE' => '1',
+			'TITLE_FONT' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'TITLE_FONT_STYLE' => 'LITERATA',
+				),
+			),
+			'SELF_HOSTED_FONTS' => 'Y',
+			'OUTER_BORDER_RADIUS' => '16px',
+			'SIDE_MENU' => 'LEFT',
+			'FONT_TITLE_WEIGHT' => '600',
+			'STICKY_SIDEBAR' => 'Y',
+			'SHOW_LICENCE' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+				),
+			),
+			'SHOW_OFFER' => 'Y',
+			'INDEX_TYPE' => array(
+				'VALUE' => 'index1',
+				'SUB_PARAMS' => array(
+					'BIG_BANNER_INDEX' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'NARROW_BANNER' => 'Y',
+							'NO_OFFSET_BANNER' => 'Y',
+							'WIDE_TEXT' => 'N',
+							'HEIGHT_BANNER' => 'NORMAL',
+						),
+					),
+					'TIZERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+							'IMAGES_POSITION' => 'LEFT',
+						),
+					),
+					'CATALOG_SECTIONS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'Y',
+							'IMAGES' => 'PICTURES',
+						),
+					),
+					'CATALOG_TAB' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'N',
+							'IMG_CORNER' => 'N',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '2',
+						),
+					),
+					'YOUTUBE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '3',
+						),
+					),
+					'MIDDLE_ADV' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ELEMENTS_COUNT' => '2',
+							'LINES_COUNT' => '2',
+							'TEXT_POSITION' => 'LEFT',
+						),
+					),
+					'SALE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'BOTTOM_BANNERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+						),
+					),
+					'BLOG' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'COMPANY_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'IMAGE' => 'Y',
+							'BORDERED' => 'Y',
+						),
+					),
+					'BRANDS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'ITEMS_BORDER' => 'N',
+						),
+					),
+					'INSTAGRAMM' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+								'TITLE_POSITION' => 'NORMAL',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'VK' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '0',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'Y',
+							'ELEMENTS_COUNT' => '3',
+						),
+					),
+					'CUSTOM_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'text',
+					),
+				),
+				'ORDER' => 'BIG_BANNER_INDEX,CATALOG_SECTIONS,MIDDLE_ADV,BOTTOM_BANNERS,CATALOG_TAB,TIZERS,SALE,YOUTUBE,COMPANY_TEXT,BRANDS,VK,BLOG,INSTAGRAMM,CUSTOM_TEXT,CUSTOM_CATALOG,CUSTOM_CATALOG_3,CUSTOM_CATALOG_2',
+			),
+			'TOP_MENU_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_FIXED' => array(
+						'VALUE' => '1',
+						'TOGGLE_OPTIONS' => array(
+						),
+					),
+				),
+			),
+			'HEADER_TYPE' => array(
+				'VALUE' => '1',
+				'ADDITIONAL_OPTIONS' => array(
+					'HEADER_NARROW' => 'Y',
+					'CATALOG_IN_BTN' => 'N',
+					'SHOW_TOP_SECTIONS' => 'N',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'HEADER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'HEADER_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'HEADER_TOGGLE_THEME_SELECTOR' => 'Y',
+				),
+			),
+			'MEGA_MENU_TYPE' => array(
+				'VALUE' => '1',
+				'DEPENDENT_PARAMS' => array(
+					'REPLACE_TYPE' => 'REPLACE',
+				),
+			),
+			'USE_BIG_MENU' => 'N',
+			'SHOW_RIGHT_SIDE' => 'Y',
+			'IMAGES_WIDE_MENU' => 'PICTURES',
+			'IMAGES_WIDE_MENU_POSITION' => 'LEFT',
+			'MAX_DEPTH_MENU' => '5',
+			'CLICK_TO_SHOW_4DEPTH' => 'Y',
+			'USE_REGIONALITY' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'REGIONALITY_TYPE' => 'ONE_DOMAIN',
+					'REGIONALITY_VIEW' => 'POPUP_REGIONS',
+					'REGIONALITY_CONFIRM' => 'NORMAL',
+				),
+			),
+			'ORDER_VIEW' => 'N',
+			'CATALOG_COMPARE' => 'Y',
+			'SHOW_FAVORITE' => 'Y',
+			'SHOW_CATALOG_GALLERY_IN_LIST' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'MAX_GALLERY_ITEMS' => '5',
+				),
+			),
+			'VIEW_LINKED_GOODS' => 'catalog_slider',
+			'LEFT_BLOCK_CATALOG_ROOT' => 'N',
+			'SECTIONS_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_ELEMENTS_COUNT' => '5',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'LEFT_BLOCK_CATALOG_SECTIONS' => 'Y',
+			'SECTION_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'ELEMENTS_TABLE_TYPE_VIEW' => array(
+				'VALUE' => 'catalog_table',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ITEM_LIST_BORDERED' => 'Y',
+					'SECTION_ITEM_LIST_IMG_CORNER' => 'N',
+				),
+			),
+			'SHOW_TABLE_PROPS' => 'NOT',
+			'SHOW_SMARTFILTER' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'FILTER_VIEW' => 'COMPACT',
+					'AJAX_FILTER' => 'Y',
+				),
+			),
+			'CATALOG_PAGE_DETAIL' => 'element_1',
+			'USE_DETAIL_TABS' => 'Y',
+			'CATALOG_PAGE_DETAIL_SKU' => 'TYPE_1',
+			'CATALOG_DETAIL_SHOW_AMOUNT_STORES' => 'Y',
+			'LEFT_BLOCK_SERVICES_ROOT' => 'Y',
+			'SECTIONS_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'LEFT_BLOCK_SERVICES_SECTIONS' => 'Y',
+			'SECTION_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'ELEMENTS_PAGE_SERVICES' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'LEFT_BLOCK_SERVICES_DETAIL' => 'N',
+			'USE_DETAIL_TABS_SERVICES' => 'Y',
+			'PAGE_CONTACTS' => '2',
+			'CONTACTS_USE_FEEDBACK' => 'Y',
+			'CONTACTS_USE_MAP' => 'Y',
+			'CONTACTS_USE_TABS' => 'N',
+			'BLOG_PAGE_LEFT_BLOCK' => 'Y',
+			'LEFT_BLOCK_BLOG_DETAIL' => 'Y',
+			'BLOG_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_BLOG' => '3',
+				),
+			),
+			'LANDINGS_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_LANDINGS' => '3',
+				),
+			),
+			'SALE_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SALE' => '3',
+				),
+			),
+			'FOOTER_TYPE' => array(
+				'VALUE' => '1',
+				'ADDITIONAL_OPTIONS' => array(
+					'FOOTER_COLOR' => 'LIGHT',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'FOOTER_TOGGLE_SUBSCRIBE' => 'Y',
+					'FOOTER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+						),
+					),
+					'FOOTER_TOGGLE_EMAIL' => 'Y',
+					'FOOTER_TOGGLE_ADDRESS' => 'Y',
+					'FOOTER_TOGGLE_SOCIAL' => 'Y',
+					'FOOTER_TOGGLE_PAY_SYSTEMS' => 'Y',
+					'FOOTER_TOGGLE_DEVELOPER' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'FOOTER_TOGGLE_DEVELOPER_PARTNER' => 'N',
+						),
+					),
+				),
+			),
+			'ADV_TOP_HEADER' => 'N',
+			'ADV_TOP_UNDERHEADER' => 'N',
+			'ADV_SIDE' => 'N',
+			'ADV_CONTENT_TOP' => 'N',
+			'ADV_CONTENT_BOTTOM' => 'N',
+			'ADV_FOOTER' => 'N',
+			'HEADER_MOBILE_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_MOBILE_SHOW' => 'ALWAYS',
+				),
+			),
+			'HEADER_MOBILE_MENU_OPEN' => '1',
+			'MOBILE_LIST_SECTIONS_COMPACT_IN_SECTIONS' => 'N',
+			'MOBILE_LIST_ELEMENTS_COMPACT_IN_SECTIONS' => 'N',
+			'BOTTOM_ICONS_PANEL' => 'Y',
+			'CABINET' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'PERSONAL_ONEFIO' => 'Y',
+					'LOGIN_EQUAL_EMAIL' => 'Y',
+				),
+			),
+		),
+	),
+	748 => array(
+		'ID' => 748,
+		'TITLE' => GetMessage('PRESET_748_TITLE'),
+		'DESCRIPTION' => GetMessage('PRESET_748_DESCRIPTION'),
+		'PREVIEW_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_748_preview.jpg',
+		'DETAIL_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_748_detail.jpg',
+		'BANNER_INDEX' => '4',
+		'OPTIONS' => array(
+			'BASE_COLOR' => '14',
+			'BASE_COLOR_CUSTOM' => '5b7fff',
+			'USE_MORE_COLOR' => 'N',
+			'THEME_VIEW_COLOR' => 'DEFAULT',
+			'PAGE_WIDTH' => '1500px',
+			'FONT_STYLE' => '4',
+			'TITLE_FONT' => 'N',
+			'SELF_HOSTED_FONTS' => 'Y',
+			'OUTER_BORDER_RADIUS' => '8px',
+			'SIDE_MENU' => 'LEFT',
+			'FONT_TITLE_WEIGHT' => '500',
+			'STICKY_SIDEBAR' => 'Y',
+			'SHOW_LICENCE' => 'Y',
+			'SHOW_OFFER' => 'Y',
+			'INDEX_TYPE' => array(
+				'VALUE' => 'index1',
+				'SUB_PARAMS' => array(
+					'BIG_BANNER_INDEX' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'NARROW_BANNER' => 'Y',
+							'NO_OFFSET_BANNER' => 'N',
+							'WIDE_TEXT' => 'N',
+							'HEIGHT_BANNER' => 'NORMAL',
+						),
+					),
+					'TIZERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+							'IMAGES_POSITION' => 'LEFT',
+						),
+					),
+					'CATALOG_SECTIONS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '40',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'N',
+							'ELEMENTS_COUNT' => '8',
+							'LINES_COUNT' => '1',
+							'IMAGES' => 'ICONS',
+						),
+					),
+					'CATALOG_TAB' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'N',
+							'IMG_CORNER' => 'N',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '3',
+						),
+					),
+					'YOUTUBE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => 'N',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+						),
+					),
+					'MIDDLE_ADV' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ELEMENTS_COUNT' => '3',
+							'LINES_COUNT' => '1',
+							'TEXT_POSITION' => 'LEFT',
+						),
+					),
+					'SALE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => 'N',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '3',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'BOTTOM_BANNERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+						),
+					),
+					'BLOG' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => 'N',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '5',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'COMPANY_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'IMAGE' => 'Y',
+							'BORDERED' => 'Y',
+						),
+					),
+					'BRANDS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'ITEMS_BORDER' => 'N',
+						),
+					),
+					'INSTAGRAMM' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+								'TITLE_POSITION' => 'NORMAL',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'VK' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => 'N',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+						),
+					),
+					'CUSTOM_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'text',
+					),
+					'CUSTOM_CATALOG' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'telefony',
+					),
+					'CUSTOM_CATALOG_2' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'elektrosamokaty',
+					),
+					'CUSTOM_CATALOG_3' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'posuda',
+					),
+				),
+				'ORDER' => 'BIG_BANNER_INDEX,CATALOG_SECTIONS,CATALOG_TAB,BRANDS,MIDDLE_ADV,TIZERS,YOUTUBE,COMPANY_TEXT,BLOG,VK,INSTAGRAMM,CUSTOM_TEXT,CUSTOM_CATALOG,SALE,CUSTOM_CATALOG_3,BOTTOM_BANNERS,CUSTOM_CATALOG_2',
+			),
+			'TOP_MENU_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_FIXED' => array(
+						'VALUE' => '1',
+						'TOGGLE_OPTIONS' => array(
+						),
+					),
+				),
+			),
+			'HEADER_TYPE' => array(
+				'VALUE' => '4',
+				'ADDITIONAL_OPTIONS' => array(
+					'HEADER_NARROW' => 'Y',
+					'CATALOG_IN_BTN' => 'Y',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'HEADER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'HEADER_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'HEADER_TOGGLE_SLOGAN' => 'Y',
+					'HEADER_TOGGLE_THEME_SELECTOR' => 'Y',
+				),
+			),
+			'MEGA_MENU_TYPE' => array(
+				'VALUE' => '1',
+				'DEPENDENT_PARAMS' => array(
+					'REPLACE_TYPE' => 'REPLACE',
+				),
+			),
+			'USE_BIG_MENU' => 'N',
+			'SHOW_RIGHT_SIDE' => 'N',
+			'IMAGES_WIDE_MENU' => 'ICONS',
+			'IMAGES_WIDE_MENU_POSITION' => 'LEFT',
+			'MAX_DEPTH_MENU' => '5',
+			'CLICK_TO_SHOW_4DEPTH' => 'Y',
+			'USE_REGIONALITY' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'REGIONALITY_TYPE' => 'ONE_DOMAIN',
+					'REGIONALITY_VIEW' => 'POPUP_REGIONS',
+					'REGIONALITY_CONFIRM' => 'NORMAL',
+				),
+			),
+			'ORDER_VIEW' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'SHOW_BASKET_PRINT' => 'Y',
+					'SHOW_SHARE_BASKET' => 'Y',
+					'SHOW_DOWNLOAD_BASKET' => 'Y',
+					'BASKET_FILE_DOWNLOAD_TEMPLATE' => 'pdf',
+				),
+			),
+			'CATALOG_COMPARE' => 'Y',
+			'SHOW_ONE_CLICK_BUY' => 'Y',
+			'SHOW_FAVORITE' => 'Y',
+			'USE_FAST_VIEW_PAGE_DETAIL' => 'fast_view_1',
+			'SHOW_CATALOG_GALLERY_IN_LIST' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'MAX_GALLERY_ITEMS' => '5',
+				),
+			),
+			'VIEW_LINKED_GOODS' => 'catalog_slider',
+			'LEFT_BLOCK_CATALOG_ROOT' => 'N',
+			'SECTIONS_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_ELEMENTS_COUNT' => '5',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'LEFT_BLOCK_CATALOG_SECTIONS' => 'Y',
+			'SECTION_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_IMAGES' => 'ICONS',
+				),
+			),
+			'ELEMENTS_TABLE_TYPE_VIEW' => array(
+				'VALUE' => 'catalog_table',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ITEM_LIST_BORDERED' => 'Y',
+					'SECTION_ITEM_LIST_IMG_CORNER' => 'N',
+				),
+			),
+			'SHOW_TABLE_PROPS' => 'NOT',
+			'SHOW_SMARTFILTER' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'FILTER_VIEW' => 'COMPACT',
+					'AJAX_FILTER' => 'Y',
+				),
+			),
+			'CATALOG_PAGE_DETAIL' => 'element_1',
+			'USE_DETAIL_TABS' => 'Y',
+			'CATALOG_PAGE_DETAIL_SKU' => 'TYPE_1',
+			'CATALOG_DETAIL_SHOW_AMOUNT_STORES' => 'Y',
+			'LEFT_BLOCK_SERVICES_ROOT' => 'Y',
+			'SECTIONS_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'LEFT_BLOCK_SERVICES_SECTIONS' => 'Y',
+			'SECTION_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'ELEMENTS_PAGE_SERVICES' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'LEFT_BLOCK_SERVICES_DETAIL' => 'N',
+			'USE_DETAIL_TABS_SERVICES' => 'Y',
+			'PAGE_CONTACTS' => '2',
+			'CONTACTS_USE_FEEDBACK' => 'Y',
+			'CONTACTS_USE_MAP' => 'Y',
+			'CONTACTS_USE_TABS' => 'N',
+			'BLOG_PAGE_LEFT_BLOCK' => 'Y',
+			'LEFT_BLOCK_BLOG_DETAIL' => 'Y',
+			'BLOG_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_BLOG' => '3',
+				),
+			),
+			'LANDINGS_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_LANDINGS' => '3',
+				),
+			),
+			'SALE_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SALE' => '3',
+				),
+			),
+			'BRANDS_PAGE' => 'list_elements_1',
+			'FOOTER_TYPE' => array(
+				'VALUE' => '1',
+				'ADDITIONAL_OPTIONS' => array(
+					'FOOTER_COLOR' => 'LIGHT',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'FOOTER_TOGGLE_SUBSCRIBE' => 'Y',
+					'FOOTER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+						),
+					),
+					'FOOTER_TOGGLE_EMAIL' => 'Y',
+					'FOOTER_TOGGLE_ADDRESS' => 'Y',
+					'FOOTER_TOGGLE_SOCIAL' => 'Y',
+					'FOOTER_TOGGLE_PAY_SYSTEMS' => 'Y',
+					'FOOTER_TOGGLE_DEVELOPER' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'FOOTER_TOGGLE_DEVELOPER_PARTNER' => 'N',
+						),
+					),
+				),
+			),
+			'ADV_TOP_HEADER' => 'N',
+			'ADV_TOP_UNDERHEADER' => 'N',
+			'ADV_SIDE' => 'N',
+			'ADV_CONTENT_TOP' => 'N',
+			'ADV_CONTENT_BOTTOM' => 'N',
+			'ADV_FOOTER' => 'N',
+			'HEADER_MOBILE_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_MOBILE_SHOW' => 'ALWAYS',
+				),
+			),
+			'HEADER_MOBILE' => array(
+				'VALUE' => '1',
+				'TOGGLE_OPTIONS' => array(
+					'HEADER_MOBILE_TOGGLE_BURGER' => 'Y',
+					'HEADER_MOBILE_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'HEADER_MOBILE_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'HEADER_MOBILE_TOGGLE_SEARCH' => 'Y',
+				),
+			),
+			'HEADER_MOBILE_MENU' => array(
+				'VALUE' => '1',
+				'TOGGLE_OPTIONS' => array(
+					'MOBILE_MENU_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_EMAIL' => 'Y',
+					'MOBILE_MENU_TOGGLE_ADDRESS' => 'Y',
+					'MOBILE_MENU_TOGGLE_SCHEDULE' => 'Y',
+					'MOBILE_MENU_TOGGLE_SOCIAL' => 'Y',
+					'MOBILE_MENU_TOGGLE_REGION' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_REGION_UP' => 'Y',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_PERSONAL' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_PERSONAL_UP' => 'Y',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_COMPARE' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_COMPARE_UP' => 'N',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_CART' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_CART_UP' => 'N',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_FAVORITE' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_FAVORITE_UP' => 'N',
+						),
+					),
+				),
+			),
+			'HEADER_MOBILE_MENU_OPEN' => '1',
+			'MOBILE_LIST_SECTIONS_COMPACT_IN_SECTIONS' => 'N',
+			'MOBILE_LIST_ELEMENTS_COMPACT_IN_SECTIONS' => 'N',
+			'BOTTOM_ICONS_PANEL' => 'Y',
+			'CABINET' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'PERSONAL_ONEFIO' => 'Y',
+					'LOGIN_EQUAL_EMAIL' => 'Y',
+				),
+			),
+		),
+	),
+	607 => array(
+		'ID' => 607,
+		'TITLE' => GetMessage('PRESET_607_TITLE'),
+		'DESCRIPTION' => GetMessage('PRESET_607_DESCRIPTION'),
+		'PREVIEW_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_607_preview.jpg',
+		'DETAIL_PICTURE' => '/bitrix/images/aspro.lite/themes/preset_607_detail.jpg',
+		'BANNER_INDEX' => '4',
+		'OPTIONS' => array(
+			'BASE_COLOR' => 'CUSTOM',
+			'BASE_COLOR_CUSTOM' => '5c60d0',
+			'USE_MORE_COLOR' => 'N',
+			'THEME_VIEW_COLOR' => 'DEFAULT',
+			'PAGE_WIDTH' => '1500px',
+			'FONT_STYLE' => '1',
+			'TITLE_FONT' => 'N',
+			'SELF_HOSTED_FONTS' => 'Y',
+			'OUTER_BORDER_RADIUS' => '16px',
+			'SIDE_MENU' => 'LEFT',
+			'FONT_TITLE_WEIGHT' => '500',
+			'STICKY_SIDEBAR' => 'Y',
+			'SHOW_LICENCE' => 'Y',
+			'SHOW_OFFER' => 'Y',
+			'INDEX_TYPE' => array(
+				'VALUE' => 'index1',
+				'SUB_PARAMS' => array(
+					'BIG_BANNER_INDEX' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE_TEXT' => 'Y',
+							'HEIGHT_BANNER' => 'NORMAL',
+						),
+					),
+					'TIZERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '3',
+							'LINES_COUNT' => '1',
+							'IMAGES_POSITION' => 'LEFT',
+						),
+					),
+					'CATALOG_SECTIONS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_2',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'Y',
+							'ELEMENTS_COUNT' => '8',
+							'LINES_COUNT' => '1',
+							'IMAGES' => 'PICTURES',
+						),
+					),
+					'CATALOG_TAB' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'Y',
+							'IMG_CORNER' => 'N',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '2',
+						),
+					),
+					'YOUTUBE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => 'N',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '4',
+						),
+					),
+					'MIDDLE_ADV' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ELEMENTS_COUNT' => '2',
+							'LINES_COUNT' => '1',
+							'TEXT_POSITION' => 'LEFT',
+						),
+					),
+					'SALE' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => 'N',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '3',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'BOTTOM_BANNERS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+						),
+					),
+					'BLOG' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => 'N',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ELEMENTS_COUNT' => '5',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'COMPANY_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'IMAGE' => 'Y',
+							'BORDERED' => 'Y',
+						),
+					),
+					'BRANDS' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+								'SHOW_TITLE' => 'N',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'ITEMS_BORDER' => 'Y',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'INSTAGRAMM' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+								'TITLE_POSITION' => 'NORMAL',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'WIDE' => 'N',
+							'ITEMS_OFFSET' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+							'LINES_COUNT' => '1',
+						),
+					),
+					'VK' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+								'SHOW_TITLE' => 'Y',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'type_1',
+						'ADDITIONAL_OPTIONS' => array(
+							'BORDERED' => 'Y',
+							'ELEMENTS_COUNT' => '4',
+						),
+					),
+					'CUSTOM_TEXT' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'Y',
+								'FON' => 'Y',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '80',
+							),
+						),
+						'VALUE' => 'N',
+						'TEMPLATE' => 'text',
+					),
+					'CUSTOM_CATALOG' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'telefony',
+					),
+					'CUSTOM_CATALOG_2' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'elektrosamokaty',
+					),
+					'CUSTOM_CATALOG_3' => array(
+						'INDEX_BLOCK_OPTIONS' => array(
+							'TOP' => array(
+								'DELIMITER' => 'N',
+								'FON' => 'N',
+							),
+							'BOTTOM' => array(
+								'TOP_OFFSET' => '80',
+								'BOTTOM_OFFSET' => '0',
+							),
+						),
+						'VALUE' => 'Y',
+						'TEMPLATE' => 'posuda',
+					),
+				),
+				'ORDER' => 'BIG_BANNER_INDEX,CATALOG_SECTIONS,CATALOG_TAB,BLOG,INSTAGRAMM,MIDDLE_ADV,BRANDS,CUSTOM_TEXT,CUSTOM_CATALOG,BOTTOM_BANNERS,CUSTOM_CATALOG_3,CUSTOM_CATALOG_2,COMPANY_TEXT,TIZERS,VK,SALE,YOUTUBE',
+			),
+			'TOP_MENU_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_FIXED' => array(
+						'VALUE' => '1',
+						'TOGGLE_OPTIONS' => array(
+						),
+					),
+				),
+			),
+			'HEADER_TYPE' => array(
+				'VALUE' => '2',
+				'ADDITIONAL_OPTIONS' => array(
+					'HEADER_NARROW' => 'Y',
+					'CATALOG_IN_BTN' => 'Y',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'HEADER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'HEADER_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'HEADER_TOGGLE_SEARCH' => 'Y',
+					'HEADER_TOGGLE_THEME_SELECTOR' => 'Y',
+				),
+			),
+			'MEGA_MENU_TYPE' => array(
+				'VALUE' => '1',
+				'DEPENDENT_PARAMS' => array(
+					'REPLACE_TYPE' => 'REPLACE',
+				),
+			),
+			'USE_BIG_MENU' => 'N',
+			'SHOW_RIGHT_SIDE' => 'N',
+			'IMAGES_WIDE_MENU' => 'PICTURES',
+			'IMAGES_WIDE_MENU_POSITION' => 'LEFT',
+			'MAX_DEPTH_MENU' => '5',
+			'CLICK_TO_SHOW_4DEPTH' => 'Y',
+			'USE_REGIONALITY' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'REGIONALITY_TYPE' => 'ONE_DOMAIN',
+					'REGIONALITY_VIEW' => 'POPUP_REGIONS',
+					'REGIONALITY_CONFIRM' => 'NORMAL',
+				),
+			),
+			'ORDER_VIEW' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'SHOW_BASKET_PRINT' => 'Y',
+					'SHOW_SHARE_BASKET' => 'Y',
+					'SHOW_DOWNLOAD_BASKET' => 'Y',
+					'BASKET_FILE_DOWNLOAD_TEMPLATE' => 'pdf',
+				),
+			),
+			'CATALOG_COMPARE' => 'Y',
+			'SHOW_ONE_CLICK_BUY' => 'Y',
+			'SHOW_FAVORITE' => 'Y',
+			'USE_FAST_VIEW_PAGE_DETAIL' => 'fast_view_1',
+			'SHOW_CATALOG_GALLERY_IN_LIST' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'MAX_GALLERY_ITEMS' => '5',
+				),
+			),
+			'VIEW_LINKED_GOODS' => 'catalog_slider',
+			'LEFT_BLOCK_CATALOG_ROOT' => 'N',
+			'SECTIONS_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_ELEMENTS_COUNT' => '5',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'LEFT_BLOCK_CATALOG_SECTIONS' => 'Y',
+			'SECTION_TYPE_VIEW_CATALOG' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_BORDERED' => 'Y',
+					'SECTIONS_IMAGES' => 'PICTURES',
+				),
+			),
+			'ELEMENTS_TABLE_TYPE_VIEW' => array(
+				'VALUE' => 'catalog_table',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ITEM_LIST_BORDERED' => 'Y',
+					'SECTION_ITEM_LIST_IMG_CORNER' => 'N',
+				),
+			),
+			'SHOW_TABLE_PROPS' => 'NOT',
+			'SHOW_SMARTFILTER' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'FILTER_VIEW' => 'COMPACT',
+					'AJAX_FILTER' => 'Y',
+				),
+			),
+			'CATALOG_PAGE_DETAIL' => 'element_1',
+			'USE_DETAIL_TABS' => 'Y',
+			'CATALOG_PAGE_DETAIL_SKU' => 'TYPE_1',
+			'CATALOG_DETAIL_SHOW_AMOUNT_STORES' => 'Y',
+			'LEFT_BLOCK_SERVICES_ROOT' => 'Y',
+			'SECTIONS_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'sections_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTIONS_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'LEFT_BLOCK_SERVICES_SECTIONS' => 'Y',
+			'SECTION_TYPE_VIEW_SERVICES' => array(
+				'VALUE' => 'section_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'SECTION_ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'ELEMENTS_PAGE_SERVICES' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SERVICES' => '3',
+				),
+			),
+			'LEFT_BLOCK_SERVICES_DETAIL' => 'N',
+			'USE_DETAIL_TABS_SERVICES' => 'Y',
+			'PAGE_CONTACTS' => '2',
+			'CONTACTS_USE_FEEDBACK' => 'Y',
+			'CONTACTS_USE_MAP' => 'Y',
+			'CONTACTS_USE_TABS' => 'N',
+			'BLOG_PAGE_LEFT_BLOCK' => 'Y',
+			'LEFT_BLOCK_BLOG_DETAIL' => 'Y',
+			'BLOG_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_BLOG' => '3',
+				),
+			),
+			'LANDINGS_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_LANDINGS' => '3',
+				),
+			),
+			'SALE_PAGE' => array(
+				'VALUE' => 'list_elements_1',
+				'ADDITIONAL_OPTIONS' => array(
+					'ELEMENTS_COUNT_SALE' => '3',
+				),
+			),
+			'BRANDS_PAGE' => 'list_elements_1',
+			'FOOTER_TYPE' => array(
+				'VALUE' => '1',
+				'ADDITIONAL_OPTIONS' => array(
+					'FOOTER_COLOR' => 'DARK',
+				),
+				'TOGGLE_OPTIONS' => array(
+					'FOOTER_TOGGLE_SUBSCRIBE' => 'Y',
+					'FOOTER_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+						),
+					),
+					'FOOTER_TOGGLE_EMAIL' => 'Y',
+					'FOOTER_TOGGLE_ADDRESS' => 'Y',
+					'FOOTER_TOGGLE_SOCIAL' => 'Y',
+					'FOOTER_TOGGLE_PAY_SYSTEMS' => 'Y',
+					'FOOTER_TOGGLE_DEVELOPER' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'FOOTER_TOGGLE_DEVELOPER_PARTNER' => 'N',
+						),
+					),
+				),
+			),
+			'ADV_TOP_HEADER' => 'N',
+			'ADV_TOP_UNDERHEADER' => 'N',
+			'ADV_SIDE' => 'N',
+			'ADV_CONTENT_TOP' => 'N',
+			'ADV_CONTENT_BOTTOM' => 'N',
+			'ADV_FOOTER' => 'N',
+			'HEADER_MOBILE_FIXED' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'HEADER_MOBILE_SHOW' => 'ALWAYS',
+				),
+			),
+			'HEADER_MOBILE' => array(
+				'VALUE' => '1',
+				'TOGGLE_OPTIONS' => array(
+					'HEADER_MOBILE_TOGGLE_BURGER' => 'Y',
+					'HEADER_MOBILE_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'HEADER_MOBILE_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'HEADER_MOBILE_TOGGLE_SEARCH' => 'Y',
+				),
+			),
+			'HEADER_MOBILE_MENU' => array(
+				'VALUE' => '1',
+				'TOGGLE_OPTIONS' => array(
+					'MOBILE_MENU_TOGGLE_PHONE' => array(
+						'VALUE' => 'Y',
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_CALLBACK' => 'Y',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_EMAIL' => 'Y',
+					'MOBILE_MENU_TOGGLE_ADDRESS' => 'Y',
+					'MOBILE_MENU_TOGGLE_SCHEDULE' => 'Y',
+					'MOBILE_MENU_TOGGLE_SOCIAL' => 'Y',
+					'MOBILE_MENU_TOGGLE_REGION' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_REGION_UP' => 'Y',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_PERSONAL' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_PERSONAL_UP' => 'Y',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_COMPARE' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_COMPARE_UP' => 'N',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_CART' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_CART_UP' => 'N',
+						),
+					),
+					'MOBILE_MENU_TOGGLE_FAVORITE' => array(
+						'ADDITIONAL_OPTIONS' => array(
+							'MOBILE_MENU_TOGGLE_FAVORITE_UP' => 'N',
+						),
+					),
+				),
+			),
+			'HEADER_MOBILE_MENU_OPEN' => '1',
+			'MOBILE_LIST_SECTIONS_COMPACT_IN_SECTIONS' => 'N',
+			'MOBILE_LIST_ELEMENTS_COMPACT_IN_SECTIONS' => 'N',
+			'BOTTOM_ICONS_PANEL' => 'Y',
+			'CABINET' => array(
+				'VALUE' => 'Y',
+				'DEPENDENT_PARAMS' => array(
+					'PERSONAL_ONEFIO' => 'Y',
+					'LOGIN_EQUAL_EMAIL' => 'Y',
+				),
+			),
+		),
+	),
+);

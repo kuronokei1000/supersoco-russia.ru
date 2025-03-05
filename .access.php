@@ -1,0 +1,13 @@
+<?
+$PERM["personal"]["7"]="W";
+$PERM["catalog"]["7"]="W";
+$PERM["news"]["7"]="W";
+$PERM["about"]["7"]="W";
+$PERM["index.php"]["7"]="W";
+$PERM["pub"]["5"]="T_8";
+$PERM["upload"]["5"]="T_8";
+$PERM["video"]["*"]="R";
+$PERM["online"]["*"]="R";
+$PERM["desktop_app"]["*"]="R";
+$PERM["/"]["*"]="R";
+?>

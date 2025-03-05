@@ -1,0 +1,166 @@
+<?
+namespace {
+    if (!defined('VENDOR_PARTNER_NAME')) {
+        /** @const Aspro partner name */
+        define('VENDOR_PARTNER_NAME', 'aspro');
+    }
+    
+    if (!defined('VENDOR_SOLUTION_NAME')) {
+        /** @const Aspro solution name */
+        define('VENDOR_SOLUTION_NAME', 'lite');
+    }
+    
+    if (!defined('VENDOR_MODULE_ID')) {
+        /** @const Aspro module id */
+        define('VENDOR_MODULE_ID', 'aspro.lite');
+    }
+    
+    foreach ([
+        'CLite' => 'TSolution',
+        'CLiteEvents' => 'TSolution\Events',
+        'CLiteCache' => 'TSolution\Cache',
+        'CLiteRegionality' => 'TSolution\Regionality',
+        'CLiteCondition' => 'TSolution\Condition',
+        'CInstargramLite' => 'TSolution\Instagram',
+        'CVKLite' => 'TSolution\VK',
+        'Aspro\Functions\CAsproLite' => 'TSolution\Functions',
+        'Aspro\Functions\CAsproLiteReCaptcha' => 'TSolution\ReCaptcha',
+        'Aspro\Lite\Functions\Extensions' => 'TSolution\Extensions',
+        'Aspro\Lite\Functions\ExtensionsMobile' => 'TSolution\ExtensionsMobile',
+        'Aspro\Lite\Functions\CSKU' => 'TSolution\SKU',
+        'Aspro\Lite\Functions\CSKUTemplate' => 'TSolution\SKU\Template',
+        'Aspro\Lite\Functions\Basket' => 'TSolution\Basket',
+        'Aspro\Lite\PhoneAuth' => 'TSolution\PhoneAuth',
+        'Aspro\Lite\Property\CustomFilter' => 'TSolution\Property\CustomFilter',
+        'Aspro\Lite\Itemaction\Basket' => 'TSolution\Itemaction\Basket',
+        'Aspro\Lite\Itemaction\Compare' => 'TSolution\Itemaction\Compare',
+        'Aspro\Lite\Itemaction\Favorite' => 'TSolution\Itemaction\Favorite',
+        'Aspro\Lite\Itemaction\Subscribe' => 'TSolution\Itemaction\Subscribe',
+        'Aspro\Lite\Product\Price' => 'TSolution\Product\Price',
+        'Aspro\Lite\Product\Quantity' => 'TSolution\Product\Quantity',
+        'Aspro\Lite\Product\Basket' => 'TSolution\Product\Basket',
+        'Aspro\Lite\Product\Image' => 'TSolution\Product\Image',
+        'Aspro\Lite\Product\Common' => 'TSolution\Product\Common',
+        'Aspro\Lite\Menu' => 'TSolution\Menu',
+        'Aspro\Lite\Comment\Review' => 'TSolution\Comment\Review',
+        'Aspro\Lite\Search\Common' => 'TSolution\Search\Common',
+        'Aspro\Lite\Notice' => 'TSolution\Notice',
+        'Aspro\Lite\Video\Iframe' => 'TSolution\Video\Iframe',
+        'Aspro\Lite\Popover\Base' => 'TSolution\Popover\Base',
+        'Aspro\Lite\Popover\Tooltip' => 'TSolution\Popover\Tooltip',
+        'Aspro\Lite\Popover\OrderStatus' => 'TSolution\Popover\OrderStatus',
+        'Aspro\Lite\Scheme\Offers' => 'TSolution\Scheme\Offers',
+    ] as $original => $alias) {
+        if (!class_exists($alias)) {
+            class_alias($original, $alias);
+        }    
+    }
+
+    // these alias declarations for IDE only
+    if (false) {
+        class TSolution extends CLite {}
+    }
+}
+
+// these alias declarations for IDE only
+namespace TSolution {
+    if (false) {
+        class Events extends \CLiteEvents {}
+
+        class Cache extends \CLiteCache {}
+
+        class Regionality extends \CLiteRegionality {}
+
+        class Condition extends \CLiteCondition {}
+
+        class Instagram extends \CInstargramLite {}
+
+        class Functions extends \Aspro\Functions\CAsproLite {}
+
+        class Extensions extends \Aspro\Lite\Functions\Extensions {}
+
+        class ExtensionsMobile extends \Aspro\Lite\Functions\ExtensionsMobile {}
+
+        class Basket extends \Aspro\Lite\Functions\Basket {}
+
+        class SKU extends \Aspro\Lite\Functions\CSKU {}
+
+        class PhoneAuth extends \Aspro\Lite\PhoneAuth {}
+
+        class Menu extends \Aspro\Lite\Menu {}
+
+        class Notice extends \Aspro\Lite\Notice {}
+    }
+}
+
+namespace TSolution\SKU {
+    if (false) {
+        class Template extends \Aspro\Lite\Functions\CSKUTemplate {}
+    }
+}
+
+namespace TSolution\Product {
+    if (false) {
+        class Price extends \Aspro\Lite\Product\Price {}
+
+        class Quantity extends \Aspro\Lite\Product\Quantity {}
+
+        class Basket extends \Aspro\Lite\Product\Basket {}
+
+        class Image extends \Aspro\Lite\Product\Image {}
+
+        class Common extends \Aspro\Lite\Product\Common {}
+    }
+}
+
+namespace TSolution\Comment {
+    if (false) {
+        class Review extends \Aspro\Lite\Comment\Review {}
+    }
+}
+
+namespace TSolution\Search {
+    if (false) {
+        class Common extends \Aspro\Lite\Search\Common {}
+    }
+}
+
+namespace TSolution\Itemaction {
+    if (false) {
+        class Compare extends \Aspro\Lite\Itemaction\Basket {}
+
+        class Compare extends \Aspro\Lite\Itemaction\Compare {}
+
+        class Favorite extends \Aspro\Lite\Itemaction\Favorite {}
+        
+        class Subscribe extends \Aspro\Lite\Itemaction\Subscribe {}
+    }
+}
+
+namespace TSolution\Property {
+    if (false) {
+        class CustomFilter extends \Aspro\Lite\Property\CustomFilter {}
+    }
+}
+
+namespace TSolution\Video {
+    if (false) {
+        class Iframe extends \Aspro\Lite\Video\Iframe {}
+    }
+}
+
+namespace TSolution\Popover {
+    if (false) {
+        class Base extends \Aspro\Lite\Popover\Base {}
+
+        class Tooltip extends \Aspro\Lite\Popover\Tooltip {}
+
+        class Orderstatus extends \Aspro\Lite\Popover\Orderstatus {}
+    }
+}
+
+namespace TSolution\Scheme {
+    if (false) {
+        class Offers extends \Aspro\Lite\Scheme\Offers {}
+    }
+}

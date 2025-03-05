@@ -1,0 +1,2 @@
+<?
+$MESS['ASPRO_PANEL_BUTTON_TEXT'] = 'Аспро';

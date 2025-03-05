@@ -1,0 +1,530 @@
+<?
+namespace Aspro\Lite\Product;
+
+use Bitrix\Main\Loader,
+	Bitrix\Main\SystemException,
+    Bitrix\Main\Config\Option,
+	Bitrix\Main\Localization\Loc;
+
+use CLite as Solution,
+    CLiteCache as SolutionCache,
+    CLiteRegionality as SolutionRegionality,
+    Aspro\Functions\CAsproLite as SolutionFunctions;
+
+class Quantity {
+
+    const statusCode = [
+        'instock' => 'instock',
+        'outstock' => 'nostock',
+    ];
+
+    public static $catalogInclude = null;
+
+    public static function checkCatalogModule()
+    {
+        if (self::$catalogInclude === null)
+			self::$catalogInclude = Solution::isSaleMode();
+    }
+
+    public static function checkTypeCount($totalCount)
+    {
+		return floatval($totalCount);
+	}
+
+	public static function getStatus($arOptions = ['ITEM' => [], 'PARAMS' => [], 'TOTAL_COUNT' => 0, 'IS_DETAIL' => false])
+    {
+        self::checkCatalogModule();
+
+		if (self::checkRight()) {
+			if (self::$catalogInclude) {
+				return self::getStatusFromCatalog($arOptions);
+			}
+
+			return self::getStatusFromIBlock($arOptions);
+		}
+
+		return [
+            'NAME' => '',
+            'CODE' => ''
+        ];
+    }
+	
+    public static function checkRight()
+    {
+		static $bShow;
+
+		if(!isset($bShow)){
+			$bShow = false;
+
+			$arSHOW_QUANTITY_FOR_GROUPS = ($tmp = Option::get(Solution::moduleID, "SHOW_QUANTITY_FOR_GROUPS")) ? explode(",", $tmp) : array();
+			if ($arSHOW_QUANTITY_FOR_GROUPS) {
+				$res = \CUser::GetUserGroupList($GLOBALS['USER']->GetID());
+				while ($arGroup = $res->Fetch()) {
+					if (in_array($arGroup["GROUP_ID"], $arSHOW_QUANTITY_FOR_GROUPS)) {
+						$bShow = true;
+						break;
+					}
+				}
+			}
+		}
+
+		return $bShow;
+	}
+
+	public static function getStatusFromCatalog($arOptions = ['ITEM' => [], 'PARAMS' => [], 'TOTAL_COUNT' => 0, 'IS_DETAIL' => false])
+    {
+        static $arQuantityOptions;
+
+		if($arQuantityOptions === NULL){
+			$arQuantityOptions = array(
+				"EXPRESSION_FOR_EXISTS" => Option::get(Solution::moduleID, "EXPRESSION_FOR_EXISTS", GetMessage("EXPRESSION_FOR_EXISTS_DEFAULT"), SITE_ID),
+				"EXPRESSION_FOR_NOTEXISTS" => Option::get(Solution::moduleID, "EXPRESSION_FOR_NOTEXISTS", GetMessage("EXPRESSION_FOR_NOTEXISTS_DEFAULT"), SITE_ID),
+				"CATALOG_DETAIL_SHOW_AMOUNT_STORES" => Option::get(Solution::moduleID, "CATALOG_DETAIL_SHOW_AMOUNT_STORES", "Y", SITE_ID),
+			);
+		}
+
+        $totalCount = $arOptions['TOTAL_COUNT'];
+		$statusCode = $totalCount ? self::statusCode['instock'] : self::statusCode['outstock'];
+        $status = $totalCount ? $arQuantityOptions['EXPRESSION_FOR_EXISTS'] : $arQuantityOptions['EXPRESSION_FOR_NOTEXISTS'];
+
+		if (
+			$arOptions["IS_DETAIL"] &&
+			$arQuantityOptions['CATALOG_DETAIL_SHOW_AMOUNT_STORES'] !== 'N'
+		) {
+			$dataAmount = [
+				'ID' => $arOptions['ITEM']['ID'],
+				'STORES' => array_diff((array)$arOptions['PARAMS']['STORES'], [], [""]),
+				'PARAMS' => [
+					'SHOW_EMPTY' => $arOptions['PARAMS']['SHOW_EMPTY_STORE'],
+					'SHOW_GENERAL' => $arOptions['PARAMS']['SHOW_GENERAL_STORE_INFORMATION'],
+					'USE_MIN' => $arOptions['PARAMS']['USE_MIN_AMOUNT'],
+					'MIN' => $arOptions['PARAMS']['MIN_AMOUNT'],
+					'FIELDS' => array_diff((array)$arOptions['PARAMS']['FIELDS'], [], [""]),
+					'USER_FIELDS' => array_diff((array)$arOptions['PARAMS']['USER_FIELDS'], [], [""]),
+					'PATH' => urlencode($arOptions['PARAMS']['STORE_PATH']),
+					'TITLE' => $arOptions['PARAMS']['MAIN_TITLE'],
+					'FILTER' => $arOptions['PARAMS']['STORES_FILTER'],
+					'ORDER' => $arOptions['PARAMS']['STORES_FILTER_ORDER'],
+				],
+			];
+
+			$dataAmount = $GLOBALS['APPLICATION']->ConvertCharsetArray($dataAmount, SITE_CHARSET, 'UTF-8');
+			$dataAmount = json_encode($dataAmount);
+			$dataAmount = htmlspecialcharsbx($dataAmount);
+
+			$bUseStore = $arOptions['PARAMS']['USE_STORE'] === 'Y';
+
+			$status .= ' <span><span class="status-amount--stores dark_link'.($bUseStore ? ' dotted animate-load' : '').'"'.($bUseStore ? ' data-event="jqm" data-name="stores" data-param-form_id="stores"' : '').' data-param-amount="'.$dataAmount.'"></span></span>';
+		}
+
+        return [
+            'NAME' => $status,
+            'CODE' => $statusCode
+        ];
+    }
+    
+    public static function getStatusFromIBlock($arOptions = ['ITEM' => [], 'PARAMS' => [], 'TOTAL_COUNT' => 0])
+    {
+		$arItem = $arOptions['ITEM'];
+
+        $status = $arItem['DISPLAY_PROPERTIES']['STATUS']['VALUE'];
+		$statusCode = $arItem['DISPLAY_PROPERTIES']['STATUS']['VALUE_XML_ID'];
+        
+        return [
+            'NAME' => $status,
+            'CODE' => $statusCode
+        ];
+    }
+		
+	public static function getTotalCountFromCatalog($arOptions = ['ITEM' => [], 'PARAMS' => []])
+    {
+		$totalCount = 0;
+
+		$arItem = $arOptions['ITEM'];
+		$arParams = $arOptions['PARAMS'];
+
+		//normalize STORES
+		if ($arParams['STORES']) {
+			foreach ($arParams['STORES'] as $key => $store) {
+				if(!$store)
+					unset($arParams['STORES'][$key]);
+			}
+		}
+
+		if ($arParams['USE_REGION'] === 'Y' && $arParams['STORES']) {
+			$arSelect = array('ID', 'PRODUCT_AMOUNT');
+			$arFilter = array('ID' => $arParams['STORES']);
+
+			if ($arItem['OFFERS']) {
+				$arOffers = array_column($arItem['OFFERS'], 'ID');
+
+				if ($arOffers) {
+					$quantity = 0;
+
+					$rsStore = self::CCatalogStore_GetList(array(), array_merge($arFilter, array('PRODUCT_ID' => $arOffers)), false, false, $arSelect);
+					foreach ($rsStore as $arStore) {
+						$quantity += $arStore['PRODUCT_AMOUNT'];
+					}
+
+					$totalCount = $quantity;
+				}
+			} elseif( isset($arItem['PRODUCT']['TYPE']) && $arItem['PRODUCT']['TYPE'] == 2) {
+				if (!$arItem['SET_ITEMS']) {
+					$arItem['SET_ITEMS'] = array();
+
+					if ($arSets = \CCatalogProductSet::getAllSetsByProduct($arItem['ID'], 1)) {
+						$arSets = reset($arSets);
+
+						foreach ($arSets['ITEMS'] as $v) {
+							$v['ID'] = $v['ITEM_ID'];
+							unset($v['ITEM_ID']);
+							$arItem['SET_ITEMS'][] = $v;
+						}
+					}
+				}
+
+			    $arProductSet = $arItem['SET_ITEMS'] ? array_column($arItem['SET_ITEMS'], 'ID') : array();
+
+			    if ($arProductSet) {
+					$arSelect[] = 'ELEMENT_ID';
+					$quantity = array();
+
+					$rsStore = self::CCatalogStore_GetList(array(), array_merge($arFilter, array('PRODUCT_ID' => $arProductSet)), false, false, $arSelect);
+					foreach ($rsStore as $arStore) {
+					    $quantity[$arStore['ELEMENT_ID']] += $arStore['PRODUCT_AMOUNT'];
+					}
+
+					if ($quantity) {
+					    foreach ($arItem['SET_ITEMS'] as $v) {
+							$quantity[$v['ID']] /= $v['QUANTITY'];
+							$quantity[$v['ID']] = floor($quantity[$v['ID']]);
+					    }
+					}
+					$totalCount = min($quantity);
+			    }
+			} else {
+                $quantity = 0;
+				$rsStore = self::CCatalogStore_GetList(array(), array_merge($arFilter, array('PRODUCT_ID' => $arItem['ID'])), false, false, $arSelect);
+				foreach ($rsStore as $arStore) {
+					$quantity += $arStore['PRODUCT_AMOUNT'];
+				}
+
+				$totalCount = $quantity;
+			}
+		} else {
+			if ($arItem['OFFERS']) {
+				foreach ($arItem['OFFERS'] as $arOffer) {
+					$totalCount += $arOffer['CATALOG_QUANTITY'];
+                }
+			} else {
+				$totalCount += ($arItem['~CATALOG_QUANTITY'] && $arItem['~CATALOG_QUANTITY'] != $arItem['CATALOG_QUANTITY'] ? $arItem['~CATALOG_QUANTITY'] : $arItem['CATALOG_QUANTITY']);
+            }
+		}
+
+		foreach(GetModuleEvents(Solution::moduleID, 'OnAspro'.ucfirst(__FUNCTION__), true) as $arEvent) // event for manipulation total quantity
+			ExecuteModuleEventEx($arEvent, array($arItem, $arParams, &$totalCount));
+
+		return self::checkTypeCount($totalCount);
+	}
+
+	
+    public static function getTotalCount($arOptions = ['ITEM' => [], 'PARAMS' => []])
+    {
+		self::checkCatalogModule();
+
+		if (self::$catalogInclude) {
+			return self::getTotalCountFromCatalog($arOptions);
+		}
+
+		return self::getTotalCountFromIblock($arOptions);
+	}
+	
+	public static function getTotalCountFromIblock($arOptions = ['ITEM' => [], 'PARAMS' => []])
+    {		
+		$arItem = $arOptions['ITEM'];
+		$arParams = $arOptions['PARAMS'];
+
+		$totalCount = $arItem['DISPLAY_PROPERTIES']['STATUS']['VALUE_XML_ID'] === 'instock' ? 1 : 0;
+		
+		return $totalCount;
+	}
+
+	public static function getStoresAmount(array $ids, array $stores = []) {
+		$arResult = [];
+
+		if (!Loader::includeModule('catalog')) {
+			throw new SystemException('Error include catalog');
+		}
+
+		if($bUseRegionality = SolutionRegionality::checkUseRegionality()){
+			$arRegion = SolutionRegionality::getCurrentRegion();
+		}
+
+		if (!$stores) {
+			$stores = explode(',', Solution::GetFrontParametrValue('STORES'));
+
+			if ($arRegion) {
+				if (
+					array_key_exists('LIST_STORES', $arRegion) &&
+					$arRegion['LIST_STORES']
+				) {
+					if (reset($arRegion['LIST_STORES']) !== 'component') {
+						$stores = $arRegion['LIST_STORES'];
+					}
+				}
+			}
+		}
+
+		if ($stores) {
+			foreach ($stores as $i => $store) {
+				if(!$store){
+					unset($stores[$i]);
+				}
+			}
+	
+			$stores = array_values($stores);
+		}
+
+		foreach ($ids as $id) {
+			if ($id <= 0) {
+				continue;
+			}
+	
+			$iterator = \Bitrix\Catalog\Model\Product::getList([
+				'select' => [
+					'ID', 
+					'QUANTITY', 
+					'TYPE', 
+					'BUNDLE',
+				],
+				'filter' => [
+					'=ID' => $id,
+				]
+			]);
+			$arProduct = $iterator->fetch();
+			if (!$arProduct) {
+				continue;
+			}
+
+			$arResult[$id] = '';
+			if ($stores) {
+				$arProductStores = [];
+		
+				if (!$arProduct['TYPE']) {
+					$arProduct['TYPE'] = 1;
+				}
+		
+				if ($arProduct['TYPE'] == 2) {
+					if ($arSets = \CCatalogProductSet::getAllSetsByProduct($id, 1)) {
+						$arSets = reset($arSets);
+		
+						$arProductSet = $arSets['ITEMS'] ? array_column($arSets['ITEMS'], 'ITEM_ID') : [];
+		
+						$arFilter = [
+							'PRODUCT_ID' => $arProductSet,
+							'ISSUING_CENTER' => 'Y',
+						];
+						if ($stores) {
+							$arFilter['ID'] = $stores;
+						}
+		
+						$arQuantity = [];
+						$rsStore = self::CCatalogStore_GetList(
+							[],
+							$arFilter,
+							false,
+							false,
+							[
+								'ID',
+								'ELEMENT_ID',
+								'PRODUCT_AMOUNT',
+							]
+						);
+						foreach ($rsStore as $arStore) {
+							if (!isset($arQuantity[$arStore['ID']])) {
+								$arQuantity[$arStore['ID']] = [];
+							}
+		
+							$arQuantity[$arStore['ID']][$arStore['ELEMENT_ID']] = $arStore['PRODUCT_AMOUNT'];
+						}
+		
+						if ($arQuantity) {
+							foreach ($arQuantity as $storeId => &$q) {
+								foreach ($arSets['ITEMS'] as $v) {
+									$q[$v['ITEM_ID']] /= $v['QUANTITY'];
+									$q[$v['ITEM_ID']] = floor($q[$v['ITEM_ID']]);
+								}
+		
+								$q = min($q);
+								if ($q > 0) {
+									$arProductStores[] = $storeId;
+								}
+							}
+							unset($q);
+						}
+					}
+				}
+				elseif ($arProduct['TYPE'] == 3) {
+					$res = \CCatalogSKU::getOffersList([$arProduct['ID']], 0, [], ['ID'], []);
+					if ($res && $res[$arProduct['ID']]) {
+						$arOffersIds = array_keys($res[$arProduct['ID']]);
+
+						$arFilter = [
+							'PRODUCT_ID' => $arOffersIds,
+							'ISSUING_CENTER' => 'Y',
+						];
+						if ($stores) {
+							$arFilter['ID'] = $stores;
+						}
+				
+						$rsStore = self::CCatalogStore_GetList(
+							[],
+							$arFilter,
+							false,
+							false,
+							[
+								'ID',
+								'PRODUCT_AMOUNT',
+							]
+						);
+						foreach ($rsStore as $arStore) {
+							if ($arStore['PRODUCT_AMOUNT'] > 0) {
+								$arProductStores[] = $arStore['ID'];
+							}
+						}
+					}
+				}
+				else {
+					$arFilter = [
+						'PRODUCT_ID' => $arProduct['ID'],
+						'ISSUING_CENTER' => 'Y',
+					];
+					if ($stores) {
+						$arFilter['ID'] = $stores;
+					}
+			
+					$rsStore = self::CCatalogStore_GetList(
+						[],
+						$arFilter,
+						false,
+						false,
+						[
+							'ID',
+							'PRODUCT_AMOUNT',
+						]
+					);
+					foreach ($rsStore as $arStore) {
+						if ($arStore['PRODUCT_AMOUNT'] > 0) {
+							$arProductStores[] = $arStore['ID'];
+						}
+					}
+				}
+		
+				$arProductStores = array_unique($arProductStores);
+		
+				if ($arProductStores) {
+					$count = count($arProductStores);
+					$amount_shops = SolutionFunctions::declOfNum(
+						$count,
+						[
+							Loc::getMessage('CATALOG_STORES_AMOUNT_SHOPS0'),
+							Loc::getMessage('CATALOG_STORES_AMOUNT_SHOPS1'),
+							Loc::getMessage('CATALOG_STORES_AMOUNT_SHOPS2')
+						]
+					);
+		
+					$arResult[$id] = Loc::getMessage('CATALOG_STORES_AMOUNT', [
+						'#AMOUNT_SHOPS#' => $amount_shops,
+					]);
+				} else {
+					$arResult[$id] = Loc::getMessage('CATALOG_STORES_NO_AMOUNT');
+				}
+			}
+		}
+
+		return $arResult;
+	}
+
+    /**
+	 * This method is simply wrapper on CCatalogStore::GetList
+	 * which uses methods of "d7 core" if module version support them
+	 */
+	public static function CCatalogStore_GetList(
+		$arOrder = ["SORT" => "ASC"], 
+		$arFilter = [], 
+		$arGroupBy = false, 
+		$arNavStartParams = false, 
+		$arSelectFields = []
+	){
+		$arRes = $dbRes = [];
+		$arResultGroupBy = ["GROUP" => $arGroupBy["GROUP"], "MULTI" => $arGroupBy["MULTI"], "RESULT" => $arSelectFields["RESULT"]];
+		$arGroupBy = (isset($arGroupBy["BX"]) ? $arGroupBy["BX"] : $arGroupBy);
+
+		if (Solution::checkVersionModule('17.0.4', 'catalog')) {
+			$getListParams = $arRuntimeFields = [];
+			$storeClass = empty($arSelectFields) ? '\Bitrix\Catalog\StoreTable' : '\Bitrix\Catalog\StoreProductTable';
+			$oldFieldsList = [
+				'PRODUCT_AMOUNT' => 'AMOUNT',
+				'ID' => 'STORE_ID',
+				'ELEMENT_ID' => 'PRODUCT_ID'
+			];
+
+			if (!empty($arFilter)) {
+				$getListParams['filter'] = $arFilter;
+
+				foreach ($arSelectFields as $arField) {
+					if (isset($oldFieldsList[$arField]) && !isset($arRuntimeFields[$arField])) {
+						$arRuntimeFields[$arField] = new \Bitrix\Main\Entity\ExpressionField($arField, $oldFieldsList[$arField]);
+					}
+				}
+			}
+			if (!empty($arGroupBy))
+				$getListParams['group'] = $arGroupBy;
+
+			if (!empty($arOrder)) 
+				$getListParams['order'] = $arOrder;
+
+			if (!empty($arSelectFields)) {
+				$getListParams['select'] = $arSelectFields;
+				$getListParams['filter']['STORE.ACTIVE'] = 'Y';
+				
+				if ($getListParams['filter']['ISSUING_CENTER']) {
+					$getListParams['filter']['STORE.ISSUING_CENTER'] = $getListParams['filter']['ISSUING_CENTER'];
+					unset($getListParams['filter']['ISSUING_CENTER']);
+				}
+
+				foreach ($arSelectFields as $arField) {
+					if (isset($oldFieldsList[$arField]) && !isset($arRuntimeFields[$arField])) {
+						$arRuntimeFields[$arField] = new \Bitrix\Main\Entity\ExpressionField($arField, $oldFieldsList[$arField]);
+					}
+				}
+			}
+
+			if (!empty($arRuntimeFields)) {
+				$getListParams['runtime'] = array_values($arRuntimeFields);
+			}
+
+			if (!empty($arNavStartParams)) {
+				if (isset($arNavStartParams['nPageSize']))
+					$getListParams['limit'] = $arNavStartParams['nPageSize'];
+
+				if (isset($arNavStartParams['iNumPage']))
+					$getListParams['offset'] = $arNavStartParams['iNumPage'];
+			}
+
+			$dbRes = $storeClass::getList($getListParams);
+		} else {
+			$dbRes = \CCatalogStore::GetList($arOrder, $arFilter, $arGroupBy, $arNavStartParams, $arSelectFields);
+		}
+
+		while ($item = $dbRes->Fetch()) {
+			$arRes[] = $item;
+		}
+
+		if($arResultGroupBy["MULTI"] || $arResultGroupBy["GROUP"] || $arResultGroupBy["RESULT"]){
+			$arRes = SolutionCache::GroupArrayBy($arRes, $arResultGroupBy);
+		}
+		
+		return $arRes;
+	}
+}

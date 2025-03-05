@@ -1,0 +1,270 @@
+<?php
+/**
+ * @global CMain $APPLICATION
+ */
+define('STOP_STATISTICS', true);
+define('BX_SECURITY_SHOW_MESSAGE', true);
+
+require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
+
+IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/aspro.lite/lib/marketplace/ozon.php');
+
+use
+    \Bitrix\Main\Application,
+    \Bitrix\Main\Localization\Loc,
+    \Aspro\Lite\Marketplace\Helper,
+    \Aspro\Lite\Marketplace\Ajax\Ozon as AjaxHelper,
+    \Aspro\Lite\Marketplace\Maps\Ozon as OzonMap,
+    \Aspro\Lite\Marketplace\Adapters\Ozon as Adapter,
+    \Aspro\Lite\Marketplace\Config\Ozon as Config;
+
+$request = Application::getInstance()->getContext()->getRequest();
+
+if (!check_bitrix_sessid()) {
+    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
+    $APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
+    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');
+    die();
+}
+
+if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
+    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');
+    die();
+}
+
+$clientId = Config::getClientId();
+if ($request->get('GET_CLIENT_ID_FROM_MODULE') !== 'Y') {
+    $clientId = $request->get('CLIENT_ID');
+}
+
+$token = Config::getApiKey();
+if ($request->get('GET_API_KEY_FROM_MODULE') !== 'Y') {
+    $token = $request->get('API_KEY');
+}
+if (!$clientId) {
+    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
+    ShowError(GetMessage('AS_ERROR_CLIENT_ID'));
+    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');
+    die();
+}
+if (!$token) {
+    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
+    ShowError(GetMessage('AS_ERROR_API_KEY'));
+    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');
+    die();
+}
+
+$ajaxHelper = new AjaxHelper($clientId, $token);
+if ($ajaxHelper->checkRequest($request)) {
+    switch ($request->get('action')) {
+        case 'find_category':
+            echo \Bitrix\Main\Web\Json::encode($ajaxHelper->getCategoriesForSelect($request->get('search')));
+
+            break;
+        case 'find_category_properties':
+            echo \Bitrix\Main\Web\Json::encode($ajaxHelper->getCategoryProperties($request->get('category')));
+
+            break;
+        case 'get_limits':
+            echo \Bitrix\Main\Web\Json::encode($ajaxHelper->getLimits());
+
+            break;
+    }
+    die();
+}
+
+if (!$request->get('IBLOCK_ID')) {
+    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
+    ShowError(GetMessage('AS_ERROR_IBLOCK_ID'));
+    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');
+    die();
+}
+$iblockId = (int)$request->get('IBLOCK_ID');
+
+$sessid = str_replace('sessid=', '', bitrix_sessid_get());
+
+$selectedSectionIds = [];
+if ($request->get('SECTIONS')) {
+    $selectedSectionIds = json_decode($request->get('SECTIONS'));
+}
+
+$adapter = $ajaxHelper->adapter;
+$map = new OzonMap($iblockId, $adapter);
+
+if ($request->getRequestMethod() == 'POST' && (!empty($request->get('SaveMap')) || !empty($request->get('CreateSystemProperties')))) {
+    if (!empty($request->get('SaveMap'))) {
+        if ($map->setPostData($request->get('MAP') ?: [], $request->get('MAP_STORE') ?: [])) {
+            $map->saveMap();
+        }
+    }
+    ?>
+    <script type="text/javascript">
+        top.BX.closeWait();
+        top.BX.WindowManager.Get().Close();
+    </script>
+    <?
+    die();
+}
+
+$APPLICATION->SetTitle(Loc::getMessage('AS_MAPPING_SETUP'));
+
+require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
+
+\CJSCore::Init(['jquery']);
+\Bitrix\Main\UI\Extension::load('ui.vue');
+
+$aTabs = [
+    [
+        'DIV' => 'wb-setting-map',
+        'TAB' => Loc::getMessage('AS_MAPPING_SETUP_TAB_1'),
+        'TITLE' => Loc::getMessage('AS_MAPPING_SETUP_TAB_1_TITLE')
+    ],
+    [
+        'DIV' => 'wb-setting-store',
+        'TAB' => Loc::getMessage('AS_MAPPING_SETUP_TAB_2'),
+        'TITLE' => Loc::getMessage('AS_MAPPING_SETUP_TAB_2_TITLE')
+    ],
+];
+
+$assetDir = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/aspro.lite/lib/marketplace/admin/assets/setting-mappings';
+
+$sections = Helper::getSectionTree($iblockId);
+
+$arExcludeFields = ['FILELD_WEIGHT_KG', 'FILELD_WIDTH_CM', 'FILELD_HEIGHT_CM', 'FILELD_LENGTH_CM'];
+$arExcludeFields = [];
+$allPropsAndFields = Helper::getPropertySelectOptions($iblockId);
+$propertySelectOptions = array_values(array_filter($allPropsAndFields, fn($arProp) => isset($arProp['id']) ? !in_array($arProp['id'], $arExcludeFields) : $arProp));
+
+$useSkuProps = false;
+$skuPropsAndFields = [];
+if ($arSku = Helper::getSkuInfo($iblockId)) {
+    $useSkuProps = true;
+    $skuPropsAndFields = array_map(fn($arProp) => $arProp['id'] == '-' ? [] : $arProp, Helper::getPropertySelectOptions($arSku['IBLOCK_ID']));
+    array_unshift($skuPropsAndFields, ['id' => 'PARENT_NAME', 'text' => Loc::getMessage('FIELD_PARENT_NAME')]);
+}
+
+$stores = Helper::getAllStoreList();
+$wbStoreSelectOptions = $adapter->encoding(
+    array_map(function ($item) {
+        return [
+            'id' => $item['warehouse_id'],
+            'text' => $item['name']
+        ];
+    }, $adapter->getServiceWarehouses())
+);
+
+$ajaxHelper->checkPropsTable();
+?>
+
+<style>
+    <? require_once ($assetDir . '/select2.css')?>
+    <? require_once ($assetDir . '/style.css')?>
+</style>
+
+<form name="wb_form" method="POST" action="<?= $APPLICATION->GetCurPage(); ?>">
+    <input type="hidden" name="lang" value="<?= LANGUAGE_ID; ?>">
+    <input type="hidden" name="bxpublic" value="Y">
+    <input type="hidden" name="Update" value="Y"/>
+    <input type="hidden" name="IBLOCK_ID" value="<? echo $iblockId; ?>"/>
+    <input type="hidden" name="API_KEY" value="<? echo $token; ?>"/>
+    <input type="hidden" name="CLIENT_ID" value="<? echo $clientId; ?>"/>
+    <? echo bitrix_sessid_post(); ?>
+    <input type="hidden" name="SaveMap" value="true">
+
+    <?php
+    $tabControl = new \CAdminTabControl('tabControl', $aTabs, true, true);
+
+    $tabControl->Begin();
+
+    $tabControl->BeginNextTab();
+    ?>
+
+    <p class="adm-info-message" style="margin:0px 0px 14px;"><?=Loc::getMessage('MAPPING_SECTION_TIP')?></p>
+
+    <div id="marketplace_map_setting">
+        <mpm-app :state="state"/>
+    </div>
+
+    <? $tabControl->BeginNextTab(); ?>
+
+    <div id="marketplace_map_store_setting">
+        <mpm-app-stores :state="state"/>
+    </div>
+
+    <?php
+    $tabControl->EndTab();
+    $tabControl->Buttons(array());
+    $tabControl->End();
+    ?>
+</form>
+<script>
+    (function () {
+        <? require_once($assetDir . '/select2.js')?>
+        <? require_once($assetDir . '/components.js')?>
+        <? require_once($assetDir . '/app-map.js')?>
+        <? require_once($assetDir . '/app-map-stores.js')?>
+
+        BX.message({
+            AS_SECTION_IN_BX: '<?= Loc::getMessage('AS_SECTION_IN_BX') ?>',
+            AS_SECTION_IN_WB: '<?= Loc::getMessage('AS_SECTION_IN_SERVICE') ?>',
+            AS_SELECT2_TOO_SHORT_3: '<?= Loc::getMessage('AS_SELECT2_TOO_SHORT_3') ?>',
+            AS_SELECT2_SEARCHING: '<?= Loc::getMessage('AS_SELECT2_SEARCHING') ?>',
+            AS_SELECT2_ERROR_LOADING: '<?= Loc::getMessage('AS_SELECT2_ERROR_LOADING') ?>',
+            AS_OPEN: '<?= Loc::getMessage('AS_OPEN') ?>',
+            AS_HIDE: '<?= Loc::getMessage('AS_HIDE') ?>',
+            AS_PROPERTIES: '<?= Loc::getMessage('AS_PROPERTIES') ?>',
+            AS_ONLY_REQUIRED: '<?= Loc::getMessage('AS_ONLY_REQUIRED') ?>',
+            AS_PROPERTY_IN_WB: '<?= Loc::getMessage('AS_PROPERTY_IN_WB') ?>',
+            AS_PROPERTY_IN_BX: '<?= Loc::getMessage('AS_PROPERTY_IN_BX') ?>',
+            AS_PROPERTY_IN_BX_SKU: '<?= Loc::getMessage('AS_PROPERTY_IN_BX_SKU') ?>',
+            AS_OR: '<?= Loc::getMessage('AS_OR') ?>',
+            AS_LOADING: '<?= Loc::getMessage('AS_LOADING') ?>',
+            AS_CHOOSE_A_SECTION: '<?= Loc::getMessage('AS_CHOOSE_A_SECTION') ?>',
+            AS_STORE_BX: '<?= Loc::getMessage('AS_STORE_BX') ?>',
+            AS_STORE_WB: '<?= Loc::getMessage('AS_STORE_WB') ?>',
+            AS_EMPTY_STORES: '<?= Loc::getMessage('AS_EMPTY_STORES') ?>',
+            MATCHING_PROPERTY_VALUES: '<?= Loc::getMessage('MATCHING_PROPERTY_VALUES') ?>',
+            SYNC_PROPERTY_VALUES: '<?= Loc::getMessage('SYNC_PROPERTY_VALUES') ?>',
+            VALUES_FROM_CATALOG: '<?= Loc::getMessage('VALUES_FROM_CATALOG') ?>',
+        });
+
+        AppMpMapSetting.setConfig(<?= CUtil::PhpToJSObject([
+            'sessid' => $sessid,
+            'iblockId' => $iblockId,
+            'clientId' => $clientId,
+            'apiKey' => $token,
+            'ajaxUrl' => '/bitrix/tools/aspro.lite/marketplace/ozon_detail.php',
+            'ajaxUrlPropValuesMatch' => '/bitrix/tools/aspro.lite/marketplace/ozon_prop_values_map.php?lang='.LANGUAGE_ID.'&bxpublic=Y',
+            'controller' => 'ozon',
+            'useSkuProps' => $useSkuProps,
+            'externalSections' => $ajaxHelper->getCategories()
+        ])?>)
+
+        AppMpMapSetting.loadData(<?= CUtil::PhpToJSObject([
+            'sections' => $sections,
+            'propertySelectOptions' => $propertySelectOptions,
+            'propertySkuSelectOptions' => $skuPropsAndFields,
+            'selectedSectionIds' => $selectedSectionIds,
+            'map' => $map->getValues(true),
+        ])?>)
+
+        AppMpMapSetting.mount('#marketplace_map_setting');
+
+        AppMpMapStoreSetting.setConfig(<?= CUtil::PhpToJSObject([
+            'sessid' => $sessid,
+            'iblockId' => $iblockId,
+        ])?>);
+
+        AppMpMapStoreSetting.loadData(<?= CUtil::PhpToJSObject([
+            'stores' => $stores,
+            'wbStoreSelectOptions' => $wbStoreSelectOptions,
+            'map' => $map->getStoreValues(),
+        ])?>)
+
+        AppMpMapStoreSetting.mount('#marketplace_map_store_setting');
+    })();
+</script>
+
+<?php require_once($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/main/include/epilog_admin.php') ?>
+

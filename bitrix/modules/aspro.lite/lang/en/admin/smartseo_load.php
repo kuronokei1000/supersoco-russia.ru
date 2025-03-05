@@ -1,0 +1,44 @@
+<?
+$MESS['ASPRO_MAX_PAGE_TITLE'] = 'Installing Smart SEO Plugin';
+$MESS['ASPRO_SMARTSEO_INSTALL'] = 'Install Smart SEO';
+$MESS['ASPRO_SMARTSEO_CHECK'] = 'Check';
+$MESS['ASPRO_SMARTSEO_CLEAR'] = 'Preparing archive (deleting unnecessary files)';
+$MESS["ASPRO_SMARTSEO_DOWNLOAD"] = "Archive preparation (download)";
+$MESS['ASPRO_SMARTSEO_DOWNLOAD_PART'] = 'Preparing archive (loading #INDEX# from #MAX_INDEX#, passed #TMP_SIZE# from #FILE_SIZE#)';
+$MESS['ASPRO_SMARTSEO_UNZIP'] = 'Preparing archive (unpacking)';
+$MESS['ASPRO_SMARTSEO_UNZIP_PART'] = 'Preparing archive (unpacking #INDEX# from #MAX_INDEX#)';
+$MESS['ASPRO_SMARTSEO_COPY'] = 'Copying files';
+$MESS['ASPRO_SMARTSEO_SETUP'] = 'Setup';
+$MESS['ASPRO_SMARTSEO_ERROR'] = 'Error';
+$MESS['ASPRO_SMARTSEO_FINISH'] = 'Installation completed';
+$MESS['ASPRO_SMARTSEO_DELETE_FINISH'] = 'Deletion completed';
+$MESS['ASPRO_SMARTSEO_ERROR_SETUP_INDEX'] = 'Module setup file not found';
+$MESS['ASPRO_SMARTSEO_OPTIONS_LINK'] = 'Go to Smart SEO module settings';
+$MESS['ASPRO_SMARTSEO_ALREADY_INSTALLED'] = 'Smart SEO installed';
+$MESS['ASPRO_SMARTSEO_CAN_DELETE'] = 'You can delete the Smart SEO module';
+$MESS['ASPRO_SMARTSEO_BUTTON_DELETE'] = 'Delete';
+$MESS['ASPRO_SMARTSEO_BUTTON_DOWNLOAD'] = 'Install';
+$MESS['ASPRO_SMARTSEO_CAN_DOWNLOAD'] = 'To install the Smart SEO module, click the "Install" button';
+$MESS['ASPRO_SMARTSEO_CLEAR_FINAL'] = 'Delete temporary files';
+$MESS['ASPRO_SMARTSEO_SETUP_TAB'] = 'Setup';
+$MESS['ASPRO_SMARTSEO_SETUP_TAB_TITLE'] = 'Smart SEO Setup';
+
+$MESS['ASPRO_SMARTSEO_MAIN_TITLE'] = 'Simple and convenient functionality for setting up SEO';
+$MESS['ASPRO_SMARTSEO_IFRAME_TITLE'] = 'Smart SEO - helper in creating landing pages and setting up SEO texts';
+$MESS['ASPRO_SMARTSEO_ADDITIONAL_DESC'] = 'Create landing pages and SEO texts to fill your site with content and rank high in search results. The functionality has already been implemented in Aspro: Maximum from version 1.4.0 and solves business problems.';
+$MESS['ASPRO_SMARTSEO_ADVANTAGES'] = 'Advantages';
+$MESS['ASPRO_SMARTSEO_ADVANTAGES_1'] = 'Work with an unlimited number of landing pages.';
+$MESS['ASPRO_SMARTSEO_ADVANTAGES_2'] = 'Fast page uniqueization: setting up meta tags, SEO texts, CNC, breadcrumbs.';
+$MESS['ASPRO_SMARTSEO_ADVANTAGES_3'] = 'Tag cloud for additional navigation.';
+$MESS['ASPRO_SMARTSEO_ADVANTAGES_4'] = 'Create pages without duplicates.';
+$MESS['ASPRO_SMARTSEO_WHO_USEFUL'] = 'Who benefits from this functionality';
+$MESS['ASPRO_SMARTSEO_WHO_USEFUL_1'] = 'SEO specialists — create landing pages in the catalog for various filter conditions in 5 minutes and solve other tasks. Engage in SEO settings, not site improvements. Focus on optimizing and getting your sites to the top.';
+$MESS['ASPRO_SMARTSEO_WHO_USEFUL_2'] = 'For marketers and content managers - fill your site with SEO texts in 5 minutes. You no longer need to copy 1 text for 100 products or sections. Create description for elements in one rule and uniqueize them using templates.';
+$MESS['ASPRO_SMARTSEO_WHO_USEFUL_3'] = 'Site owners - save on the implementation of third-party modules. The functionality is already in the Aspro solution: Maximum, starting from version 1.4.0.';
+$MESS['ASPRO_SMARTSEO_MAIN_BLOCKS'] = 'Smart SEO functionality consists of 5 main blocks';
+$MESS['ASPRO_SMARTSEO_MAIN_BLOCKS_1'] = 'SEO smart filter - rules and conditions for creating landing pages by filter are written here.';
+$MESS['ASPRO_SMARTSEO_MAIN_BLOCKS_2'] = 'SEO indexing control — functionality for hiding filter pages from the index, which are generated using the 1C-Bitrix smart filter component.';
+$MESS['ASPRO_SMARTSEO_MAIN_BLOCKS_3'] = 'SEO texts - you can create templates for bulk filling of sections with texts in the section.';
+$MESS['ASPRO_SMARTSEO_MAIN_BLOCKS_4'] = 'Sitemaps - this section sets up a sitemap so that search robots index pages.';
+$MESS['ASPRO_SMARTSEO_MAIN_BLOCKS_5'] = 'Settings - the main parameters for operation.';
+?>

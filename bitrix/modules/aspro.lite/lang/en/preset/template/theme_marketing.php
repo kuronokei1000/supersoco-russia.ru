@@ -1,0 +1,22 @@
+<?
+$MESS['UNSUB_TEXT'] = 'You have received this email because you are a customer of <a href="#SITE_ADDRESS#">#SITE_NAME#</a>';
+$MESS['UNSUB_LINK_TEXT'] = 'You can always <a href="#UNSUBSCRIBE_LINK#" target="_blank">unsubscribe</a>.';
+$MESS['SOCIAL_VK'] = 'VKontakte';
+$MESS['SOCIAL_FACEBOOK'] = 'Facebook';
+$MESS['SOCIAL_TWITTER'] = 'Twitter';
+$MESS['SOCIAL_INSTAGRAM'] = 'Instagram';
+$MESS['SOCIAL_TELEGRAM'] = 'Telegram';
+$MESS['SOCIAL_ODNOKLASSNIKI'] = 'Classmates';
+$MESS['SOCIAL_MAILRU'] = 'Mail.ru';
+$MESS['SOCIAL_MAIL'] = 'Mail.ru';
+$MESS['SOCIAL_LIVEJOURNAL'] = 'Livejournal';
+$MESS['SOCIAL_YOUTUBE'] = 'YouTube';
+$MESS['SOCIAL_GOOGLEPLUS'] = 'Google Plus';
+$MESS['SOCIAL_VIBER'] = 'Viber';
+$MESS['SOCIAL_WHATS'] = 'WhatsApp';
+$MESS['SOCIAL_TIKTOK'] = 'TikTok';
+$MESS['SOCIAL_PINTEREST'] = 'Pinterest';
+$MESS['SOCIAL_SNAPCHAT'] = 'Snapchat';
+$MESS['SOCIAL_ZEN'] = 'Yandex Zen';
+$MESS['SOCIAL_LINKEDIN'] = 'LinkedIn';
+$MESS['SOCIAL_ASPRO_LINK'] = 'Aspro.Link';

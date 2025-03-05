@@ -1,0 +1,175 @@
+<?
+namespace Aspro\Lite\Popover;
+
+use Aspro\Lite\Functions\Extensions;
+
+class Base {
+	public static function initExtensions() {
+		Extensions::init(['popover']);
+	}
+
+	public static function getDefaultConfig() {
+		return [
+			'trigger' => ['click'],
+			'placement' => ['top', ''],
+			'offset' => [0,	0],
+			'sticky' => true,
+		];
+	}
+
+	protected $config;
+	protected $contentFunc;
+
+	public function __construct(array $config = [], $contentFunc = null) {
+		$this->setConfig($config);
+		$this->setContentFunc($contentFunc);
+	}
+
+	public function __get(string $name) {
+		$getterMethodName = 'get'.ucfirst($name);
+		if (method_exists($this, $getterMethodName)) {
+			return $this->{$getterMethodName}();
+		}
+
+		return null;
+	}
+
+	public function __set(string $name, $value) {
+		$setterMethodName = 'set'.ucfirst($name);
+		if (method_exists($this, $setterMethodName)) {
+			return $this->{$setterMethodName}($value);
+		}
+
+		return null;
+	}
+
+	public function getConfig() :array {
+		return $this->config;
+	}
+
+	public function setConfig(array $config = []) {
+		$this->config = static::getDefaultConfig();
+
+		if (isset($config['trigger'])) {
+			if (is_string($config['trigger'])) {
+				$config['trigger'] = explode(',', trim($config['trigger']));
+			}
+
+			if (is_array($config['trigger']) && $config['trigger']) {
+				foreach ($config['trigger'] as $i => $trigger) {
+					$trigger = trim($trigger);
+
+					if (
+						$trigger !== 'click' &&
+						$trigger !== 'hover'
+					) {
+						unset($config['trigger'][$i]);
+					}
+				}
+
+				$config['trigger'] = array_unique(array_values($config['trigger']));
+			}
+
+			if ($config['trigger']) {
+				$this->config['trigger'] = $config['trigger'];
+			}
+		}
+
+		if (isset($config['placement'])) {
+			if (is_string($config['placement'])) {
+				$config['placement'] = explode(',', trim($config['placement']));
+				$config['placement'] = [
+					$config['placement'][0] ?? '',
+					$config['placement'][1] ?? '',
+				];
+			}
+
+			if (is_array($config['placement']) && $config['placement']) {
+				$this->config['placement'] = [
+					in_array('bottom', $config['placement']) ? 'bottom' : (in_array('top', $config['placement']) ? 'top' : ''),
+					in_array('right', $config['placement']) ? 'right' : (in_array('left', $config['placement']) ? 'left' : ''),
+				];
+			}
+		}
+
+		if (isset($config['offset'])) {
+			if (is_string($config['offset'])) {
+				$config['offset'] = explode(',', trim($config['offset']));
+				$config['offset'] = [
+					$config['offset'][0] ?? 0,
+					$config['offset'][1] ?? 0,
+				];
+			}
+
+			if (is_array($config['offset']) && $config['offset']) {
+				$this->config['offset'] = [
+					$config['offset'][0] ?? 0,
+					$config['offset'][1] ?? 0,
+				];
+			}
+		}
+
+		if (isset($config['sticky'])) {
+			$this->config['sticky'] = boolval($config['sticky']);
+		}
+	}
+
+	public function mergeConfig(array $config = []) {
+		$this->setConfig(
+			array_merge(
+				$this->getConfig(),
+				$config,
+			)
+		);
+	}
+
+	public function getContentFunc() {
+		return $this->contentFunc;
+	}
+
+	public function setContentFunc($contentFunc = null) {
+		if (is_callable($contentFunc)) {
+			$this->contentFunc = $contentFunc;
+		}
+	}
+
+	public function showToggleAttrs() {
+		$default = static::getDefaultConfig();
+		$config = $this->config;
+
+		foreach ($default as $key => $value) {
+			if ($value === $config[$key]) {
+				unset($config[$key]);
+			}
+		}
+
+		if (isset($config['placement'])) {
+			$config['placement'] = trim(implode(',', $config['placement']), ',');
+		}
+
+		if (isset($config['offset'])) {
+			$config['offset'] = trim(implode(',', $config['offset']), ',');
+		}
+
+		echo " data-popover=\"".htmlspecialcharsbx(json_encode($config))."\"";
+	}
+
+	public function showContent(...$args) {
+		$contentClass = static::getContentClass();
+		?>
+		<template class="popover-template">
+			<div class="scrollbar">
+				<div class="popover-content<?=(strlen($contentClass) ? ' '.$contentClass : '')?>">
+					<?if ($this->contentFunc && is_callable($this->contentFunc)):?>
+						<?($this->contentFunc)(...$args);?>
+					<?endif;?>
+				</div>
+			</div>
+		</template>
+		<?
+	}
+
+	protected static function getContentClass() :string {
+		return '';
+	}
+}

@@ -1,0 +1,25 @@
+<?EventMessageThemeCompiler::includeComponent(
+	"bitrix:sale.discount.coupon.mail",
+	"aspro_lite_coupon",
+	Array(
+		"COMPOSITE_FRAME_MODE" => "A",
+		"COMPOSITE_FRAME_TYPE" => "AUTO",
+		"COMPONENT_TEMPLATE" => "aspro_lite_coupon",
+		"COUPON_DESCRIPTION" => "{#EMAIL_TO#}",
+		"COUPON_IS_LIMITED" => "Y",
+		"COUPON_LIMIT_TYPE" => "days",
+		"COUPON_LIMIT_VALUE" => "1",
+		"COUPON_TYPE" => "Order",
+		"DISCOUNT_UNIT" => "Perc",
+		"DISCOUNT_VALUE" => "%DISCOUNT_VALUE%",
+		"DISCOUNT_XML_ID" => "{#SENDER_CHAIN_CODE#}",
+		"USE_DISCOUNT_ID" => "N",
+        "TITLE" => "%COUPON_TITLE%",
+        "SHOW_BUTTON" => "%SHOW_BUTTON%",
+        "BUTTON_TITLE" => "%BUTTON_TITLE%",
+        "BUTTON_LINK" => "%BASKET_PAGE_URL%",
+		"SITE_ID" => "%SITE_ID%",
+        "SITE_ADDRESS" => "%SITE_ADDRESS%",
+        "BASE_COLOR" => "%BASE_COLOR%",
+	)
+);?>

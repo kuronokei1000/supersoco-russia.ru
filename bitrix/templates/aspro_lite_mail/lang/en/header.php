@@ -1,0 +1,23 @@
+<?
+// $MESS['T_MAIL_GREETINGS'] = '';
+$MESS['T_MAIL_GREETINGS'] = 'Hello!';
+$MESS['T_CONTACTS_TEXT'] = 'If you have any questions, you can always contact us';
+$MESS['T_SOCIAL_VK'] = 'VKontakte';
+$MESS['T_SOCIAL_FACEBOOK'] = 'Facebook';
+$MESS['T_SOCIAL_TWITTER'] = 'Twitter';
+$MESS['T_SOCIAL_INSTAGRAM'] = 'Instagram';
+$MESS['T_SOCIAL_TELEGRAM'] = 'Telegram';
+$MESS['T_SOCIAL_ODNOKLASSNIKI'] = 'Classmates';
+$MESS['T_SOCIAL_MAILRU'] = 'Mail.ru';
+$MESS['T_SOCIAL_MAIL'] = 'Mail.ru';
+$MESS['T_SOCIAL_LIVEJOURNAL'] = 'Livejournal';
+$MESS['T_SOCIAL_YOUTUBE'] = 'YouTube';
+$MESS['T_SOCIAL_GOOGLEPLUS'] = 'Google Plus';
+$MESS['T_SOCIAL_VIBER'] = 'Viber';
+$MESS['T_SOCIAL_WHATS'] = 'WhatsApp';
+$MESS['T_SOCIAL_TIKTOK'] = 'TikTok';
+$MESS['T_SOCIAL_PINTEREST'] = 'Pinterest';
+$MESS['T_SOCIAL_SNAPCHAT'] = 'Snapchat';
+$MESS['T_SOCIAL_ZEN'] = 'Yandex Zen';
+$MESS['T_SOCIAL_LINKEDIN'] = 'LinkedIn';
+$MESS['T_SOCIAL_ASPRO_LINK'] = 'Aspro.Link';

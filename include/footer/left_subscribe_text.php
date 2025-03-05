@@ -1,0 +1,1 @@
+<div class="font_short font_weight--600">Подписаться <br> на новости и акции</div>

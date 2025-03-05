@@ -1,0 +1,2392 @@
+<?
+use Bitrix\Main\Localization\Loc,
+	Bitrix\Main\Application,
+	Bitrix\Main\Config\Option,
+	Bitrix\Main\IO\File,
+	Bitrix\Main\Page\Asset,
+	Bitrix\Main\Loader,
+	CLite as Solution,
+	CLiteRegionality as SolutionRegionality,
+	CLiteCache as SolutionCache,
+	Aspro\Functions\CAsproLite as SolutionFunctions,
+	Aspro\Functions\CAsproLiteReCaptcha as SolutionReCaptcha,
+	Aspro\Lite\Itemaction\Favorite,
+	Aspro\Lite\Comment\Review;
+
+Loc::loadMessages(__FILE__);
+
+class CLiteEvents{
+	const MODULE_ID = Solution::moduleID;
+
+	public static function BeforeSendEvent(\Bitrix\Main\Event $event){
+		if(isset($_REQUEST["ONE_CLICK_BUY"]) && method_exists('\Bitrix\Sale\Compatible\EventCompatibility', 'setDisableMailSend')){
+			\Bitrix\Sale\Compatible\EventCompatibility::setDisableMailSend(true);
+			if(method_exists('\Bitrix\Sale\Notify', 'setNotifyDisable'))
+				\Bitrix\Sale\Notify::setNotifyDisable(true);
+		}
+	}
+
+	public static function OnBeforeEventAddHandler(&$event, &$lid, &$arFields, &$message_id){
+		if(Loader::includeModule(Solution::moduleID))
+		{
+			if($arCurrentRegion = SolutionRegionality::getCurrentRegion())
+			{
+				$arFields['REGION_ID'] = $arCurrentRegion['ID'];
+				$arFields['REGION_MAIN_DOMAIN'] = $arCurrentRegion['PROPERTY_MAIN_DOMAIN_VALUE'];
+				$arFields['REGION_MAIN_DOMAIN_RAW'] = (CMain::IsHTTPS() ? 'https://' : 'http://').$arCurrentRegion['PROPERTY_MAIN_DOMAIN_VALUE'];
+				$arFields['REGION_ADDRESS'] = $arCurrentRegion['PROPERTY_ADDRESS_VALUE']['TEXT'];
+				$arFields['REGION_EMAIL'] = implode(', ', $arCurrentRegion['PROPERTY_EMAIL_VALUE']);
+				$arFields['REGION_PHONE'] = implode(', ', $arCurrentRegion['PHONES']);
+
+				$arTagSeoMarks = array();
+				foreach($arCurrentRegion as $key => $value)
+				{
+					if(strpos($key, 'PROPERTY_REGION_TAG') !== false && strpos($key, '_VALUE_ID') === false)
+					{
+						$tag_name = str_replace(array('PROPERTY_', '_VALUE'), '', $key);
+						$arTagSeoMarks['#'.$tag_name.'#'] = $key;
+					}
+				}
+
+				if($arTagSeoMarks)
+					SolutionRegionality::addSeoMarks($arTagSeoMarks);
+
+				foreach(SolutionRegionality::$arSeoMarks as $mark => $field)
+				{
+					$mark = str_replace('#', '', $mark);
+					if(is_array($arCurrentRegion[$field]))
+						$arFields[$mark] = $arCurrentRegion[$field]['TEXT'];
+					else
+						$arFields[$mark] = $arCurrentRegion[$field];
+				}
+			}
+		}
+	}
+
+	public static function fixRegionMailFields(&$arFields, $regionID = null){
+		$arCurrentRegion = array();
+	}
+
+	public static function OnFindSocialservicesUserHandler($arFields){
+		// check for user with email
+		if($arFields['EMAIL'])
+		{
+			$arUser = CUser::GetList($by = 'ID', $ord = 'ASC', array('EMAIL' => $arFields['EMAIL'], 'ACTIVE' => 'Y'), array('NAV_PARAMS' => array("nTopCount" => "1")))->fetch();
+			if($arUser)
+			{
+				if($arFields['PERSONAL_PHOTO'])
+				{
+
+					/*if(!$arUser['PERSONAL_PHOTO'])
+					{
+						$arUpdateFields = Array(
+							'PERSONAL_PHOTO' => $arFields['PERSONAL_PHOTO'],
+						);
+						$user->Update($arUser['ID'], $arUpdateFields);
+					}
+					else
+					{*/
+						$code = 'UF_'.strtoupper($arFields['EXTERNAL_AUTH_ID']);
+						$arUserFieldUserImg = CUserTypeEntity::GetList(array(), array('ENTITY_ID' => 'USER', 'FIELD_NAME' => $code))->Fetch();
+						if(!$arUserFieldUserImg)
+						{
+							$arFieldsUser = array(
+								"FIELD_NAME" => $code,
+								"USER_TYPE_ID" => "file",
+								"XML_ID" => $code,
+								"SORT" => 100,
+								"MULTIPLE" => "N",
+								"MANDATORY" => "N",
+								"SHOW_FILTER" => "N",
+								"SHOW_IN_LIST" => "Y",
+								"EDIT_IN_LIST" => "Y",
+								"IS_SEARCHABLE" => "N",
+								"SETTINGS" => array(
+									"DISPLAY" => "LIST",
+									"LIST_HEIGHT" => 5,
+								)
+							);
+							$arLangs = array(
+								"EDIT_FORM_LABEL" => array(
+									"ru" => $code,
+									"en" => $code,
+								),
+								"LIST_COLUMN_LABEL" => array(
+									"ru" => $code,
+									"en" => $code,
+								)
+							);
+
+							$ob = new CUserTypeEntity();
+							$FIELD_ID = $ob->Add(array_merge($arFieldsUser, array('ENTITY_ID' => 'USER'), $arLangs));
+
+						}
+						$user = new CUser;
+						$arUpdateFields = Array(
+							$code => $arFields['PERSONAL_PHOTO'],
+						);
+						$user->Update($arUser['ID'], $arUpdateFields);
+					//}
+				}
+				return $arUser['ID'];
+			}
+		}
+		return false;
+	}
+
+	public static function OnRegionUpdateHandler($arFields){
+		$arIBlock = CIBlock::GetList(array(), array("ID" => $arFields["IBLOCK_ID"]))->Fetch();
+
+		if(isset(SolutionCache::$arIBlocks[$arIBlock['LID']]['aspro_lite_regionality']['aspro_lite_regions'][0]) && SolutionCache::$arIBlocks[$arIBlock['LID']]['aspro_lite_regionality']['aspro_lite_regions'][0])
+			$iRegionIBlockID = SolutionCache::$arIBlocks[$arIBlock['LID']]['aspro_lite_regionality']['aspro_lite_regions'][0];
+		else
+			return;
+
+		if($iRegionIBlockID == $arFields['IBLOCK_ID'])
+		{
+			$arSite = CSite::GetList($by, $sort, array("ACTIVE"=>"Y", "ID" =>  $arIBlock['LID']))->Fetch();
+			$arSite['DIR'] = str_replace('//', '/', '/'.$arSite['DIR']);
+			if(!strlen($arSite['DOC_ROOT'])){
+				$arSite['DOC_ROOT'] = $_SERVER['DOCUMENT_ROOT'];
+			}
+			$arSite['DOC_ROOT'] = str_replace('//', '/', $arSite['DOC_ROOT'].'/');
+			$siteDir = str_replace('//', '/', $arSite['DOC_ROOT'].$arSite['DIR']);
+
+			$arProperty = CIBlockElement::GetProperty($arFields["IBLOCK_ID"], $arFields["ID"], "sort", "asc", array("CODE" => "MAIN_DOMAIN"))->Fetch();
+			$xml_file = (isset($arFields["SITE_MAP"]) && $arFields["SITE_MAP"] ? $arFields["SITE_MAP"] : "sitemap.xml");
+			if($arProperty["VALUE"])
+			{
+				if(file_exists($siteDir.'robots.txt'))
+				{
+					// @copy($siteDir.'robots.txt', $siteDir.'aspro_regions/robots/robots_'.$arProperty["VALUE"].'.txt');
+					CopyDirFiles($siteDir.'robots.txt', $siteDir.'aspro_regions/robots/robots_'.$arProperty["VALUE"].'.txt', true, true);
+					$arFile = file($siteDir.'aspro_regions/robots/robots_'.$arProperty["VALUE"].'.txt');
+					$bHasHostRobots = $bHasHostSitemap = false;
+					foreach($arFile as $key => $str)
+					{
+						if(strpos($str, "Host" ) !== false)
+						{
+							$arFile[$key] = "Host: ".(CMain::isHTTPS() ? "https://" : "http://").$arProperty["VALUE"]."\r\n";
+							$bHasHostRobots = true;
+						}
+						if(strpos($str, "Sitemap" ) !== false)
+						{
+							$arFile[$key] = "Sitemap: ".(CMain::isHTTPS() ? "https://" : "http://").$arProperty["VALUE"]."/".$xml_file."\r\n";
+							$bHasHostSitemap = true;
+						}
+					}
+
+					if(!$bHasHostRobots)
+						$arFile[] = "\r\nHost: ".(CMain::isHTTPS() ? "https://" : "http://").$arProperty["VALUE"];
+					if(!$bHasHostSitemap && Loader::includeModule('seo') && file_exists($siteDir.$xml_file))
+						$arFile[] = "\r\nSitemap: ".(CMain::isHTTPS() ? "https://" : "http://").$arProperty["VALUE"]."/".$xml_file;
+
+					$strr = implode("", $arFile);
+					file_put_contents($siteDir.'aspro_regions/robots/robots_'.$arProperty["VALUE"].'.txt', $strr);
+				}
+			}
+		}
+	}
+
+	public static function OnGetOptimalPriceHandler($intProductID, $quantity = 1, $arUserGroups = array(), $renewal = "N", $priceList = array(), $siteID = false, $arDiscountCoupons = false){
+		global $APPLICATION, $arRegion;
+		static $priceTypeCache = array();
+		if(!$arRegion)
+		{
+			if(Loader::includeModule(Solution::moduleID))
+			{
+				$arRegion = SolutionRegionality::getCurrentRegion(); //get current region from regionality module
+			}
+		}
+
+		if($arRegion)
+		{
+			static $resultCurrency, $arPricesID;
+
+			$intProductID = (int)$intProductID;
+			if ($intProductID <= 0)
+			{
+				$APPLICATION->ThrowException(Loc::getMessage("BT_MOD_CATALOG_PROD_ERR_PRODUCT_ID_ABSENT"), "NO_PRODUCT_ID");
+				return false;
+			}
+
+			$quantity = (float)$quantity;
+			if ($quantity <= 0)
+			{
+				$APPLICATION->ThrowException(Loc::getMessage("BT_MOD_CATALOG_PROD_ERR_QUANTITY_ABSENT"), "NO_QUANTITY");
+				return false;
+			}
+
+			$intIBlockID = (int)CIBlockElement::GetIBlockByID($intProductID);
+			if($intIBlockID <= 0)
+			{
+				$APPLICATION->ThrowException(
+					Loc::getMessage(
+						'BT_MOD_CATALOG_PROD_ERR_ELEMENT_ID_NOT_FOUND',
+						array('#ID#' => $intProductID)
+					),
+					'NO_ELEMENT'
+				);
+				return false;
+			}
+
+			if(class_exists('\Bitrix\Sale\Internals\SiteCurrencyTable'))
+				$resultCurrency = \Bitrix\Sale\Internals\SiteCurrencyTable::getSiteCurrency(($siteID ? $siteID : SITE_ID));
+
+			if($resultCurrency === NULL)
+				$resultCurrency = \Bitrix\Currency\CurrencyManager::getBaseCurrency();
+
+			if(empty($resultCurrency))
+			{
+				$APPLICATION->ThrowException(Loc::getMessage("BT_MOD_CATALOG_PROD_ERR_NO_BASE_CURRENCY"), "NO_BASE_CURRENCY");
+				return false;
+			}
+
+			if($arPricesID === NULL)
+			{
+				$arPricesID = array();
+				if($arRegion['LIST_PRICES'])
+				{
+					foreach($arRegion['LIST_PRICES'] as $arPrice)
+					{
+						if(is_array($arPrice))
+						{
+							if($arPrice['CAN_BUY'] == 'Y')
+								$arPricesID[] = $arPrice['ID'];
+						}
+					}
+				}
+				$strRegionPrices = isset($arRegion['LIST_PRICES']) && is_array($arRegion['LIST_PRICES']) ? reset($arRegion['LIST_PRICES']) : '';
+				if(!$arPricesID && ($strRegionPrices == 'component' || $strRegionPrices == ''))
+				{
+					 if (!is_array($arUserGroups) && (int)$arUserGroups.'|' == (string)$arUserGroups.'|')
+			            $arUserGroups = array((int)$arUserGroups);
+
+			        if (!is_array($arUserGroups))
+			            $arUserGroups = array();
+
+			        if (!in_array(2, $arUserGroups))
+			            $arUserGroups[] = 2;
+			        \Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($arUserGroups);
+
+					$cacheKey = 'U'.implode('_', $arUserGroups);
+		            if (!isset($priceTypeCache[$cacheKey]))
+		            {
+		                $priceTypeCache[$cacheKey] = array();
+		                $priceIterator = \Bitrix\Catalog\GroupAccessTable::getList(array(
+		                    'select' => array('CATALOG_GROUP_ID'),
+		                    'filter' => array('@GROUP_ID' => $arUserGroups, '=ACCESS' => \Bitrix\Catalog\GroupAccessTable::ACCESS_BUY),
+		                    'order' => array('CATALOG_GROUP_ID' => 'ASC')
+		                ));
+		                while ($priceType = $priceIterator->fetch())
+		                {
+		                    $priceTypeId = (int)$priceType['CATALOG_GROUP_ID'];
+		                    $priceTypeCache[$cacheKey][$priceTypeId] = $priceTypeId;
+		                    unset($priceTypeId);
+		                }
+		                unset($priceType, $priceIterator);
+		            }
+		            if (empty($priceTypeCache[$cacheKey]))
+		                return false;
+		            $arPricesID = $priceTypeCache[$cacheKey];
+				}
+			}
+			if($arPricesID)
+			{
+				if(!isset($priceList) || !is_array($priceList))
+					$priceList = array();
+
+				/*if($arRegion['LIST_STORES'] && reset($arRegion['LIST_STORES']) != 'component') // check product quantity
+				{
+					$quantity_stores = 0;
+					$arSelect = array('ID', 'PRODUCT_AMOUNT');
+					$arFilter = array(
+						'ID' => $arRegion['LIST_STORES'],
+						'PRODUCT_ID' => $intProductID,
+					);
+					$rsStore = CCatalogStore::GetList(array(), $arFilter, false, false, $arSelect);
+					while($arStore = $rsStore->Fetch())
+					{
+						$quantity_stores += $arStore['PRODUCT_AMOUNT'];
+					}
+					if(!$quantity_stores)
+						return false;
+				}*/
+
+				$arSelect = array('ID', 'CATALOG_GROUP_ID', 'PRICE', 'CURRENCY');
+				$arFilter = array(
+					'=PRODUCT_ID' => $intProductID,
+					'@CATALOG_GROUP_ID' => $arPricesID,
+					array(
+						'LOGIC' => 'OR',
+						'<=QUANTITY_FROM' => $quantity,
+						'=QUANTITY_FROM' => null
+					),
+					array(
+						'LOGIC' => 'OR',
+						'>=QUANTITY_TO' => $quantity,
+						'=QUANTITY_TO' => null
+					)
+				);
+				if(empty($priceList))
+				{
+					if(class_exists('\Bitrix\Catalog\PriceTable'))
+					{
+						$iterator = \Bitrix\Catalog\PriceTable::getList(array(
+							'select' => $arSelect,
+							'filter' => $arFilter
+						));
+					}
+					else
+					{
+						$iterator = CPrice::GetList(array(), $arFilter, false, false, $arSelect);
+					}
+					while($row = $iterator->fetch())
+					{
+						$row['ELEMENT_IBLOCK_ID'] = $intIBlockID;
+						$priceList[] = $row;
+					}
+					unset($row);
+				}
+				else
+				{
+					foreach(array_keys($priceList) as $priceIndex)
+						$priceList[$priceIndex]['ELEMENT_IBLOCK_ID'] = $intIBlockID;
+					unset($priceIndex);
+				}
+
+				if (empty($priceList))
+					return false;
+
+				$iterator = CCatalogProduct::GetVATInfo($intProductID);
+				if($vat = $iterator->Fetch())
+					$vat['RATE'] = (float)$vat['RATE'] * 0.01;
+				else
+					$vat = array('RATE' => 0.0, 'VAT_INCLUDED' => 'N');
+				unset($iterator);
+
+				if (\CCatalogProduct::getUseDiscount())
+				{
+					if ($arDiscountCoupons === false)
+						$arDiscountCoupons = CCatalogDiscountCoupon::GetCoupons();
+				}
+
+				$boolDiscountVat = true;
+				$isNeedDiscounts = \CCatalogProduct::getUseDiscount();
+				$resultWithVat = \Bitrix\Catalog\Product\Price\Calculation::isIncludingVat();
+
+				foreach($priceList as $priceData)
+				{
+					$priceData['VAT_RATE'] = $vat['RATE'];
+					$priceData['VAT_INCLUDED'] = $vat['VAT_INCLUDED'];
+
+					$currentPrice = $priceData['PRICE'];
+					if($boolDiscountVat)
+					{
+						if($priceData['VAT_INCLUDED'] == 'N')
+							$currentPrice *= (1 + $priceData['VAT_RATE']);
+					}
+					else
+					{
+						if($priceData['VAT_INCLUDED'] == 'Y')
+							$currentPrice /= (1 + $priceData['VAT_RATE']);
+					}
+
+					if($priceData['CURRENCY'] != $resultCurrency)
+						$currentPrice = CCurrencyRates::ConvertCurrency($currentPrice, $priceData['CURRENCY'], $resultCurrency);
+					$currentPrice = roundEx($currentPrice, CATALOG_VALUE_PRECISION);
+
+					$result = array(
+						'BASE_PRICE' => $currentPrice,
+						'COMPARE_PRICE' => $currentPrice,
+						'PRICE' => $currentPrice,
+						'CURRENCY' => $resultCurrency,
+						'DISCOUNT_LIST' => array(),
+						'USE_ROUND' => true,
+						'RAW_PRICE' => $priceData
+					);
+					if($isNeedDiscounts) // discount operation
+					{
+						$arDiscounts = CCatalogDiscount::GetDiscount(
+							$intProductID,
+							$intIBlockID,
+							$priceData['CATALOG_GROUP_ID'],
+							$arUserGroups,
+							$renewal,
+							$siteID,
+							$arDiscountCoupons
+						);
+
+						$discountResult = CCatalogDiscount::applyDiscountList($currentPrice, $resultCurrency, $arDiscounts);
+						unset($arDiscounts);
+						if ($discountResult === false)
+							return false;
+						$result['PRICE'] = $discountResult['PRICE'];
+						$result['COMPARE_PRICE'] = $discountResult['PRICE'];
+						$result['DISCOUNT_LIST'] = $discountResult['DISCOUNT_LIST'];
+						unset($discountResult);
+					}
+
+					if($boolDiscountVat)
+					{
+						if( !$resultWithVat )
+						{
+							$result['PRICE'] /= (1 + $priceData['VAT_RATE']);
+							$result['COMPARE_PRICE'] /= (1 + $priceData['VAT_RATE']);
+							$result['BASE_PRICE'] /= (1 + $priceData['VAT_RATE']);
+						}
+					}
+					else
+					{
+						if( $resultWithVat )
+						{
+							$result['PRICE'] *= (1 + $priceData['VAT_RATE']);
+							$result['COMPARE_PRICE'] *= (1 + $priceData['VAT_RATE']);
+							$result['BASE_PRICE'] *= (1 + $priceData['VAT_RATE']);
+						}
+					}
+
+					$result['UNROUND_PRICE'] = $result['PRICE'];
+					if ($result['USE_ROUND'])
+					{
+						if(class_exists('\Bitrix\Catalog\Product\Price') && method_exists('\Bitrix\Catalog\Product\Price', 'roundPrice'))
+						{
+							$result['PRICE'] = \Bitrix\Catalog\Product\Price::roundPrice(
+								$priceData['CATALOG_GROUP_ID'],
+								$result['PRICE'],
+								$resultCurrency
+							);
+						}
+						$result['COMPARE_PRICE'] = $result['PRICE'];
+					}
+
+					if(empty($result['DISCOUNT_LIST']))
+					{
+						$result['BASE_PRICE'] = $result['PRICE'];
+					}
+					elseif(roundEx($result['BASE_PRICE'], 2) - roundEx($result['PRICE'], 2) < 0.01)
+					{
+						$result['BASE_PRICE'] = $result['PRICE'];
+						$result['DISCOUNT_PRICE'] = array();
+					}
+
+					if(empty($minimalPrice) || $minimalPrice['COMPARE_PRICE'] > $result['COMPARE_PRICE'])
+					{
+						$minimalPrice = $result;
+					}
+
+					unset($currentPrice, $result);
+				}
+				unset($priceData);
+				unset($vat);
+
+				$discountValue = ($minimalPrice['BASE_PRICE'] > $minimalPrice['PRICE'] ? $minimalPrice['BASE_PRICE'] - $minimalPrice['PRICE'] : 0);
+
+				$arResult = array(
+					'PRICE' => $minimalPrice['RAW_PRICE'],
+					'RESULT_PRICE' => array(
+						'PRICE_TYPE_ID' => $minimalPrice['RAW_PRICE']['CATALOG_GROUP_ID'],
+						'BASE_PRICE' => $minimalPrice['BASE_PRICE'],
+						'DISCOUNT_PRICE' => $minimalPrice['PRICE'],
+						'UNROUND_DISCOUNT_PRICE' => $minimalPrice['UNROUND_PRICE'],
+						'CURRENCY' => $resultCurrency,
+						'DISCOUNT' => $discountValue,
+						'PERCENT' => (
+							$minimalPrice['BASE_PRICE'] > 0 && $discountValue > 0
+							? roundEx((100*$discountValue)/$minimalPrice['BASE_PRICE'], CATALOG_VALUE_PRECISION)
+							: 0
+						),
+						'VAT_RATE' => $minimalPrice['RAW_PRICE']['VAT_RATE'],
+						'VAT_INCLUDED' => $resultWithVat ? 'Y' : 'N', //$minimalPrice['RAW_PRICE']['VAT_INCLUDED']
+					),
+					'DISCOUNT_PRICE' => $minimalPrice['PRICE'],
+					'DISCOUNT' => array(),
+					'DISCOUNT_LIST' => array(),
+					'PRODUCT_ID' => $intProductID
+				);
+				if(!empty($minimalPrice['DISCOUNT_LIST']))
+				{
+					reset($minimalPrice['DISCOUNT_LIST']);
+					$arResult['DISCOUNT'] = current($minimalPrice['DISCOUNT_LIST']);
+					$arResult['DISCOUNT_LIST'] = $minimalPrice['DISCOUNT_LIST'];
+				}
+				unset($minimalPrice);
+
+				return $arResult;
+			}
+			else
+				return false;
+		}
+		else
+			return true;
+	}
+
+	public static function OnAfterSocServUserAddHandler( $arFields ){
+		if($arFields["EMAIL"]){
+			global $USER;
+			$userEmail=$USER->GetEmail();
+			$email=(is_null($userEmail) ? $arFields["EMAIL"] : $userEmail );
+			//$resUser = CUser::GetList(($by="ID"), ($order="asc"), array("=EMAIL" => $arFields["EMAIL"]), array("FIELDS" => array("ID")));
+			$resUser = CUser::GetList(($by="ID"), ($order="asc"), array("=EMAIL" => $email), array("FIELDS" => array("ID")));
+			$arUserAlreadyExist = $resUser->Fetch();
+
+			if($arUserAlreadyExist["ID"]){
+				Loader::includeModule('socialservices');
+				global $USER;
+				if($resUser->SelectedRowsCount()>1){
+					CSocServAuthDB::Update($arFields["ID"], array("USER_ID" => $arUserAlreadyExist["ID"], "CAN_DELETE" => "Y"));
+					CUser::Delete($arFields["USER_ID"]);
+					$USER->Authorize($arUserAlreadyExist["ID"]);
+				}else{
+					$def_group = COption::GetOptionString("main", "new_user_registration_def_group", "");
+					if($def_group!=""){
+						$GROUP_ID = explode(",", $def_group);
+						$arPolicy = $USER->GetGroupPolicy($GROUP_ID);
+					}else{
+						$arPolicy = $USER->GetGroupPolicy(array());
+					}
+					$password_min_length = (int)$arPolicy["PASSWORD_LENGTH"];
+					if($password_min_length <= 0)
+						$password_min_length = 6;
+					$password_chars = array(
+						"abcdefghijklnmopqrstuvwxyz",
+						"ABCDEFGHIJKLNMOPQRSTUVWXYZ",
+						"0123456789",
+					);
+					if($arPolicy["PASSWORD_PUNCTUATION"] === "Y")
+						$password_chars[] = ",.<>/?;:'\"[]{}\|`~!@#\$%^&*()-_+=";
+					$NEW_PASSWORD = $NEW_PASSWORD_CONFIRM = randString($password_min_length+2, $password_chars);
+
+					$user = new CUser;
+					$arFieldsUser = Array(
+					  "NAME"              => $arFields["NAME"],
+					  "LAST_NAME"         => $arFields["LAST_NAME"],
+					  "EMAIL"             => $arFields["EMAIL"],
+					  "LOGIN"             => $arFields["EMAIL"],
+					  "GROUP_ID"          => $GROUP_ID,
+					  "PASSWORD"          => $NEW_PASSWORD,
+					  "CONFIRM_PASSWORD"  => $NEW_PASSWORD_CONFIRM,
+					);
+					unset($arFields["LOGIN"]);
+					unset($arFields["PASSWORD"]);
+					unset($arFields["EXTERNAL_AUTH_ID"]);
+					unset($arFields["XML_ID"]);
+					$arAddFields = array();
+					$arAddFields = array_merge($arFieldsUser, $arFields);
+					if(isset($arAddFields["PERSONAL_PHOTO"]) && $arAddFields["PERSONAL_PHOTO"])
+					{
+						$arPic = CFile::MakeFileArray($arFields["PERSONAL_PHOTO"]);
+						$arAddFields["PERSONAL_PHOTO"] = $arPic;
+					}
+
+					//if($arUserAlreadyExist["ID"]!=$arFields["USER_ID"]){
+						$ID = $user->Add($arAddFields);
+						//$ID = $user->Add($arFieldsUser);
+						CSocServAuthDB::Update($arFields["ID"], array("USER_ID" => $ID, "CAN_DELETE" => "Y"));
+						CUser::Delete($arFields["USER_ID"]);
+						$USER->Authorize($ID);
+					//}
+				}
+			}
+		}
+	}
+
+	public static function OnSaleComponentOrderProperties(&$arUserResult, $arRequest, $arParams, $arResult){
+		if($arUserResult['ORDER_PROP'])
+		{
+			$arPhoneProp = CSaleOrderProps::GetList(
+				array('SORT' => 'ASC'),
+				array(
+						'PERSON_TYPE_ID' => $arUserResult['PERSON_TYPE_ID'],
+						'IS_PHONE' => 'Y',
+					),
+				false,
+				false,
+				array()
+			)->fetch(); // get phone prop
+			if($arPhoneProp && $arParams['USE_PHONE_NORMALIZATION'] !='N')
+			{
+				global $USER;
+				if($arUserResult['ORDER_PROP'][$arPhoneProp['ID']])
+				{
+					if($_REQUEST['order']['ORDER_PROP_'.$arPhoneProp['ID']] && $_REQUEST['order']['profile_change'] != 'Y')
+					{
+						$arUserResult['ORDER_PROP'][$arPhoneProp['ID']] = $_REQUEST['order']['ORDER_PROP_'.$arPhoneProp['ID']];
+					}
+					else
+					{
+						if($arUserResult['PROFILE_ID']) //get phone from user profile
+						{
+							$arUserPropValue = CSaleOrderUserPropsValue::GetList(
+								array('ID' => 'ASC'),
+								array('USER_PROPS_ID' => $arUserResult['PROFILE_ID'], 'ORDER_PROPS_ID' => $arPhoneProp['ID'])
+							)->fetch();
+							if($arUserPropValue['VALUE'])
+							{
+								$arUserResult['ORDER_PROP'][$arPhoneProp['ID']] = $arUserPropValue['VALUE'];
+							}
+						}
+						elseif($USER->isAuthorized()) //get phone from user field
+						{
+							$rsUser = CUser::GetByID($USER->GetID());
+							if($arUser = $rsUser->Fetch())
+							{
+								if(!empty($arUser['PERSONAL_PHONE']))
+								{
+									$value = $arUser['PERSONAL_PHONE'];
+								}
+								elseif(!empty($arUser['PERSONAL_MOBILE']))
+								{
+									$value = $arUser['PERSONAL_MOBILE'];
+								}
+							}
+							if($value)
+								$arUserResult['ORDER_PROP'][$arPhoneProp['ID']] = $value;
+						}
+						if($arUserResult['ORDER_PROP'][$arPhoneProp['ID']]) // add + mark for correct mask
+						{
+							$mask = \Bitrix\Main\Config\Option::get(Solution::moduleID, 'PHONE_MASK', '+7 (999) 999-99-99');
+							if(strpos($arUserResult['ORDER_PROP'][$arPhoneProp['ID']], '+') === false && strpos($mask, '+') !== false)
+							{
+								$arUserResult['ORDER_PROP'][$arPhoneProp['ID']] = '+'.$arUserResult['ORDER_PROP'][$arPhoneProp['ID']];
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	public static function OnSaleComponentOrderPropertiesHandler(&$arFields){
+		global $arRegion;
+
+		if(!$arRegion){
+			$arRegion = SolutionRegionality::getCurrentRegion();
+		}
+
+		if($arRegion){
+			if($_SERVER['REQUEST_METHOD'] != 'POST'){
+				if($arRegion['LOCATION']){
+		    		$arLocationProp = CSaleOrderProps::GetList(
+				        array('SORT' => 'ASC'),
+				        array(
+			                'PERSON_TYPE_ID' => $arFields['PERSON_TYPE_ID'],
+			                'TYPE' => 'LOCATION',
+			                'IS_LOCATION' => 'Y',
+			                'ACTIVE' => 'Y',
+				        ),
+				        false,
+				        false,
+				        array('ID')
+				    )->Fetch();
+				    if($arLocationProp){
+						$arFields['ORDER_PROP'][$arLocationProp['ID']] = CSaleLocation::getLocationCODEbyID($arRegion['LOCATION']);
+				    }
+
+					$arLocationZipProp = CSaleOrderProps::GetList(
+				        array('SORT' => 'ASC'),
+				        array(
+			                'PERSON_TYPE_ID' => $arFields['PERSON_TYPE_ID'],
+			                'CODE' => 'ZIP',
+			                'ACTIVE' => 'Y',
+				        ),
+				        false,
+				        false,
+				        array('ID')
+				    )->Fetch();
+				    if($arLocationZipProp){
+						$rsLocaction = CSaleLocation::GetLocationZIP($arRegion['LOCATION']);
+		    			$arLocation = $rsLocaction->Fetch();
+		    			if($arLocation['ZIP']){
+		    				$arFields['ORDER_PROP'][$arLocationZipProp['ID']] = $arLocation['ZIP'];
+		    			}
+		    		}
+				}
+			}
+			else{
+				if(isset($arFields['PERSON_TYPE_ID']) && isset($arFields['PERSON_TYPE_OLD'])){
+					if($arFields['PROFILE_CHANGE'] === 'Y' || ($arFields['PERSON_TYPE_ID'] && $arFields['PERSON_TYPE_OLD'] && ($arFields['PERSON_TYPE_ID'] != $arFields['PERSON_TYPE_OLD']))){
+						$arLocationProps = $arZipProps = array();
+
+						$dbRes = CSaleOrderProps::GetList(
+					        array('SORT' => 'ASC'),
+					        array(
+				                'PERSON_TYPE_ID' => array($arFields['PERSON_TYPE_ID'], $arFields['PERSON_TYPE_OLD']),
+				                'TYPE' => 'LOCATION',
+				                'IS_LOCATION' => 'Y',
+				                'ACTIVE' => 'Y',
+					        ),
+					        false,
+					        false,
+					        array(
+					        	'ID',
+					        	'PERSON_TYPE_ID'
+					        )
+					    );
+					    while($arLocationProp = $dbRes->Fetch()){
+					    	$arLocationProps[$arLocationProp['PERSON_TYPE_ID']] = $arLocationProp['ID'];
+					    }
+
+					    if($arLocationProps){
+					    	$arFields['ORDER_PROP'][$arLocationProps[$arFields['PERSON_TYPE_ID']]] = $_POST['order']['ORDER_PROP_'.$arLocationProps[$arFields['PERSON_TYPE_OLD']]];
+					    }
+
+					    $dbRes = CSaleOrderProps::GetList(
+					        array('SORT' => 'ASC'),
+					        array(
+				                'PERSON_TYPE_ID' => array($arFields['PERSON_TYPE_ID'], $arFields['PERSON_TYPE_OLD']),
+				                'CODE' => 'ZIP',
+				                'ACTIVE' => 'Y',
+					        ),
+					        false,
+					        false,
+					        array(
+					        	'ID',
+					        	'PERSON_TYPE_ID'
+					        )
+					    );
+					    while($arZipProp = $dbRes->Fetch()){
+					    	$arZipProps[$arZipProp['PERSON_TYPE_ID']] = $arZipProp['ID'];
+					    }
+
+					    if($arZipProps){
+					    	$arFields['ORDER_PROP'][$arZipProps[$arFields['PERSON_TYPE_ID']]] = $_POST['order']['ORDER_PROP_'.$arZipProps[$arFields['PERSON_TYPE_OLD']]];
+						}
+					}
+				}
+			}
+		}
+	}
+
+	public static function OnSaleComponentOrderOneStepComplete($ID, $arOrder, $arParams){
+		$arOrderProps = array();
+		$resOrder = CSaleOrderPropsValue::GetList(array(), array('ORDER_ID' => $ID));
+		while($item = $resOrder->fetch())
+		{
+			$arOrderProps[$item['CODE']] = $item;
+		}
+		$arPhoneProp = CSaleOrderProps::GetList(
+			array('SORT' => 'ASC'),
+			array(
+					'PERSON_TYPE_ID' => $arOrder['PERSON_TYPE_ID'],
+					'IS_PHONE' => 'Y',
+				),
+			false,
+			false,
+			array()
+		)->fetch(); // get phone prop
+		if($arPhoneProp && $arParams['USE_PHONE_NORMALIZATION'] !='N')
+		{
+			if($arOrderProps[$arPhoneProp['CODE']])
+			{
+				if($arOrderProps[$arPhoneProp['CODE']]['VALUE'])
+				{
+					if($_REQUEST['ORDER_PROP_'.$arOrderProps[$arPhoneProp['CODE']]['ORDER_PROPS_ID']])
+					{
+						CSaleOrderPropsValue::Update($arOrderProps[$arPhoneProp['CODE']]['ID'], array('VALUE'=>$_REQUEST['ORDER_PROP_'.$arOrderProps[$arPhoneProp['CODE']]['ORDER_PROPS_ID']])); // set phone order prop
+						$arUserProps = CSaleOrderUserProps::GetList(
+							array('DATE_UPDATE' => 'DESC'),
+							array('USER_ID' => $arOrder['USER_ID'], 'PERSON_TYPE_ID' => $arOrder['PERSON_TYPE_ID'])
+						)->fetch(); // get user profile info
+
+						if($arUserProps)
+						{
+							$arUserPropValue = CSaleOrderUserPropsValue::GetList(
+								array('ID' => 'ASC'),
+								array('USER_PROPS_ID' => $arUserProps['ID'], 'ORDER_PROPS_ID' => $arOrderProps[$arPhoneProp['CODE']]['ORDER_PROPS_ID'])
+							)->fetch(); // get phone from user prop
+							if($arUserPropValue['VALUE'])
+							{
+								CSaleOrderUserPropsValue::Update($arUserPropValue['ID'], array('VALUE'=>$_REQUEST['ORDER_PROP_'.$arOrderProps[$arPhoneProp['CODE']]['ORDER_PROPS_ID']])); //set phone in user profile
+							}
+						}
+					}
+				}
+			}
+		}
+
+		/*$siteId = $arOrder['LID'] ?: SITE_ID;
+		$acloud = CRM\Acloud\Connection::getInstance($siteId);
+		if ($acloud->orders_autosend) {
+			try {
+				CRM\Helper::sendOrder($ID, $acloud);
+			}
+			catch (\Exception $e) {
+			}
+		}*/
+	}
+
+	public static function clearBasketCacheHandler($orderID, $arFields, $arParams = array()){
+		if(isset($arFields) && $arFields)
+		{
+			if(isset($arFields["ID"]) && $arFields["ID"])
+			{
+				Loader::includeModule("sale");
+				global $USER;
+				$USER_ID = ($USER_ID = $USER->GetID()) ? $USER_ID : 0;
+				$arUser = $arUser = SolutionCache::CUser_GetList(array("SORT" => "ASC", "CACHE" => array("MULTI" => "N", "TAG" => SolutionCache::GetUserCacheTag($USER_ID))), array("ID" => $USER_ID), array("FIELDS" => array("ID", "PERSONAL_PHONE")));
+				if(!$arUser["PERSONAL_PHONE"])
+				{
+					$rsOrder = CSaleOrderPropsValue::GetList(array(), array("ORDER_ID" => $arFields["ID"]));
+					$arOrderProps = array();
+					while($item = $rsOrder->Fetch())
+					{
+						$arOrderProps[$item["CODE"]] = $item;
+					}
+					if(isset($arOrderProps["PHONE"]) && $arOrderProps["PHONE"] && (isset($arOrderProps["PHONE"]["VALUE"]) && $arOrderProps["PHONE"]["VALUE"]))
+					{
+						$user = new CUser;
+						$fields = Array(
+							"PERSONAL_PHONE" => $arOrderProps["PHONE"]["VALUE"],
+						);
+						$user->Update($arUser["ID"], $fields);
+					}
+
+				}
+			}
+		}
+	}
+
+	public static function DoIBlockAfterSave($arg1, $arg2 = false){
+		if (Solution::isSaleMode()) {
+			static::Sale_DoIBlockAfterSave($arg1, $arg2);
+		}
+	}
+
+	protected static function Sale_DoIBlockAfterSave($arg1, $arg2 = false){
+		$ELEMENT_ID = false;
+		$IBLOCK_ID = false;
+		$OFFERS_IBLOCK_ID = false;
+		$OFFERS_PROPERTY_ID = false;
+
+		if ($bCurrency = CModule::IncludeModule('currency')){
+			$strDefaultCurrency = CCurrency::GetBaseCurrency();
+		}
+
+		//Check for catalog event
+		if(is_array($arg2) && $arg2["PRODUCT_ID"] > 0){
+			//Get iblock element
+			$rsPriceElement = CIBlockElement::GetList(
+				array(),
+				array(
+					"ID" => $arg2["PRODUCT_ID"],
+				),
+				false,
+				false,
+				array("ID", "IBLOCK_ID")
+			);
+			if($arPriceElement = $rsPriceElement->Fetch()){
+				$arCatalog = CCatalog::GetByID($arPriceElement["IBLOCK_ID"]);
+				if(is_array($arCatalog)){
+					//Check if it is offers iblock
+					if($arCatalog["OFFERS"] == "Y"){
+						//Find product element
+						$rsElement = CIBlockElement::GetProperty(
+							$arPriceElement["IBLOCK_ID"],
+							$arPriceElement["ID"],
+							"sort",
+							"asc",
+							array("ID" => $arCatalog["SKU_PROPERTY_ID"])
+						);
+						$arElement = $rsElement->Fetch();
+						if($arElement && $arElement["VALUE"] > 0)
+						{
+							$ELEMENT_ID = $arElement["VALUE"];
+							$IBLOCK_ID = $arCatalog["PRODUCT_IBLOCK_ID"];
+							$OFFERS_IBLOCK_ID = $arCatalog["IBLOCK_ID"];
+							$OFFERS_PROPERTY_ID = $arCatalog["SKU_PROPERTY_ID"];
+						}
+					}
+					//or iblock which has offers
+					elseif($arCatalog["OFFERS_IBLOCK_ID"] > 0){
+						$ELEMENT_ID = $arPriceElement["ID"];
+						$IBLOCK_ID = $arPriceElement["IBLOCK_ID"];
+						$OFFERS_IBLOCK_ID = $arCatalog["OFFERS_IBLOCK_ID"];
+						$OFFERS_PROPERTY_ID = $arCatalog["OFFERS_PROPERTY_ID"];
+					}
+					//or it's regular catalog
+					else{
+						$ELEMENT_ID = $arPriceElement["ID"];
+						$IBLOCK_ID = $arPriceElement["IBLOCK_ID"];
+						$OFFERS_IBLOCK_ID = false;
+						$OFFERS_PROPERTY_ID = false;
+					}
+				}
+			}
+		}
+		//Check for iblock event
+		elseif(is_array($arg1) && $arg1["ID"] > 0 && $arg1["IBLOCK_ID"] > 0){
+			$IBLOCK_ID = $arg1["IBLOCK_ID"];
+
+			//Check if iblock has offers
+			$arOffers = CIBlockPriceTools::GetOffersIBlock($arg1["IBLOCK_ID"]);
+			if(is_array($arOffers)){
+				$ELEMENT_ID = $arg1["ID"];
+				$OFFERS_IBLOCK_ID = $arOffers["OFFERS_IBLOCK_ID"];
+				$OFFERS_PROPERTY_ID = $arOffers["OFFERS_PROPERTY_ID"];
+			}
+		}
+
+		if($ELEMENT_ID){
+			static $arPropCache = array();
+			static $arPropArray = array();
+
+			if(!array_key_exists($IBLOCK_ID, $arPropCache)){
+				//Check for MINIMUM_PRICE property
+				$rsProperty = CIBlockProperty::GetByID("MINIMUM_PRICE", $IBLOCK_ID);
+				$arProperty = $rsProperty->Fetch();
+				if($arProperty){
+					$arPropCache[$IBLOCK_ID] = $arProperty["ID"];
+					$arPropArray["MINIMUM_PRICE"]=$arProperty["ID"];
+				}else{
+					$arPropCache[$IBLOCK_ID] = false;
+				}
+				$rsProperty = CIBlockProperty::GetByID("IN_STOCK", $IBLOCK_ID);
+				$arProperty = $rsProperty->Fetch();
+				if($arProperty){
+					$arPropCache[$IBLOCK_ID] = $arProperty["ID"];
+					$arPropArray["IN_STOCK"]=$arProperty["ID"];
+				}else{
+					if(!$arPropCache[$IBLOCK_ID])
+						$arPropCache[$IBLOCK_ID] = false;
+				}
+			}
+
+			if($arPropCache[$IBLOCK_ID]){
+				//Compose elements filter
+				if($OFFERS_IBLOCK_ID){
+					$rsOffers = CIBlockElement::GetList(
+						array(),
+						array(
+							"IBLOCK_ID" => $OFFERS_IBLOCK_ID,
+							"PROPERTY_".$OFFERS_PROPERTY_ID => $ELEMENT_ID,
+							"ACTIVE" => "Y"
+						),
+						false,
+						false,
+						array("ID")
+					);
+					while($arOffer = $rsOffers->Fetch())
+						$arProductID[] = $arOffer["ID"];
+
+					if (!is_array($arProductID))
+						$arProductID = array($ELEMENT_ID);
+				}
+				else
+					$arProductID = array($ELEMENT_ID);
+
+				if($arPropArray["MINIMUM_PRICE"]){
+					$minPrice = false;
+					$maxPrice = false;
+					//Get prices
+					$rsPrices = CPrice::GetList(
+						array(),
+						array(
+							"PRODUCT_ID" => $arProductID,
+						)
+					);
+					while($arPrice = $rsPrices->Fetch()){
+						if ($bCurrency && $strDefaultCurrency != $arPrice['CURRENCY']){
+							$arPrice["PRICE"] = CCurrencyRates::ConvertCurrency($arPrice["PRICE"], $arPrice["CURRENCY"], $strDefaultCurrency);
+						}
+
+						$PRICE = $arPrice["PRICE"];
+
+						if($minPrice === false || $minPrice > $PRICE)
+							$minPrice = $PRICE;
+
+						if($maxPrice === false || $maxPrice < $PRICE)
+							$maxPrice = $PRICE;
+					}
+
+					//Save found minimal price into property
+					if($minPrice !== false){
+						CIBlockElement::SetPropertyValuesEx(
+							$ELEMENT_ID,
+							$IBLOCK_ID,
+							array(
+								"MINIMUM_PRICE" => $minPrice,
+								"MAXIMUM_PRICE" => $maxPrice,
+							)
+						);
+					}
+				}
+
+				if($arPropArray["IN_STOCK"]){
+					$quantity = 0;
+
+					$rsQuantity = CCatalogProduct::GetList(
+				        array("QUANTITY" => "DESC"),
+				        array("ID" => $arProductID),
+				        false,
+				        false,
+				        array("QUANTITY")
+				    );
+					while($arQuantity = $rsQuantity->Fetch()){
+						if($arQuantity["QUANTITY"]>0)
+							$quantity+=$arQuantity["QUANTITY"];
+					}
+
+					if($quantity > 0){
+						$rsPropStock = CIBlockPropertyEnum::GetList(Array("DEF"=>"DESC", "SORT"=>"ASC"), Array("IBLOCK_ID"=>$IBLOCK_ID, "CODE"=>"IN_STOCK"));
+						if($arPropStock=$rsPropStock->Fetch()){
+							$idProp=$arPropStock["ID"];
+						}
+
+						CIBlockElement::SetPropertyValuesEx(
+							$ELEMENT_ID,
+							$IBLOCK_ID,
+							array(
+								"IN_STOCK" => $idProp,
+							)
+						);
+					}
+					else {
+						CIBlockElement::SetPropertyValuesEx(
+							$ELEMENT_ID,
+							$IBLOCK_ID,
+							array(
+								"IN_STOCK" => "",
+							)
+						);
+					}
+
+					if(class_exists('\Bitrix\Iblock\PropertyIndex\Manager')){
+						\Bitrix\Iblock\PropertyIndex\Manager::updateElementIndex($IBLOCK_ID, $ELEMENT_ID);
+					}
+				}
+			}
+		}
+	}
+
+	protected static $handlerDisallow = 0;
+
+	public static function disableHandler()
+	{
+	  self::$handlerDisallow--;
+	}
+
+	public static function enableHandler()
+	{
+	  self::$handlerDisallow++;
+	}
+
+	public static function isEnabledHandler()
+	{
+	  return (self::$handlerDisallow >= 0);
+	}
+
+	public static function setStoreProductHandler($ID, $arFields){
+		static $stores_quantity_product, $updateFromCatalog;
+		$arProduct = CCatalogStoreProduct::GetList(array(), array('ID' => $ID), false, false, array('PRODUCT_ID'))->Fetch();
+		if($arProduct['PRODUCT_ID'] && \Bitrix\Main\Config\Option::get(Solution::moduleID, "EVENT_SYNC", "N") == "Y")
+		{
+			if(isset($arFields['AMOUNT']) && $arFields['AMOUNT'])
+				$stores_quantity_product += $arFields['AMOUNT'];
+
+			if($updateFromCatalog !== NULL)
+			{
+				/*set flag*/
+    	   		self::disableHandler();
+    	   	}
+
+			CCatalogProduct::Update($arProduct['PRODUCT_ID'], array("QUANTITY" => $stores_quantity_product));
+
+			if($updateFromCatalog !== NULL)
+			{
+				/*unset flag*/
+				self::enableHandler();
+			}
+		}
+	}
+
+	public static function setStockProduct($ID, $arFields){
+		/*check flag*/
+		if (!self::isEnabledHandler())
+           return;
+
+       	/*set flag*/
+       	self::disableHandler();
+
+		//Get iblock element
+		$rsPriceElement = CIBlockElement::GetList(
+			array(),
+			array(
+				"ID" => $ID,
+			),
+			false,
+			false,
+			array("ID", "IBLOCK_ID")
+		);
+
+		if($arPriceElement = $rsPriceElement->Fetch()){
+			$arCatalog = CCatalog::GetByID($arPriceElement["IBLOCK_ID"]);
+			if(is_array($arCatalog)){
+				//Check if it is offers iblock
+				if($arCatalog["OFFERS"] == "Y"){
+					//Find product element
+					$rsElement = CIBlockElement::GetProperty(
+						$arPriceElement["IBLOCK_ID"],
+						$arPriceElement["ID"],
+						"sort",
+						"asc",
+						array("ID" => $arCatalog["SKU_PROPERTY_ID"])
+					);
+					$arElement = $rsElement->Fetch();
+					if($arElement && $arElement["VALUE"] > 0)
+					{
+						$ELEMENT_ID = $arElement["VALUE"];
+						$IBLOCK_ID = $arCatalog["PRODUCT_IBLOCK_ID"];
+						$OFFERS_IBLOCK_ID = $arCatalog["IBLOCK_ID"];
+						$OFFERS_PROPERTY_ID = $arCatalog["SKU_PROPERTY_ID"];
+					}
+				}
+				//or iblock which has offers
+				elseif($arCatalog["OFFERS_IBLOCK_ID"] > 0){
+					$ELEMENT_ID = $arPriceElement["ID"];
+					$IBLOCK_ID = $arPriceElement["IBLOCK_ID"];
+					$OFFERS_IBLOCK_ID = $arCatalog["OFFERS_IBLOCK_ID"];
+					$OFFERS_PROPERTY_ID = $arCatalog["OFFERS_PROPERTY_ID"];
+				}
+				//or it's regular catalog
+				else{
+					$ELEMENT_ID = $arPriceElement["ID"];
+					$IBLOCK_ID = $arPriceElement["IBLOCK_ID"];
+					$OFFERS_IBLOCK_ID = false;
+					$OFFERS_PROPERTY_ID = false;
+				}
+			}
+		}
+		if($ELEMENT_ID){
+			static $arPropCache = array();
+			static $arPropArray=array();
+
+			if(!array_key_exists($IBLOCK_ID, $arPropCache)){
+				//Check for IN_STOCK property
+				$rsProperty = CIBlockProperty::GetByID("IN_STOCK", $IBLOCK_ID);
+				$arProperty = $rsProperty->Fetch();
+				if($arProperty){
+					$arPropCache[$IBLOCK_ID] = $arProperty["ID"];
+					$arPropArray["IN_STOCK"]=$arProperty["ID"];
+				}else{
+					if(!$arPropCache[$IBLOCK_ID])
+						$arPropCache[$IBLOCK_ID] = false;
+				}
+			}
+			if($arPropCache[$IBLOCK_ID]){
+				//Compose elements filter
+				$arProductID = array();
+				if($OFFERS_IBLOCK_ID){
+					$rsOffers = CIBlockElement::GetList(
+						array(),
+						array(
+							"IBLOCK_ID" => $OFFERS_IBLOCK_ID,
+							"PROPERTY_".$OFFERS_PROPERTY_ID => $ELEMENT_ID,
+							"ACTIVE" => "Y"
+						),
+						false,
+						false,
+						array("ID")
+					);
+					while($arOffer = $rsOffers->Fetch())
+						$arProductID[] = $arOffer["ID"];
+
+					if (!$arProductID)
+						$arProductID = array($ELEMENT_ID);
+				}
+				else
+					$arProductID = array($ELEMENT_ID);
+
+
+				if($arPropArray["IN_STOCK"]){
+					/* sync quantity product by stores start */
+					if($arProductID /*&& \Bitrix\Main\Config\Option::get('catalog', 'default_use_store_control', 'N') == 'N'*/ && ($_SESSION['CUSTOM_UPDATE'] == 'Y' || \Bitrix\Main\Config\Option::get(Solution::moduleID, "EVENT_SYNC", "N") == "Y"))
+					{
+						static $bStores;
+						if(class_exists('CCatalogStore')){
+							if(!$bStores)
+							{
+								$dbRes = CCatalogStore::GetList(array(), array(), false, false, array());
+								if($c = $dbRes->SelectedRowsCount()){
+									$bStores = true;
+								}
+							}
+						}
+						if($bStores)
+						{
+							static $updateFromCatalog;
+							$updateFromCatalog = true;
+
+							foreach($arProductID as $id)
+							{
+								$quantity_stores = 0;
+								$rsStore = CCatalogStore::GetList(array(), array('PRODUCT_ID' => $id), false, false, array('ID', 'PRODUCT_AMOUNT'));
+								while($arStore = $rsStore->Fetch())
+								{
+									$quantity_stores += $arStore['PRODUCT_AMOUNT'];
+								}
+								CCatalogProduct::Update($id, array("QUANTITY" => $quantity_stores));
+							}
+						}
+					}
+					/* sync quantity product by stores end */
+
+					$quantity = 0;
+					
+					$rsQuantity = CCatalogProduct::GetList(
+				        array("QUANTITY" => "DESC"),
+				        array("ID" => $arProductID),
+				        false,
+				        false,
+				        array("QUANTITY")
+				    );
+					while($arQuantity = $rsQuantity->Fetch()){
+						if($arQuantity["QUANTITY"]>0)
+							$quantity+=$arQuantity["QUANTITY"];
+					}
+
+					if($quantity > 0){
+						$rsPropStock = CIBlockPropertyEnum::GetList(Array("DEF"=>"DESC", "SORT"=>"ASC"), Array("IBLOCK_ID"=>$IBLOCK_ID, "CODE"=>"IN_STOCK"));
+						if($arPropStock=$rsPropStock->Fetch()){
+							$idProp=$arPropStock["ID"];
+						}
+
+						CIBlockElement::SetPropertyValuesEx(
+							$ELEMENT_ID,
+							$IBLOCK_ID,
+							array(
+								"IN_STOCK" => $idProp,
+							)
+						);
+					}
+					else{
+						CIBlockElement::SetPropertyValuesEx(
+							$ELEMENT_ID,
+							$IBLOCK_ID,
+							array(
+								"IN_STOCK" => "",
+							)
+						);
+					}
+
+					if(class_exists('\Bitrix\Iblock\PropertyIndex\Manager')){
+						\Bitrix\Iblock\PropertyIndex\Manager::updateElementIndex($IBLOCK_ID, $ELEMENT_ID);
+					}
+				}
+			}
+		}
+
+		/*unset flag*/
+		self::enableHandler();
+	}
+
+	public static function OnBeforeUserUpdateHandler(&$arFields){
+		$bTmpUser = false;
+		$bAdminSection = (defined('ADMIN_SECTION') && ADMIN_SECTION === true);
+
+		if(strlen($arFields['NAME']))
+			$arFields['NAME'] = trim($arFields['NAME']);
+
+		$siteID = SITE_ID;
+
+		if($bAdminSection)
+	    {
+	    	// include CMainPage
+	        require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/include/mainpage.php");
+	        // get site_id by host
+	        $CMainPage = new \CMainPage();
+	        $siteID = $CMainPage->GetSiteByHost();
+	        if(
+				!$siteID ||
+				$siteID == 'ru'
+			) {
+	            $siteID = "s1";
+			}
+
+			$sOneFIO = COption::GetOptionString(Solution::moduleID, 'PERSONAL_ONEFIO', 'Y', $siteID);
+			$sChangeLogin = COption::GetOptionString(Solution::moduleID, 'LOGIN_EQUAL_EMAIL', 'Y', $siteID);
+        }
+		else
+		{
+			$arFrontParametrs = Solution::GetFrontParametrsValues($siteID);
+			$sOneFIO = $arFrontParametrs['PERSONAL_ONEFIO'];
+			$sChangeLogin = $arFrontParametrs['LOGIN_EQUAL_EMAIL'];
+		}
+
+		if(isset($arFields["NAME"])){
+			$arFields["NAME"] = trim($arFields["NAME"]);
+		}
+		if(isset($arFields["LAST_NAME"])){
+			$arFields["LAST_NAME"] = trim($arFields["LAST_NAME"]);
+		}
+		if(isset($arFields["SECOND_NAME"])){
+			$arFields["SECOND_NAME"] = trim($arFields["SECOND_NAME"]);
+		}
+
+		if(strlen($arFields['NAME']) && !strlen($arFields['LAST_NAME']) && !strlen($arFields['SECOND_NAME']))
+		{
+			if($sOneFIO !== 'N')
+			{
+				$arName = explode(' ', $arFields['NAME']);
+				if($arName)
+				{
+					$arFields['NAME'] = '';
+					$arFields['SECOND_NAME'] = '';
+					foreach($arName as $i => $name)
+					{
+						if(!$i)
+						{
+							$arFields['LAST_NAME'] = $name;
+						}
+						else
+						{
+							if(!strlen($arFields['NAME']))
+								$arFields['NAME'] = $name;
+
+							elseif(!strlen($arFields['SECOND_NAME']))
+								$arFields['SECOND_NAME'] = $name;
+
+						}
+					}
+				}
+			}
+		}
+		if($_REQUEST["confirmorder"]=="Y"  && !strlen($arFields["SECOND_NAME"]) && $_REQUEST["ORDER_PROP_1"]){
+			$arNames = explode(' ', $_REQUEST["ORDER_PROP_1"]);
+			if($arNames[2]){
+				$arFields["SECOND_NAME"]=$arNames[2];
+			}
+		}
+
+		if(isset($_REQUEST["soa-action"]) && $_REQUEST["soa-action"] == "saveOrderAjax") // set correct phone in user field
+		{
+			$arPhoneProp = CSaleOrderProps::GetList(
+				array('SORT' => 'ASC'),
+				array(
+						'PERSON_TYPE_ID' => $_REQUEST['PERSON_TYPE'],
+						'IS_PHONE' => 'Y',
+					),
+				false,
+				false,
+				array()
+			)->fetch();
+			if($arPhoneProp)
+			{
+				if($_REQUEST['ORDER_PROP_'.$arPhoneProp['ID']])
+				{
+					$arFields["PERSONAL_PHONE"] = $_REQUEST['ORDER_PROP_'.$arPhoneProp['ID']];
+				}
+			}
+		}
+
+		if(strlen($arFields["EMAIL"]))
+		{
+			if($sChangeLogin != "N")
+			{
+				$bEmailError = false;
+
+				if(\Bitrix\Main\Config\Option::get('main', 'new_user_email_uniq_check', 'N') == 'Y')
+				{
+					$rsUser = CUser::GetList($by = "ID", $order = "ASC", array("=EMAIL" => $arFields["EMAIL"], "!ID" => $arFields["ID"]));
+					if(!$bEmailError = intval($rsUser->SelectedRowsCount()) > 0)
+					{
+						$rsUser = CUser::GetList($by = "ID", $order = "ASC", array("LOGIN_EQUAL" => $arFields["EMAIL"], "!ID" => $arFields["ID"]));
+						$bEmailError = intval($rsUser->SelectedRowsCount()) > 0;
+					}
+				}
+
+				if($bEmailError){
+					global $APPLICATION;
+					$APPLICATION->throwException(Loc::getMessage("EMAIL_IS_ALREADY_EXISTS", array("#EMAIL#" => $arFields["EMAIL"])));
+					return false;
+				}
+				else{
+					// !admin
+					if (!isset($GLOBALS["USER"]) || !is_object($GLOBALS["USER"])){
+						$bTmpUser = True;
+						$GLOBALS["USER"] = new \CUser;
+					}
+
+					if($bAdminSection)
+					{
+						if(isset($arFields['ID']) && $arFields['ID'])
+						{
+							if(!in_array(1, CUser::GetUserGroup($arFields['ID'])))
+								$arFields['LOGIN'] = $arFields['EMAIL'];
+						}
+						elseif(isset($arFields['GROUP_ID']) && $arFields['GROUP_ID'])
+						{
+							$arUserGroups = array();
+							$arTmpGroups = (array)$arFields['GROUP_ID'];
+							foreach($arTmpGroups as $arGroup)
+							{
+								if(is_array($arGroup))
+									$arUserGroups[] = $arGroup['GROUP_ID'];
+								else
+									$arUserGroups[] = $arGroup;
+							}
+
+							if(count(array_intersect($arUserGroups, array(1)))<=0)
+								$arFields['LOGIN'] = $arFields['EMAIL'];
+						}
+						else
+							$arFields['LOGIN'] = $arFields['EMAIL'];
+					}
+					else
+					{
+						if(!$GLOBALS['USER']->IsAdmin())
+							$arFields["LOGIN"] = $arFields["EMAIL"];
+					}
+				}
+			}
+			else
+			{
+				if(!$arFields["LOGIN"] || $arFields["LOGIN"] == 1)
+				{
+					$newLogin = $arFields['EMAIL'];
+					$pos = strpos($newLogin, '@');
+					if ($pos !== false)
+						$newLogin = substr($newLogin, 0, $pos);
+
+					if (strlen($newLogin) > 47)
+						$newLogin = substr($newLogin, 0, 47);
+
+					if (strlen($newLogin) < 3)
+						$newLogin .= '_';
+
+					if (strlen($newLogin) < 3)
+						$newLogin .= '_';
+					$arFields["LOGIN"] = $newLogin;
+				}
+			}
+		}
+
+		if ($bTmpUser)
+			unset($GLOBALS["USER"]);
+
+		return $arFields;
+	}
+
+	public static function OnAfterUserRegisterHandler($arFields){
+
+	}
+	public static function OnAfterUserAuthorizeHandler($arFields){
+		// merge FAVORITE_ITEMS from $_SESSION to User
+		if (
+			isset($_SESSION['CATALOG_FAVORITE_LIST']) 
+			&& (isset($_SESSION['CATALOG_FAVORITE_LIST'][Solution::moduleID]) && $_SESSION['CATALOG_FAVORITE_LIST'][Solution::moduleID]['ITEMS'])
+		) {
+
+			$arItems = $_SESSION['CATALOG_FAVORITE_LIST'][Solution::moduleID]['ITEMS'];
+			if ($_SESSION['CATALOG_FAVORITE_LIST'][Solution::moduleID]['IBLOCK_ID']) {
+				$iblockID = $_SESSION['CATALOG_FAVORITE_LIST'][Solution::moduleID]['IBLOCK_ID'];
+			}
+			if ($arFields['user_fields'] && $arFields['user_fields']['ID']) {
+				$userID = $arFields['user_fields']['ID'];
+			}
+
+			$arRootSection = Favorite::getRootSection(['USER_ID' => $userID, 'IBLOCK_ID' => $iblockID]);
+			if (!$arRootSection['ERROR']) {
+				$arListItem = Favorite::addCollection(['USER_ID' => $userID, 'IBLOCK_ID' => $iblockID, 'PARENT_SECTION' => $arRootSection]);
+				if (!$arListItem['ERROR']) {
+					Favorite::addItemsToCollection(['ITEMS' => array_keys($arItems), 'IBLOCK_ID' => $iblockID, 'COLLECTION' => $arListItem]);
+				}
+			}
+
+			unset($_SESSION['CATALOG_FAVORITE_LIST'], $arItems);
+		}
+	}
+
+	public static function replaceMarks($text, $arMarks) {
+		global $arRegion;
+		foreach ($arMarks as $mark => $field) {
+			if (strpos($text, $mark) !== false) {
+				if ($arRegion) {
+					$text = str_replace(array($mark, str_replace('#REGION_TAG_', '#REGION_STRIP_TAG_', $mark)), array($arRegion[$field], strip_tags($arRegion[$field])), $text);
+				} else {
+					$text = str_replace(array($mark, str_replace('#REGION_TAG_', '#REGION_STRIP_TAG_', $mark)), '', $text);
+				}
+			}
+		}
+
+		return $text;
+	}
+
+	public static function onAfterAjaxResponseHandler() {
+		if(defined('ADMIN_SECTION')){
+			return;
+		}
+
+		if(!defined('_USE_AJAX_HANDLER_LITE_')){
+			return;
+		}
+
+		global $arRegion, $APPLICATION;
+		$arRegion = SolutionRegionality::getCurrentRegion();
+	
+		Solution::setRegionSeoMarks();
+
+		/* add|remove top banner in section */
+		$banner = trim($APPLICATION->GetViewContent('section_bnr_h1_content'));
+
+		if (strlen($banner) > 0) {?>
+			<script>
+				$(<?=CUtil::PhpToJSObject($banner)?>).insertAfter($('.top-block-wrapper .page-top > div:first-of-type'))
+				$('.wrapper1').addClass($('.js-banner').data('class'));
+			</script>
+		<?} else {?>
+			<script>
+				if(window.jQuery){
+					$('.wrapper1').removeClass('has-secion-banner');
+					$('.top-block-wrapper .section-banner-top').remove();
+				}							
+			</script>
+		<?}
+		/* */
+		?>
+		<script>
+			setTimeout(function(){
+				if(typeof window.InitStickySideBar === "function"){
+					InitStickySideBar();
+				}
+			}, 100)
+		</script>
+		<?
+
+		$APPLICATION->arAdditionalChain = array_map(
+			function($arElement) {
+				$arElement['TITLE'] = self::replaceMarks($arElement['TITLE'], SolutionRegionality::$arSeoMarks);
+				return $arElement;
+			}
+		, $APPLICATION->arAdditionalChain);
+
+		$APPLICATION->sDocTitle = self::replaceMarks($APPLICATION->sDocTitle, SolutionRegionality::$arSeoMarks);
+	}
+
+	public static function OnEndBufferContentHandler(&$content)
+	{
+		$bCompSaleOrderAjaxPost = isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['soa-action']);
+		if(
+			!defined('ADMIN_SECTION') &&
+			!defined('WIZARD_SITE_ID') && 
+			!defined('WIZARD_DEFAULT_SITE_ID') && 
+			!defined('CUSTOM_CONTENT') ||
+			$bCompSaleOrderAjaxPost
+		)
+		{
+			global $SECTION_BNR_CONTENT, $arRegion;
+
+			if($bCompSaleOrderAjaxPost){
+				if($arRegion){
+					$arTagSeoMarks = array();
+					foreach($arRegion as $key => $value){
+						if(strpos($key, 'PROPERTY_REGION_TAG') !== false && strpos($key, '_VALUE_ID') === false){
+							$tag_name = str_replace(array('PROPERTY_', '_VALUE'), '', $key);
+							$arTagSeoMarks['#'.$tag_name.'#'] = $key;
+						}
+					}
+
+					if($arTagSeoMarks){
+						SolutionRegionality::addSeoMarks($arTagSeoMarks);
+					}
+				}
+			}
+
+			foreach(SolutionRegionality::$arSeoMarks as $mark => $field)
+			{
+				if(strpos($content, $mark) !== false)
+				{
+					if($arRegion)
+					{
+						if(is_array($arRegion[$field]))
+							$content = str_replace($mark, $arRegion[$field]['TEXT'], $content);
+						else
+							$content = str_replace($mark, $arRegion[$field], $content);
+					}
+					else
+						$content = str_replace($mark, '', $content);
+				}
+			}
+
+			// replace canonical|next|prev to <head>
+			if(preg_match_all('/<\s*link\s+[^\>]*rel\s*=\s*[\'"](canonical|next|prev)[\'"][^\>]*>/i'.BX_UTF_PCRE_MODIFIER, $content, $arMatches)){
+				$arLinks = array_map(
+					function($match){
+						if(preg_match('/href\s*=\s*[\'"]([^\'"]*)[\'"]/i'.BX_UTF_PCRE_MODIFIER, $match, $arMatch)){
+							return preg_replace('/href\s*=\s*[\'"]([^\'"]*)[\'"]/i'.BX_UTF_PCRE_MODIFIER, 'href="'.(preg_replace('/(http[s]*:\/\/|^)([^\/]*[\/]?)(.*)/i'.BX_UTF_PCRE_MODIFIER, (CMain::IsHTTPS() ? 'https://' : 'http://').$_SERVER['SERVER_NAME'].'/${3}', $arMatch[1])).'"', $match);
+						}
+
+						return $match;
+					},
+					array_values($arMatches[0])
+				);
+
+				//ignone dulicate canonical
+				$bFindCanonical = false;
+				foreach($arLinks as $keyLink => $link){
+					if(preg_match('/<\s*link\s+[^\>]*rel\s*=\s*[\'"](canonical)[\'"][^\>]*>/i'.BX_UTF_PCRE_MODIFIER, $link, $arMatchCanonical)){
+						if($bFindCanonical){
+							unset($arLinks[$keyLink]);
+						} else {
+							$bFindCanonical = true;
+						}
+					}
+				}				
+
+				$links = implode(
+					'',
+					$arLinks
+				);
+
+				$content = preg_replace(
+					array(
+						'/<\s*link\s+[^\>]*rel\s*=\s*[\'"](canonical|next|prev)[\'"][^\>]*>/i'.BX_UTF_PCRE_MODIFIER,
+						'/<\s*head(\s+[^\>]*|)>/i'.BX_UTF_PCRE_MODIFIER,
+					),
+					array(
+						'',
+						'${0}'.$links,
+					),
+					$content
+				);
+			}
+
+			// lazyload
+			if(isset($GLOBALS['_USE_LAZY_LOAD_LITE_']) && $GLOBALS['_USE_LAZY_LOAD_LITE_'] && !Solution::checkMask(Option::get(Solution::moduleID, 'LAZY_LOAD_EXCEPTIONS', ''))){
+				if((strpos($_SERVER['REQUEST_URI'], '/bitrix/components/') === false && strpos($_SERVER['REQUEST_URI'], '/bitrix/tools/') === false && strpos($_SERVER['REQUEST_URI'], '/bitrix/admin/') === false)){
+					// add lazyload attribyte for each <img> that does not contain data-src
+					$tmpContent = preg_replace('/<img ((?![^>]*\bdata-src\b)[^>]*>)/i'.BX_UTF_PCRE_MODIFIER, '<img data-lazyload ${1}', $content);
+					if(isset($tmpContent)){
+						$content = $tmpContent;
+						$content = preg_replace('/(<img data-lazyload (?![^>]*\bsrcset\b)[^>]*)src=/i'.BX_UTF_PCRE_MODIFIER, '${1} src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src=', $content);
+					}
+
+					$arTags = array(
+						'div',
+						'a',
+						'li',
+						'span',
+						'tr',
+						'td',
+					);
+					$sTags = implode('|', $arTags);
+					$bgPatterns = array(
+						'/<('.$sTags.')((?![^>]*\bdata-src\b)[^>]*background-image:\s*url\s*)/i'.BX_UTF_PCRE_MODIFIER,
+						'/<('.$sTags.')((?![^>]*\bdata-src\b)[^>]*background:.*?url\s*)/i'.BX_UTF_PCRE_MODIFIER,
+					);
+					$tmpContent = preg_replace($bgPatterns, '<${1} data-lazyload ${2}', $content);
+					if(isset($tmpContent)){
+						$content = $tmpContent;
+						$bgPattern = '/
+						(						# group 1 = tag content part before attr background-image
+							< 					# open tag
+							('.$sTags.')\s+ 	# group 2 = tag name 
+							data-lazyload\s+ 	# attr data-lazyload
+							[^>]*
+						)
+						background-image:\s*url\s*
+						\(						# open (
+							\s*					# any spaces
+							[\'"]?				# \' or "
+							(					# group 3 = value of url without quotes and spaces
+								[^\)\'"\s]*
+							)
+							[\'"]?				# \' or "
+							\s*					# any spaces
+						\)						# close )
+						(						# group 4 = tag content part after attr background-image
+							[^>]*
+						)
+						/ix'.BX_UTF_PCRE_MODIFIER;
+						$tmpContent = preg_replace($bgPattern, '${1}background-image:url(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==)${4} data-bg="${3}"', $content);
+
+						if(isset($tmpContent)){
+							$content = $tmpContent;
+							$content = preg_replace('/(<\w+ data-lazyload [^>]*?)class=([\'"])(?![^>]*\blazyload\b)/is'.BX_UTF_PCRE_MODIFIER, '${1}class=${2}lazyload ', $content);
+							$content = preg_replace('/<\w+ data-lazyload (?![^>]*\bclass\s*=\s*[\'\"]\b)(?![^>]*\blazyload\b)/is'.BX_UTF_PCRE_MODIFIER, '${0}class="lazyload " ', $content);
+						}
+					}
+
+					$content = str_replace(' data-lazyload ', ' ', $content);
+				}
+			}
+
+			if( (isset($GLOBALS['_USE_GAPS_REPLACE_LITE_']) && $GLOBALS['_USE_GAPS_REPLACE_LITE_']) && (!defined('IGNORE_EOL_OPT') || IGNORE_EOL_OPT === false) ){
+				$pattern = '/\n(\s*?)\n/is';
+				$content = preg_replace($pattern, PHP_EOL, $content);
+			}
+
+			$content = str_replace('
+<!DOCTYPE html>', '<!DOCTYPE html>', $content);
+
+			// replace text/javascript for html5 validation w3c
+			$content = str_replace(' type="text/javascript"', '', $content);
+			$content = str_replace(' type=\'text/javascript\'', '', $content);
+			$content = str_replace(' type="text/css"', '', $content);
+			$content = str_replace(' type=\'text/css\'', '', $content);
+			$content = str_replace(' charset="utf-8"', '', $content);
+			$content = str_replace(' data-charset="utf-8"', ' charset="utf-8"', $content);
+
+			if(defined('ASPRO_USE_ONENDBUFFERCONTENT_HANDLER') && ASPRO_USE_ONENDBUFFERCONTENT_HANDLER == 'Y')
+			{
+				if($SECTION_BNR_CONTENT)
+				{
+					$pattern = '/<!--title_content-->(.*?)<!--end-title_content-->/ism';
+					$content = preg_replace($pattern, '', $content);
+					$content = str_replace("body class=\"", "body class=\"with_banners ", $content);
+				}
+
+				if (defined('ASPRO_PAGE_WO_TITLE') && ASPRO_PAGE_WO_TITLE) {
+					$pattern = '/<!--h1_content-->(.*?)<!--\/h1_content-->/ism';
+					$content = preg_replace($pattern, '', $content);
+					$content = str_replace("body class=\"", "body class=\"block-wo-title ", $content);
+				}
+
+			}
+
+			// process recaptcha
+			if(SolutionReCaptcha::checkRecaptchaActive())
+			{
+				$count = 0;
+				$contentReplace = preg_replace_callback(
+					'!(<img\s[^>]*?src[^>]*?=[^>]*?)(\/bitrix\/tools\/captcha\.php\?(captcha_code|captcha_sid)=[0-9a-z]+)([^>]*?>)!',
+					function ($arImage)
+					{
+						//replace src and style
+						$arImage = array(
+							'tag' => $arImage[1],
+							'src' => $arImage[2],
+							'tail' => $arImage[4],
+						);
+
+						return SolutionReCaptcha::callbackReplaceImage($arImage);
+					},
+					$content,
+					-1,
+					$count
+				);
+
+				if($count <= 0 || !$contentReplace)
+					return;
+
+				$content = $contentReplace;
+				unset($contentReplace);
+
+				$captcha_public_key = SolutionReCaptcha::getPublicKey();
+
+				$ind = 0;
+				while ($ind++ <= $count)
+				{
+					$uniqueId = randString(4);
+					$content = preg_replace(
+						'!<input\s[^>]*?name[^>]*?=[^>]*?captcha_word[^>]*?>!',
+						"<div id='recaptcha-$uniqueId'
+						class='g-recaptcha'
+						data-sitekey='$captcha_public_key'></div>
+					<script type='text/javascript' data-skip-moving='true'>
+						if(typeof renderRecaptchaById !== 'undefined')
+							renderRecaptchaById('recaptcha-$uniqueId');
+					</script>", $content, 1
+					);
+				}
+
+				$arSearchMessages = array(
+					Loc::getMessage('FORM_CAPRCHE_TITLE_RECAPTCHA'),
+					Loc::getMessage('FORM_CAPRCHE_TITLE_RECAPTCHA2'),
+					Loc::getMessage('FORM_CAPRCHE_TITLE_RECAPTCHA3')
+				);
+
+				$content = str_replace($arSearchMessages, Loc::getMessage('FORM_GENERAL_RECAPTCHA'), $content);
+			}
+		}
+	}
+
+	public static function onBeforeResultAddHandler($WEB_FORM_ID, &$arFields, &$arrVALUES){
+		if(!defined('ADMIN_SECTION') && isset($_REQUEST['aspro_lite_form_validate']))
+		{
+			global $APPLICATION;
+			$arTheme = Solution::GetFrontParametrsValues(SITE_ID);
+
+			if($arrVALUES['nspm'] && !isset($arrVALUES['captcha_sid']))
+		    	$APPLICATION->ThrowException(Loc::getMessage('ERROR_FORM_CAPTCHA'));
+
+		  	if($arTheme['SHOW_LICENCE'] == 'Y' && ((!isset($arrVALUES['licenses_popup']) || !$arrVALUES['licenses_popup']) && (!isset($arrVALUES['licenses_inline']) || !$arrVALUES['licenses_inline'])))
+		    	$APPLICATION->ThrowException(Loc::getMessage('ERROR_FORM_LICENSE'));
+		}
+	}
+
+	public static function onAfterResultAddHandler($WEB_FORM_ID, $RESULT_ID){
+		if(Option::get(Solution::moduleID, 'AUTOMATE_SEND_FLOWLU', 'Y') == 'Y')
+			SolutionFunctions::sendLeadCrmFromForm($WEB_FORM_ID, $RESULT_ID, 'FLOWLU', SITE_ID, false, false);
+
+		if(Option::get(Solution::moduleID, 'AUTOMATE_SEND_AMO_CRM', 'Y') == 'Y')
+			SolutionFunctions::sendLeadCrmFromForm($WEB_FORM_ID, $RESULT_ID, 'AMO_CRM', SITE_ID, false, false);
+			
+		if(Option::get(Solution::moduleID, 'AUTOMATE_SEND_ACLOUD', 'Y') == 'Y')
+			SolutionFunctions::sendLeadCrmFromForm($WEB_FORM_ID, $RESULT_ID, 'ACLOUD', SITE_ID, false, false);
+
+		SolutionFunctions::addFormResultToIBlock($WEB_FORM_ID, $RESULT_ID);
+	}
+
+	public static function OnPageStartHandler()
+	{
+		if(defined("ADMIN_SECTION")){
+			return;
+		}
+
+		/*mobile*/
+		require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/aspro.lite/lib/vendor/mobiledetect.php');
+		$GLOBALS['DETECT_LIB'] = new Detection\MobileDetect;
+
+		if ($GLOBALS['DETECT_LIB']->isMobile()) {
+			define('TEMPLATE_TYPE', 'mobile');
+		} else {
+			define('TEMPLATE_TYPE', 'desktop');
+		}
+		/**/
+
+		// decode auth request from utf-8 to site charset, the request was sended with xmlhttprequest
+		if(
+			(!defined('BX_UTF') || BX_UTF !== true) &&
+			isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+			strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest' &&
+			isset($_REQUEST['AUTH_FORM']) &&
+			$_REQUEST['AUTH_FORM'] <> '' &&
+			isset($_REQUEST['TYPE']) &&
+			$_REQUEST['TYPE'] === 'AUTH'
+		){
+			$_REQUEST = \Bitrix\Main\Text\Encoding::convertEncoding($_REQUEST, 'UTF-8', SITE_CHARSET);
+		}
+
+		// current region
+		global $arRegion;
+		if(!$arRegion){
+			$arRegion = SolutionRegionality::getCurrentRegion();
+		}
+
+		if(!SolutionReCaptcha::checkRecaptchaActive())
+			return;
+
+		// remove captcha_word from request
+		if(isset($_REQUEST['captcha_word'])){
+			$_REQUEST['captcha_word'] = $_POST['captcha_word'] = '';
+		}
+
+		$captcha_public_key = SolutionReCaptcha::getPublicKey();
+		$captcha_version = SolutionReCaptcha::getVersion();
+		$assets = Asset::getInstance();
+
+		if($captcha_version == 3){
+			$arCaptchaProp = array(
+				'recaptchaColor' => '',
+				'recaptchaLogoShow' => '',
+				'recaptchaSize' => '',
+				'recaptchaBadge' => '',
+				'recaptchaLang' => LANGUAGE_ID,
+			);
+		}
+		else{
+			$arCaptchaProp = array(
+				'recaptchaColor' => strtolower(Option::get(Solution::moduleID, 'GOOGLE_RECAPTCHA_COLOR', 'LIGHT')),
+				'recaptchaLogoShow' => strtolower(Option::get(Solution::moduleID, 'GOOGLE_RECAPTCHA_SHOW_LOGO', 'Y')),
+				'recaptchaSize' => strtolower(Option::get(Solution::moduleID, 'GOOGLE_RECAPTCHA_SIZE', 'NORMAL')),
+				'recaptchaBadge' => strtolower(Option::get(Solution::moduleID, 'GOOGLE_RECAPTCHA_BADGE', 'BOTTOMRIGHT')),
+				'recaptchaLang' => LANGUAGE_ID,
+			);
+		}
+
+		//add global object asproRecaptcha
+		$scripts = "<script type='text/javascript' data-skip-moving='true'>";
+		$scripts .= "window['asproRecaptcha'] = {params: ".\CUtil::PhpToJsObject($arCaptchaProp).",key: '".$captcha_public_key."',ver: '".$captcha_version."'};";
+		$scripts .= "</script>";
+		$assets->addString($scripts);
+
+		//add scripts
+		$scriptsDir = $_SERVER['DOCUMENT_ROOT'].'/bitrix/js/'.Solution::moduleID.'/captcha/';
+		$scriptsPath = File::isFileExists($scriptsDir.'recaptcha.min.js')? $scriptsDir.'recaptcha.min.js' : $scriptsDir.'recaptcha.js';
+		$scriptCode = File::getFileContents($scriptsPath);
+		$scripts = "<script type='text/javascript' data-skip-moving='true'>".$scriptCode."</script>";
+		$assets->addString($scripts);
+
+		$scriptsPath = File::isFileExists($scriptsDir . 'replacescript.min.js') ? $scriptsDir . 'replacescript.min.js' : $scriptsDir . 'replacescript.js';
+		$scriptCode = File::getFileContents($scriptsPath);
+		$scripts = "<script type='text/javascript' data-skip-moving='true'>".$scriptCode."</script>";
+		$assets->addString($scripts);
+
+		//process post request
+		$application = Application::getInstance();
+		$request = $application->getContext()->getRequest();
+		$arPostData = $request->getPostList()->toArray();
+
+		$needReInit = false;
+
+		if($arPostData['g-recaptcha-response'])
+		{
+			if($code = SolutionReCaptcha::getCodeByPostList($arPostData))
+			{
+				$_REQUEST['captcha_word'] = $_POST['captcha_word'] = $code;
+				$needReInit = true;
+			}
+		}
+
+		foreach($arPostData as $key => $arPost)
+		{
+			if(!is_array($arPost) || !$arPost['g-recaptcha-response'])
+				continue;
+
+			if($code = SolutionReCaptcha::getCodeByPostList($arPost))
+			{
+				$_REQUEST[$key]['captcha_word'] = $_POST[$key]['captcha_word'] = $code;
+				$needReInit = true;
+			}
+		}
+
+		if($needReInit)
+		{
+			SolutionReCaptcha::reInitContext($application, $request);
+		}
+	}
+
+	public static function OnSearchGetURL($arFields){
+    	if($arFields['MODULE_ID'] === 'iblock'){
+    		if(($iblockId = intval($arFields['PARAM2'])) > 0){
+    			if(($id = intval($arFields['ITEM_ID'])) > 0){
+			    	if(strpos($arFields["URL"], "#YEAR#") !== false){
+						$arElement = SolutionCache::CIBlockElement_GetList(
+							array(
+								'CACHE' => array(
+									'TAG' => SolutionCache::GetIBlockCacheTag($iblockId),
+									'MULTI' => 'N'
+								)
+							),
+							array('ID' => $id),
+							false,
+							false,
+							array(
+								'ID',
+								'ACTIVE_FROM',
+							)
+						);
+
+				    	if($arElement['ACTIVE_FROM']){
+				    		if($arDateTime = ParseDateTime($arElement['ACTIVE_FROM'], FORMAT_DATETIME)){
+						        return str_replace("#YEAR#", $arDateTime['YYYY'], $arFields['URL']);
+				    		}
+				    	}
+			    	}
+			    }
+		    }
+	    }
+
+		return $arFields["URL"];
+
+    }
+
+	public static function OnBeforeBasketUpdateHandler($ID, &$arFields){
+		global $arRegion;
+		if (!defined('ADMIN_SECTION') && $arRegion) {
+			//get PRODUCT_ID
+			$arFilter = [
+	            'FUSER_ID' => \CSaleBasket::GetBasketUserID(),
+	            'LID' => SITE_ID,
+	            'ORDER_ID' => 'NULL',
+	            'ID' => $ID
+	        ];
+			$arBasketItem = \CSaleBasket::GetList(
+	            ['ID' => 'ASC'],
+	            $arFilter,
+	            false,
+	            false,
+	            ['ID', 'PRODUCT_ID', 'QUANTITY', 'LID']
+	        )->Fetch();
+
+	        //get store amount
+			if ($arRegion['LIST_STORES'] && reset($arRegion['LIST_STORES']) != 'component') {
+				//get catalog PRODUCT
+				$arProduct = \CCatalogProduct::GetByID($arBasketItem['PRODUCT_ID']);
+
+				//check CAN_BUY quantity
+				if ($arProduct['QUANTITY_TRACE'] == 'Y' && $arProduct['CAN_BUY_ZERO'] != 'Y') {
+					$quantity_stores = 0;
+					$arSelect = ['ID', 'PRODUCT_AMOUNT'];
+					$arFilter = [
+						'ID' => $arRegion['LIST_STORES'],
+						'PRODUCT_ID' => $arBasketItem['PRODUCT_ID'],
+					];
+					$rsStore = \CCatalogStore::GetList(
+						[],
+						$arFilter,
+						false,
+						false,
+						$arSelect
+					);
+					while ($arStore = $rsStore->Fetch()) {
+						$quantity_stores += $arStore['PRODUCT_AMOUNT'];
+					}
+
+					if ($quantity_stores <= 0) {
+						$arFields['CAN_BUY'] = 'N';
+					} elseif ($arFields['QUANTITY']) {
+						if ($arFields['QUANTITY'] > $quantity_stores) {
+							$arFields['QUANTITY'] = $quantity_stores;
+						}
+					} elseif ($arBasketItem['QUANTITY'] > $quantity_stores) {
+						$arFields['QUANTITY'] = $quantity_stores;
+					}
+				}
+			}
+		}
+	}
+
+	public static function OnCatalogDeliveryComponentInitUserResult(&$arResult, &$arParams, $request){
+		global $arRegion;
+
+		if(
+			!$arResult['LOCATION'] &&
+			class_exists('CAsproCatalogDeliveryLite') &&
+			Loader::includeModule('sale')
+		){
+			if(!$arRegion){
+				$arRegion = SolutionRegionality::getCurrentRegion();
+			}
+
+			if(
+				$arRegion &&
+				$arRegion['LOCATION']
+			){
+				$arResult['LOCATION'] = CAsproCatalogDeliveryLite::getLocationByCode(CSaleLocation::getLocationCODEbyID($arRegion['LOCATION']), LANGUAGE_ID);
+			}
+		}
+	}
+
+	public static function OnSaleComponentOrderJsDataHandler($arResult, $arParams){
+		
+		global $arRegion;
+		if ($arResult['JS_DATA'] && $arResult['JS_DATA']['STORE_LIST']) {
+			if(!$arRegion){
+				$arRegion = SolutionRegionality::getCurrentRegion();
+			}
+			if ($arRegion && ($arRegion['LIST_STORES'] && reset($arRegion['LIST_STORES']) !== 'component')) {
+				$arResult['JS_DATA']['STORE_LIST'] = array_filter($arResult['JS_DATA']['STORE_LIST'], function($item) use ($arRegion){
+					return in_array($item['ID'], $arRegion['LIST_STORES']);
+				});
+			}
+		}
+		/* user profiles */
+		if ($arResult['JS_DATA']['USER_PROFILES']) {
+			$arPersonType = reset(array_filter($arResult['PERSON_TYPE'], function($item){
+				return $item['CHECKED'] === 'Y';
+			}));
+
+			$arPhoneProp = CSaleOrderProps::GetList(
+				[
+					'SORT' => 'ASC'
+				],
+				[
+					'USER_PROPS' => 'Y',
+					'IS_PHONE' => 'Y',
+					'PERSON_TYPE_ID' => $arPersonType['ID']
+				]
+			)->Fetch();
+
+			$arUserProps = [];
+			$rsUserProps = CSaleOrderUserPropsValue::GetList(
+				[
+					'ID' => 'ASC'
+				], 
+				[
+					'USER_PROPS_ID' => array_keys($arResult['JS_DATA']['USER_PROFILES'])
+				],
+				false,
+				false,
+				['ID', 'USER_PROPS_ID', 'VALUE', 'NAME', 'CODE', 'PROP_IS_EMAIL']
+			);
+			while ($arUserProp = $rsUserProps->Fetch()) {
+				if ($arUserProp['VALUE']) {
+					if ($arUserProp['PROP_IS_EMAIL'] === 'Y') {
+						$arUserProps[$arUserProp['USER_PROPS_ID']]['EMAIL'] = $arUserProp['VALUE'];
+					}
+					if ($arPhoneProp && $arPhoneProp['CODE'] === $arUserProp['CODE']) {
+						$arUserProps[$arUserProp['USER_PROPS_ID']]['PHONE'] = $arUserProp['VALUE'];
+					}
+				}
+			}
+			
+			if ($arUserProps) {
+				$arResult['JS_DATA']['USER_PROFILES_PROPS'] = $arUserProps;
+			}
+		}
+	}
+
+	public static function OnBeforeSubscriptionAddHandler(&$arFields){
+		if(!defined('ADMIN_SECTION'))
+		{
+			global $APPLICATION;
+			$arTheme = Solution::GetFrontParametrsValues(SITE_ID);
+
+			if($arTheme['SHOW_LICENCE'] == 'Y' && !isset($_REQUEST['licenses_subscribe']))
+			{
+				$APPLICATION->ThrowException(\Bitrix\Main\Localization\Loc::getMessage('ERROR_FORM_LICENSE'));
+				return false;
+			}
+		}
+	}
+
+	static function OnAfterIBlockElementAddHandler($arFields){
+		if ($arFields['IBLOCK_ID'] != ($iblockID = SolutionCache::$arIBlocks[SITE_ID]["aspro_lite_content"]["aspro_lite_reviews"][0])) {
+			$PROP = [];
+			if ($arFields['PROPERTY_VALUES']) {
+				if ($arFields['PROPERTY_VALUES']['POST']) {
+					$PROP['POST'] = $arFields['PROPERTY_VALUES']['POST'];
+				}
+				if ($arFields['PROPERTY_VALUES']['RATING']) {
+					$arRating = \CIBlockPropertyEnum::GetList(
+						[], 
+						[
+							"IBLOCK_ID" => $iblockID, 
+							"CODE" => "RATING", 
+							"VALUE" => $arFields['PROPERTY_VALUES']['RATING']
+						]
+					)->Fetch();
+					if ($arRating['ID']) {
+						$PROP['RATING'] = $arRating['ID'];
+					}
+				}
+				if ($arFields['PROPERTY_VALUES']['EMAIL']) {
+					$PROP['EMAIL'] = $arFields['PROPERTY_VALUES']['EMAIL'];
+				}
+				if ($arFields['PROPERTY_VALUES']['FILES']) {
+					$PROP['DOCUMENTS'] = $arFields['PROPERTY_VALUES']['FILES'];
+				}
+				
+			}
+			$arData = [
+				"PROPERTY_VALUES"=> $PROP,
+				"NAME"=> $arFields['PROPERTY_VALUES']['NAME'],
+				"PREVIEW_TEXT"=> $arFields['PROPERTY_VALUES']['MESSAGE']['VALUE']['TEXT'],
+			];
+			if ($arFields['PROPERTY_VALUES']['PHOTO']) {
+				$arData['PREVIEW_PICTURE'] = $arFields['PROPERTY_VALUES']['PHOTO'][0];
+			}
+			
+			// SolutionFunctions::sendDataToIBlock($arData);
+		}
+	}
+
+	static function onAsproParametersHandler(&$arParams){
+		$arNewOptions = SolutionFunctions::getCustomBlocks();
+		if ($arNewOptions) {
+			$currentIndexType = Option::get(Solution::moduleID, 'INDEX_TYPE', 'index1');
+			$indexOptions = $arParams['INDEX_PAGE']['OPTIONS']['INDEX_TYPE']['SUB_PARAMS'][$currentIndexType];
+			
+			$arParams['INDEX_PAGE']['OPTIONS']['INDEX_TYPE']['SUB_PARAMS'][$currentIndexType] = array_merge($indexOptions, $arNewOptions);
+		}
+	}
+
+	/* Reviews handlers block  */
+	public static function OnBeforeCommentAddHandler(&$arFields){
+		$application = \Bitrix\Main\Application::getInstance();
+		$request = $application->getContext()->getRequest();
+
+		if (isset($request['rating'])) {
+			if ($request['rating']) {
+				global $USER;				
+				$arFields['UF_ASPRO_COM_RATING'] = $request['rating'];
+				
+				$userID = $USER->GetID();
+				if ($userID) {
+					$arFilter = ['USER_ID' => $userID];
+					if (strpos($request['XML_ID'], '%') !== false)
+						$arFilter['%=BASKET_PRODUCT_XML_ID'] = str_replace('%', '#%', $request['XML_ID']);
+					else
+						$arFilter['BASKET_PRODUCT_ID'] = $request['ELEMENT_ID'];
+
+					if (Solution::isSaleMode())
+						$arFields['UF_ASPRO_COM_APPROVE'] = CSaleOrder::GetList([], $arFilter, false, false)->SelectedRowsCount() > 0;
+				}
+
+			} else if(!$request['parentId']) {
+				global $APPLICATION;
+				
+				$APPLICATION->throwException(Loc::getMessage("RATING_IS_REQUIRED"));
+				return false;
+			}
+		}
+
+		if( isset($arFields['POST_TEXT']) ) {
+			$arFields['POST_TEXT'] = strip_tags($arFields['POST_TEXT'], '<virtues><limitations><comment>');
+		}
+	}
+
+	public static function OnCommentAddHandler($commentID, &$arFields){
+		$notAdded = [];
+		
+		if($_FILES['comment_images']) {
+			$maxSize = $_SESSION['BLOG_MAX_IMAGE_SIZE'] * 1024 * 1024;
+
+			foreach ($_FILES['comment_images']['name'] as $key => $imgName) {
+				if($maxSize && $_FILES['comment_images']['size'][$key] > $maxSize) {
+					$notAdded[] = $imgName;
+					continue;
+				}
+				$fileArray = Array(
+    				"name" => $imgName,
+					"size" => $_FILES['comment_images']['size'][$key],
+    				"tmp_name" => $_FILES['comment_images']['tmp_name'][$key],
+    				"type" => $_FILES['comment_images']['type'][$key],
+				    "MODULE_ID" => "blog",
+				);
+				$fileId = CFile::SaveFile($fileArray, '/blog/comment/');
+				if($fileId) {
+					$filesToAttach[$key] = $fileId;
+				}
+			}
+
+			unset($_FILES['comment_images']);
+		}
+
+		if($filesToAttach) {
+			foreach ($filesToAttach as $imageKey => $imageId) {
+				CBlogImage::Add(array(
+					'FILE_ID' => $imageId,
+					"POST_ID" => $arFields["POST_ID"],
+					"BLOG_ID" => $arFields["BLOG_ID"],
+					"COMMENT_ID" => IntVal($commentID),
+					'IMAGE_SIZE' => $_FILES['comment_images']['size'][$imageKey],
+				));
+			}
+		}
+
+		if($notAdded) {
+			$_SESSION['NOT_ADDED_FILES']['ID'] = $commentID;
+			$_SESSION['NOT_ADDED_FILES']['FILES'] = $notAdded;
+		}
+
+		Review::updateExtendedReviewsProps($commentID);
+	}
+
+	public static function OnBeforeCommentUpdateHandler($id, &$arFields){
+		$application = \Bitrix\Main\Application::getInstance();
+		$request = $application->getContext()->getRequest();
+
+		if (isset($request['approve_comment_id']) || isset($request['unapprove_comment_id'])) {
+			$bStatus = isset($request['approve_comment_id']);
+
+			global $USER_FIELD_MANAGER;
+			$USER_FIELD_MANAGER->Update("BLOG_COMMENT", $id, array('UF_ASPRO_COM_APPROVE' => $bStatus));
+		}
+
+		if( isset($request['rating']) ) {
+			global $USER_FIELD_MANAGER;
+			$USER_FIELD_MANAGER->Update("BLOG_COMMENT", $id, array('UF_ASPRO_COM_RATING' => $request['rating']));
+		}
+
+		if( isset($arFields['POST_TEXT']) ) {
+			$arFields['POST_TEXT'] = strip_tags($arFields['POST_TEXT'], '<virtues><limitations><comment>');
+		}
+	}
+
+	public static function OnCommentUpdateHandler($commentID, &$arFields){
+		if( isset($_REQUEST['rating']) ) {
+			$resImages = CBlogImage::GetList(array("ID"=>"DESC"), array('COMMENT_ID' => $commentID));
+			while($arImage = $resImages->Fetch()) {
+				CFile::Delete($arImage['FILE_ID']);
+				CBlogImage::Delete($arImage['ID']);
+			}
+
+			if(isset($_FILES['comment_images']['name'][0]) && $_FILES['comment_images']['name'][0]) {
+
+				$maxSize = $_SESSION['BLOG_MAX_IMAGE_SIZE'] * 1024 * 1024;
+
+				foreach ($_FILES['comment_images']['name'] as $key => $imgName) {
+					if($maxSize && $_FILES['comment_images']['size'][$key] > $maxSize)
+						continue;
+					$fileArray = Array(
+						"name" => $imgName,
+						"size" => $_FILES['comment_images']['size'][$key],
+						"tmp_name" => $_FILES['comment_images']['tmp_name'][$key],
+						"type" => $_FILES['comment_images']['type'][$key],
+						"MODULE_ID" => "blog",
+					);
+					$fileId = CFile::SaveFile($fileArray, '/blog/comment/');
+					if($fileId) {
+						$filesToAttach[$key] = $fileId;
+					}
+				}
+
+				unset($_FILES['comment_images']);
+			}
+
+			if($filesToAttach) {
+				foreach ($filesToAttach as $imageKey => $imageId) {
+					CBlogImage::Add(array(
+						'FILE_ID' => $imageId,
+						"POST_ID" => $arFields["POST_ID"],
+						"BLOG_ID" => $arFields["BLOG_ID"],
+						"COMMENT_ID" => IntVal($commentID),
+						'IMAGE_SIZE' => $_FILES['comment_images']['size'][$imageKey],
+					));
+				}
+			}
+		}
+
+		Review::updateExtendedReviewsProps($commentID);
+	}
+
+	public static function OnCommentDeleteHandler($ID){
+		$resImages = CBlogImage::GetList(array("ID"=>"DESC"), array('COMMENT_ID' => $ID));
+		while($arImage = $resImages->Fetch()) {
+			CFile::Delete($arImage['FILE_ID']);
+		}
+
+		Review::updateExtendedReviewsProps($ID, 'delete');
+	}
+	
+	public static function UpdateFormEvent(&$arFields){
+		if($arFields['ID'] && $arFields['IBLOCK_ID'])
+		{
+			// find aspro form event for this iblock
+			$arEventIDs = array('ASPRO_SEND_FORM_'.$arFields['IBLOCK_ID'], 'ASPRO_SEND_FORM_ADMIN_'.$arFields['IBLOCK_ID']);
+			$arLangIDs = array('ru', 'en');
+			static $arEvents;
+			
+			if($arEvents == NULL)
+			{
+				foreach($arEventIDs as $EVENT_ID)
+				{
+					foreach($arLangIDs as $LANG_ID)
+					{
+						$resEvents = CEventType::GetByID($EVENT_ID, $LANG_ID);
+						$arEvents[$EVENT_ID][$LANG_ID] = $resEvents->Fetch();
+					}
+				}
+			}
+			if($arEventIDs)
+			{
+				foreach($arEventIDs as $EVENT_ID)
+				{
+					foreach($arLangIDs as $LANG_ID)
+					{
+						if($arEvent = &$arEvents[$EVENT_ID][$LANG_ID])
+						{
+							if(strpos($arEvent['DESCRIPTION'], $arFields['NAME'].': #'.$arFields['CODE'].'#') === false){
+								$arEvent['DESCRIPTION'] = str_replace('#'.$arFields['CODE'].'#', '-', $arEvent['DESCRIPTION']);
+								$arEvent['DESCRIPTION'] .= $arFields['NAME'].': #'.$arFields['CODE']."#\n";
+								CEventType::Update(array('ID' => $arEvent['ID']), $arEvent);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	public static function OnAfterUserLoginHandler(&$arFields){
+		if(
+			!defined('ADMIN_SECTION') &&
+			$arFields['USER_ID']
+		) {
+			\Aspro\Lite\Notice::setAuthFlag();
+ 		}
+	}
+}
+?>

@@ -1,0 +1,650 @@
+<?
+namespace Aspro\Lite\Product;
+
+use \Bitrix\Main\Loader,
+    \Bitrix\Main\Localization\Loc;
+
+use CLite as Solution,
+    Aspro\Functions\CAsproLite as SolutionFunctions,
+    CLiteRegionality as SolutionRegionality;
+
+class Price {
+    public static $catalogInclude = null;
+
+    public static function checkCatalogModule()
+    {
+        if (self::$catalogInclude === null)
+			self::$catalogInclude = Solution::isSaleMode();
+    }
+
+    public static function check(array $arItem = [], array $arCondition = ['CAN_ACCESS' => 'Y'])
+    {
+        if (!is_array($arItem)) return false;
+
+        self::checkCatalogModule();
+
+        if (self::$catalogInclude) {
+            if (isset($arItem['PRICES']) && $arItem['PRICES']) {
+                $arPrice = self::getCatalogPrice($arItem['PRICES']);
+                $price = $arPrice['PRICE'] ?? $arPrice['VALUE'];
+                if ($price > 0) {
+                    return true;
+                }
+            }
+        } else {
+            if (
+                (
+                    isset($arItem['DISPLAY_PROPERTIES']['PRICE']) &&
+                    $arItem['DISPLAY_PROPERTIES']['PRICE']['VALUE'] > 0
+                ) ||
+                (
+                    isset($arItem['DISPLAY_PPROPERTIESROPERTIES']['PRICE']) &&
+                    $arItem['PROPERTIES']['PRICE']['VALUE'] > 0
+                )
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function getPricesByFilter(array $arPrices = [], array $arCondition = [])
+    {
+        if (!is_array($arPrices)) return [];
+        if (is_array($arCondition) && $arCondition) {
+            return array_filter($arPrices, function($value) use ($arCondition) {
+                return array_intersect($arCondition, (array)$value) === $arCondition;
+            }, ARRAY_FILTER_USE_BOTH);
+        }
+        return $arPrices;
+    }
+
+    public static function getCatalogPrice(array $arPrices = [], array $arCondition = ['CAN_ACCESS' => 'Y'])
+    {
+        if (!is_array($arPrices)) return [];
+        $arPrice = self::getMinPrice($arPrices, $arCondition);
+
+        return $arPrice;
+    }
+    
+    public static function getMinPrice(array $arPrices = [], array $arCondition = ['CAN_ACCESS' => 'Y'])
+    {
+        if (!is_array($arPrices)) return [];
+        if ($arCondition) {
+            $arPrices = self::getPricesByFilter($arPrices, $arCondition);
+        }
+        
+        $maxPrice = PHP_INT_MAX;
+        $arResultPrice = [];
+        foreach ($arPrices as $arPrice) {
+            if ($arPrice['VALUE'] < $maxPrice) {
+                $maxPrice = $arPrice['VALUE'];
+                $arResultPrice = $arPrice;
+            }
+        }
+        return $arResultPrice;
+    }
+
+    public static function getMaxPrice(array $arPrices = [])
+    {
+        if (!is_array($arPrices)) return [];
+        
+        $maxPrice = 0;
+        $arResultPrice = [];
+        foreach ($arPrices as $arPrice) {
+            if ($arPrice['VALUE'] > $maxPrice) {
+                $maxPrice = $arPrice['VALUE'];
+                $arResultPrice = $arPrice;
+            }
+        }
+        return $arResultPrice;
+    }
+
+    public static function getPriceTypeFromOffersProperties(array $arOptions = [])
+    {
+        $arDefaultOptions = [
+            'OFFERS' => [],
+            'TYPE' => 'max',
+            'STATIC' => false,
+        ];
+        $arConfig = array_merge($arDefaultOptions, $arOptions);
+
+        $listTypes = ['max', 'min'];
+        if (!$arConfig['OFFERS'] || !in_array($arConfig['TYPE'], $listTypes)) {
+            return ['VALUE' => 0, 'CURRENCY' => ''];
+        }
+
+        static $arPrices;
+        if (!isset($arPrices) || !$arConfig['STATIC']) {
+            $arPrices = array_map(fn($arFields) => [
+                'VALUE' => $arFields['DISPLAY_PROPERTIES']['FILTER_PRICE']['VALUE'],
+                'CURRENCY' => $arFields['DISPLAY_PROPERTIES']['PRICE_CURRENCY']['VALUE_XML_ID'],
+            ], $arConfig['OFFERS']);
+        }
+
+        return $arConfig['TYPE'] === 'min' ? static::getMinPrice($arPrices, []) : static::getMaxPrice($arPrices);
+    }
+
+    public static function getPriceFromOffersExt(array &$offers, array $arOptions)
+    {
+        $arDefaultOptions = [
+            'REPLACE_PRICE' => true,
+            'CURRENCY' => '',
+            'IS_PRICE_MIN' => true,
+        ];
+        $arConfig = array_merge($arDefaultOptions, $arOptions);
+        $replacePrice = $arConfig['REPLACE_PRICE'];
+        $currency = $arConfig['CURRENCY'];
+        $result = false;
+        $minPrice = 0;
+
+        if (!$currency) {
+            $currency = \Bitrix\Currency\CurrencyManager::getBaseCurrency();
+        }
+
+        if (!empty($offers) && is_array($offers)) {
+            $doubles = [];
+            foreach ($offers as $oneOffer) {
+                if (!$oneOffer["MIN_PRICE"]) continue;
+                $oneOffer['ID'] = (int)$oneOffer['ID'];
+
+                if (isset($doubles[$oneOffer['ID']])) continue;
+                if (!$oneOffer['CAN_BUY']) continue;
+
+                \CIBlockPriceTools::setRatioMinPrice($oneOffer, $replacePrice);
+
+                $oneOffer['MIN_PRICE']['CATALOG_MEASURE_RATIO'] = $oneOffer['CATALOG_MEASURE_RATIO'];
+                $oneOffer['MIN_PRICE']['CATALOG_MEASURE'] = $oneOffer['CATALOG_MEASURE'];
+                $oneOffer['MIN_PRICE']['CATALOG_MEASURE_NAME'] = $oneOffer['CATALOG_MEASURE_NAME'];
+                $oneOffer['MIN_PRICE']['~CATALOG_MEASURE_NAME'] = $oneOffer['~CATALOG_MEASURE_NAME'];
+                if (empty($result)) {
+                    $minPrice = $oneOffer['MIN_PRICE']['CURRENCY'] == $currency
+                        ? $oneOffer['MIN_PRICE']['DISCOUNT_VALUE']
+                        : \CCurrencyRates::ConvertCurrency($oneOffer['MIN_PRICE']['DISCOUNT_VALUE'], $oneOffer['MIN_PRICE']['CURRENCY'], $currency);
+
+                    $result = $oneOffer['MIN_PRICE'];
+                } else {
+                    $comparePrice = $oneOffer['MIN_PRICE']['CURRENCY'] == $currency
+                        ? $oneOffer['MIN_PRICE']['DISCOUNT_VALUE']
+                        : \CCurrencyRates::ConvertCurrency($oneOffer['MIN_PRICE']['DISCOUNT_VALUE'], $oneOffer['MIN_PRICE']['CURRENCY'], $currency);
+
+                    $bCompareCondition = $arConfig['IS_PRICE_MIN'] 
+                        ? $minPrice > $comparePrice // min price condition
+                        : $minPrice < $comparePrice; // max price condition
+                    if (
+                        $bCompareCondition
+                        // && $oneOffer['MIN_PRICE']['CAN_BUY'] == 'Y'
+                    ) {
+                        $minPrice = $comparePrice;
+                        $result = $oneOffer['MIN_PRICE'];
+                    }
+                }
+
+                $doubles[$oneOffer['ID']] = true;
+            }
+        }
+
+        //add CAN_ACCESS for TSolution\Product\Price::check
+        if ($result && is_array($result)) {
+            if ($result['VALUE']) {
+                $result['PRINT_DISCOUNT_VALUE'] = self::addFromTextBeforePrice($result['PRINT_DISCOUNT_VALUE']);
+            }
+            if (!isset($result['CAN_ACCESS'])) {
+                $result['CAN_ACCESS'] = 'Y';
+            }
+        }
+        return $result;
+    }
+
+    public static function getMinPriceFromOffersExt(&$offers, $currency = '', $replaceMinPrice = true)
+    {
+		return static::getPriceFromOffersExt($offers, [
+            'CURRENCY' => $currency,
+            'REPLACE_PRICE' => $replaceMinPrice,
+            'IS_PRICE_MIN' => true,
+        ]);
+	}
+    public static function getMaxPriceFromOffersExt(&$offers, $currency = '', $replaceMinPrice = true)
+    {
+		return static::getPriceFromOffersExt($offers, [
+            'CURRENCY' => $currency,
+            'REPLACE_PRICE' => $replaceMinPrice,
+            'IS_PRICE_MIN' => false,
+        ]);
+	}
+
+    public static function addFromTextBeforePrice($price)
+    {
+        if ($price) {
+            return Loc::getMessage('PRICE_FROM').$price;
+        }
+    }
+        
+    public static function getPricesID(array $arPricesID = [], bool $bUsePriceCode = false)
+    {
+        $arPriceIDs = array();
+        if ($arPricesID) {
+            global $USER;
+            $arUserGroups = $USER->GetUserGroupArray();
+
+             if (!is_array($arUserGroups) && (int)$arUserGroups.'|' == (string)$arUserGroups.'|')
+                $arUserGroups = array((int)$arUserGroups);
+
+            if (!is_array($arUserGroups))
+                $arUserGroups = array();
+
+            if (!in_array(2, $arUserGroups))
+                $arUserGroups[] = 2;
+            \Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($arUserGroups);
+
+            $cacheKey = 'U'.implode('_', $arUserGroups).implode('_', $arPricesID);
+            if (!isset($priceTypeCache[$cacheKey])) {
+                if($bUsePriceCode)
+                {
+                    $dbPriceType = \CCatalogGroup::GetList(
+                        array("SORT" => "ASC"),
+                        array("NAME" => $arPricesID)
+                        );
+                    while($arPriceType = $dbPriceType->Fetch())
+                    {
+                        $arPricesID[] = $arPriceType["ID"];
+                    }
+                }
+                $priceTypeCache[$cacheKey] = array();
+                $priceIterator = \Bitrix\Catalog\GroupAccessTable::getList(array(
+                    'select' => array('CATALOG_GROUP_ID'),
+                    'filter' => array('@GROUP_ID' => $arUserGroups, 'CATALOG_GROUP_ID' => $arPricesID, 'ACCESS' => array(\Bitrix\Catalog\GroupAccessTable::ACCESS_BUY, \Bitrix\Catalog\GroupAccessTable::ACCESS_VIEW)),
+                    'order' => array('CATALOG_GROUP_ID' => 'ASC')
+                ));
+                while ($priceType = $priceIterator->fetch())
+                {
+                    $priceTypeId = (int)$priceType['CATALOG_GROUP_ID'];
+                    $priceTypeCache[$cacheKey][$priceTypeId] = $priceTypeId;
+                    unset($priceTypeId);
+                }
+                unset($priceType, $priceIterator);
+            }
+            $arPriceIDs = $priceTypeCache[$cacheKey];
+        }
+        return $arPriceIDs;
+    }
+
+    public static function getPriceList($elementID, $arPricesID = array(), $quantity = 1, $bUsePriceCode = false)
+    {
+        $arPricesList = array();
+        if($arPricesID)
+        {
+            $arPricesID = self::getPricesID($arPricesID, $bUsePriceCode);
+
+            $arSelect = array('ID', 'CATALOG_GROUP_ID', 'PRICE', 'CURRENCY');
+            $arFilter = array(
+                '=PRODUCT_ID' => $elementID,
+                '@CATALOG_GROUP_ID' => $arPricesID,
+                array(
+                    'LOGIC' => 'OR',
+                    '<=QUANTITY_FROM' => $quantity,
+                    '=QUANTITY_FROM' => null
+                ),
+                array(
+                    'LOGIC' => 'OR',
+                    '>=QUANTITY_TO' => $quantity,
+                    '=QUANTITY_TO' => null
+                )
+            );
+
+            if(class_exists('\Bitrix\Catalog\PriceTable'))
+            {
+                $iterator = \Bitrix\Catalog\PriceTable::getList(array(
+                    'select' => $arSelect,
+                    'filter' => $arFilter
+                ));
+            }
+            else
+            {
+                $iterator = \CPrice::GetList(array(), $arFilter, false, false, $arSelect);
+            }
+            while($row = $iterator->fetch())
+            {
+                $row['ELEMENT_IBLOCK_ID'] = '';
+                $arPricesList[] = $row;
+            }
+            unset($row);
+        }
+        return $arPricesList;
+    }
+    
+    /**
+     * Show product price
+     * @param array $arOptions
+     * @var 'TYPE' => 'catalog-block',
+     * @var 'WRAPPER_CLASS' => '',
+     * @var 'TO_LINE' => false,
+     * @var 'WIDE_BLOCK' => false,
+     * @var 'SHOW_SCHEMA' => true,
+     * @var 'PRICE_BLOCK_CLASS' => 'color_222',
+     * @var 'PRICE_FONT' => 17,
+     * @var 'PRICEOLD_FONT' => 13,
+     * @var 'RETURN' => false,
+     * @var 'APART_ECONOMY' => false,
+     * @var 'PRICES' => [],
+     * @var 'ITEM' => [],
+     * @var 'PARAMS' => []
+     * @return string|array ['PRICES' => $html, ECONOMY' => $htmlPriceEconomy ] 
+     */
+    public static function show(array $arOptions = [])
+    {
+        $arDefaultOptions = [
+            'TYPE' => 'catalog-block',
+            'WRAPPER_CLASS' => '',
+            'TO_LINE' => true,
+            'LINE_OFFSET' => 6,
+            'WIDE_BLOCK' => false,
+            'SHOW_SCHEMA' => true,
+            'PRICE_BLOCK_CLASS' => 'color_222',
+            'PRICE_FONT' => 18,
+            'PRICEOLD_FONT' => 12,
+            'RETURN' => false,
+            'APART_ECONOMY' => false,
+            'PRICES' => [],
+            'ITEM' => [],
+            'PARAMS' => []
+        ];
+        $arConfig = array_merge($arDefaultOptions, $arOptions);
+
+        self::checkCatalogModule();
+
+        if ($handler = SolutionFunctions::getCustomFunc(__FUNCTION__)) {
+            return call_user_func_array($handler, [$arConfig]);
+        }
+
+        $arParams = $arConfig['PARAMS'];
+        $arItem = $arConfig['ITEM'];
+        $bLinePrices = $arConfig['TO_LINE'];
+        $bShowSchema = $arConfig['SHOW_SCHEMA'];
+        $bWideBlock = $arConfig['WIDE_BLOCK'];
+
+        $price = $priceOld = $priceEconomy = $priceCurrency = $priceFilter = [];
+
+        //catalog
+        if (self::$catalogInclude && isset($arItem['PRICES'])) {
+            $arConfig['PRICES'] = self::getCatalogPrice($arItem['PRICES']);
+
+            //set old price from price types
+            $arOldPrice = self::getOldPriceFromTypes($arConfig['PRICES'], $arItem['PRICES']);
+            if ($arOldPrice && isset($arOldPrice['VALUE'])) {
+                $arConfig['PRICES']['VALUE'] = $arOldPrice['VALUE'];
+                $arConfig['PRICES']['PRINT_VALUE'] = $arOldPrice['PRINT_VALUE'];
+                $arConfig['PRICES']['DISCOUNT_DIFF_PERCENT'] = $arOldPrice['DISCOUNT_DIFF_PERCENT'];
+            }
+        } else {
+            $price = isset($arItem['PRICE']) && $arItem['PRICE']['VALUE']
+            ? $arItem['PRICE']
+            : $arItem['DISPLAY_PROPERTIES']['PRICE'];
+            $priceOld = isset($arItem['PRICEOLD']) && $arItem['PRICEOLD']['VALUE']
+                ? $arItem['PRICEOLD']
+                : $arItem['DISPLAY_PROPERTIES']['PRICEOLD'];
+            $priceEconomy = isset($arItem['ECONOMY']) && $arItem['ECONOMY']['VALUE']
+                ? $arItem['ECONOMY']
+                : $arItem['DISPLAY_PROPERTIES']['ECONOMY'];
+            $priceCurrency = isset($arItem['PRICE_CURRENCY']) && $arItem['PRICE_CURRENCY']
+                ? $arItem['PRICE_CURRENCY']
+                : $arItem['DISPLAY_PROPERTIES']['PRICE_CURRENCY'];
+            $priceFilter = isset($arItem['FILTER_PRICE']) && $arItem['FILTER_PRICE']['VALUE']
+                ? $arItem['FILTER_PRICE']
+                : $arItem['DISPLAY_PROPERTIES']['FILTER_PRICE'];
+
+            if (!$priceCurrency) {
+                $priceCurrency = $arItem['PROPERTIES']['PRICE_CURRENCY'];
+            }
+            if (!$priceFilter) {
+                $priceFilter = $arItem['PROPERTIES']['FILTER_PRICE'];
+            }
+        }
+
+        if ($arConfig['PRICES']) {
+            $price['VALUE'] = $arConfig['PRICES']['PRICE'] ?? $arConfig['PRICES']['VALUE'];
+            $priceOld['VALUE'] = $arConfig['PRICES']['PRICE_OLD'];
+            $priceCurrency['VALUE'] = $arConfig['PRICES']['PRICE_CURRENCY'];
+
+            //catalog
+            if ($arConfig['PRICES']['VALUE']) {
+                $priceOld['VALUE'] = $priceCurrency['VALUE'] = $priceEconomy['VALUE'] = [];
+                if ($arConfig['PRICES']['VALUE'] > $arConfig['PRICES']['DISCOUNT_VALUE']) {
+                    $priceOld['VALUE'] = $arConfig['PRICES']['PRINT_VALUE'];
+
+                    if (isset($arConfig['PRICES']['DISCOUNT_DIFF_PERCENT'])) {
+                        $percent = $arConfig['PRICES']['DISCOUNT_DIFF_PERCENT'];
+                    } else {
+                        $percent = round(($arConfig['PRICES']['DISCOUNT_DIFF']/$arConfig['PRICES']['VALUE'])*100, 0);
+                    }
+                    $priceEconomy['VALUE'] = '-'.$percent.'%';
+                }
+            }
+        }
+
+        $bUseCurrency = $priceCurrency['VALUE'];?>
+        <?ob_start();?>
+            <?if($priceEconomy['VALUE'] && $arParams['SHOW_DISCOUNT_PERCENT'] !== 'N'):?>
+                <div class="price-economy">
+                    <?if($bWideBlock):?>
+                        <?=GetMessage('PRICE_ECONOMY')?>
+                    <?endif;?>
+                    <?if ($bUseCurrency) {
+                        $priceEconomy['VALUE'] = str_replace('#CURRENCY#',$priceCurrency["VALUE"], $priceEconomy['VALUE']);
+                    }?>
+                    <span class="price-economy__val sticker__item--stock font_12"><?=$priceEconomy['VALUE']?></span>
+                </div>
+            <?endif;?>
+        <?$htmlPriceEconomy = ob_get_contents();
+        ob_end_clean();?>
+
+        <?ob_start();?>
+            <?if(strlen($price['VALUE'])):?>
+                <?if(strlen($arConfig['WRAPPER_CLASS'])):?>
+                    <div class="<?=$arConfig['WRAPPER_CLASS']?>">
+                <?endif;?>
+
+                <div class="price <?=$arConfig['PRICE_BLOCK_CLASS'];?>">
+                    <?if (!$arConfig['APART_ECONOMY']):?>
+                        <?=$htmlPriceEconomy;?>
+                    <?endif;?>
+                    <?if ($bLinePrices):?>
+                        <div class="line-block line-block--<?=$arConfig['LINE_OFFSET'];?> line-block--align-baseline line-block--flex-wrap">
+                            <div class="line-block__item">
+                    <?endif;?>
+                    <div class="price__new">
+                        <span class="price__new-val font_<?=$arConfig['PRICE_FONT'];?>" <?/*if($bShowSchema):?>itemprop="price" content="<?=($arParams['SHOW_PRICE'] ? $price['VALUE'] : $priceFilter['VALUE']);?>"<?endif;*/?>>
+                            <?if ($bUseCurrency) {
+                                $price['VALUE'] = str_replace('#CURRENCY#',$priceCurrency["VALUE"], $price['VALUE']);
+                            }?>
+                            <?if ($arConfig['PRICES'] && isset($arItem['PRICES'])) :?>
+                                <?=self::formatWithSchemaByTypes([
+                                    'PRICE' => $arConfig['PRICES'],
+                                    'SHOW_SCHEMA' => $arParams['SHOW_PRICE'] ? false : $bShowSchema
+                                ])?>
+                            <?else:?>
+                                <?=self::formatWithSchemaByProps($price['VALUE'], ($arParams['SHOW_PRICE'] ? false : $bShowSchema), $arItem['PROPERTIES'] ?: $arItem['DISPLAY_PROPERTIES'] ?: $arItem, $arConfig['PRICES'])?>
+                            <?endif;?>
+                        </span>
+                    </div>
+                    <?if ($bLinePrices):?>
+                        </div>
+                    <?endif;?>
+                    <?if($priceOld['VALUE'] && $arParams['SHOW_OLD_PRICE'] !== 'N'):?>
+                        <?if ($bLinePrices):?>
+                            <div class="line-block__item">
+                        <?endif;?>
+                            <div class="price__old">
+                                <?if($bWideBlock):?>
+                                    <?=GetMessage('PRICE_DISCOUNT')?>
+                                <?endif;?>
+                                <?if ($bUseCurrency) {
+                                    $priceOld['VALUE'] = str_replace('#CURRENCY#',$priceCurrency["VALUE"], $priceOld['VALUE']);
+                                }?>
+                                <span class="price__old-val font_<?=$arConfig['PRICEOLD_FONT'];?> color_999"><?=$priceOld['VALUE']?></span>
+                            </div>
+                        <?if ($bLinePrices):?>
+                            </div>
+                        <?endif;?>
+                    <?endif;?>
+                    <?if ($bLinePrices):?>
+                        </div>
+                    <?endif;?>
+                </div>
+
+                <?if(strlen($arConfig['WRAPPER_CLASS'])):?>
+                    </div>
+                <?endif;?>
+            <?endif;?>
+        <?$html = ob_get_contents();
+        ob_end_clean();
+
+        // event for manipulation
+        foreach (GetModuleEvents(Solution::moduleID, 'OnAspro'.ucfirst(__FUNCTION__), true) as $arEvent) {
+            ExecuteModuleEventEx($arEvent, array($arConfig, &$html));
+        }
+
+        $html = trim($html);
+
+        if ($arConfig['RETURN']) {
+            if ($arConfig['APART_ECONOMY']) {
+                return [
+                    'PRICES' => $html,
+                    'ECONOMY' => $htmlPriceEconomy,
+                ];
+            } else {
+                return $html;
+            }
+        } else {
+            echo $html;
+        }
+        ?>
+    <?}
+
+    public static function formatWithSchemaByTypes(array $arOptions = [])
+    {
+        $arDefaultOptions = [
+            'PRICE' => [],
+            'SHOW_SCHEMA' => true,
+            'FIELD' => 'DISCOUNT_VALUE',
+        ];
+        $arOptions = array_merge($arDefaultOptions, $arOptions);
+        $strPrice = '';
+
+        if (is_array($arOptions['PRICE']) && $arOptions['PRICE']) {
+            $price = $arOptions['PRICE'][$arOptions['FIELD']];
+            $strPrice = $arOptions['PRICE']['PRINT_'.$arOptions['FIELD']];
+            if ($arOptions['SHOW_SCHEMA']) {
+                if ($price) {
+                    $strPrice.= '<meta itemprop="price" content="'.$price.'">';
+                }
+                if ($arOptions['PRICE']['CURRENCY']) {
+                    $strPrice.= '<meta itemprop="priceCurrency" content="'.$arOptions['PRICE']['CURRENCY'].'">';
+                }
+            }
+
+        }
+        return $strPrice;
+    }
+    public static function formatWithSchemaByProps(string $strPrice = '', bool $bShowSchema = true, array $arElementProps = []){
+        if (strlen($strPrice = trim($strPrice))){
+            $bFilterPrice = false;
+            if (isset($arElementProps["FILTER_PRICE"]) && $arElementProps["FILTER_PRICE"]["VALUE"] !== '' && $arElementProps["FILTER_PRICE"]["VALUE"] >= 0 && $bShowSchema) {
+                $strPrice.= '<meta itemprop="price" content="'.$arElementProps["FILTER_PRICE"]["VALUE"].'">';
+                $bFilterPrice = true;
+            }
+
+            if (isset($arElementProps["PRICE_CURRENCY"]) && $arElementProps["PRICE_CURRENCY"]["VALUE_XML_ID"] != NULL) {
+                $strPrice = str_replace('#CURRENCY#',$arElementProps["PRICE_CURRENCY"]["VALUE"], $strPrice);
+            }
+
+            if (isset($arElementProps["PRICE_CURRENCY"]) && $arElementProps["PRICE_CURRENCY"]["VALUE_XML_ID"] != NULL && $bShowSchema) {
+                $strPrice.= '<meta itemprop="priceCurrency" content="'.$arElementProps["PRICE_CURRENCY"]["VALUE_XML_ID"].'">';
+
+            } else {
+                $arCur = array(
+                    '$' => 'USD',
+                    GetMessage('LITE_CUR_EUR1') => 'EUR',
+                    GetMessage('LITE_CUR_RUB1') => 'RUB',
+                    GetMessage('LITE_CUR_RUB2') => 'RUB',
+                    GetMessage('LITE_CUR_UAH1') => 'UAH',
+                    GetMessage('LITE_CUR_UAH2') => 'UAH',
+                    GetMessage('LITE_CUR_RUB3') => 'RUB',
+                    GetMessage('LITE_CUR_RUB4') => 'RUB',
+                    GetMessage('LITE_CUR_RUB5') => 'RUB',
+                    GetMessage('LITE_CUR_RUB6') => 'RUB',
+                    GetMessage('LITE_CUR_RUB3') => 'RUB',
+                    GetMessage('LITE_CUR_UAH3') => 'UAH',
+                    GetMessage('LITE_CUR_RUB5') => 'RUB',
+                    GetMessage('LITE_CUR_UAH6') => 'UAH',
+                );
+                foreach($arCur as $curStr => $curCode){
+                    if(strpos($strPrice, $curStr) !== false){
+                        $priceVal = str_replace($curStr, '', $strPrice);
+                        if($bShowSchema)
+                            return str_replace(array($curStr, $priceVal), array('<span class="currency" itemprop="priceCurrency" content="'.$curCode.'">'.$curStr.'</span>', '<span itemprop="price" content="'.$priceVal.'">'.$priceVal.'</span>'), $strPrice);
+                        else
+                            return str_replace(array($curStr, $priceVal), array('<span class="currency">'.$curStr.'</span>', '<span>'.$priceVal.'</span>'), $strPrice);
+                    }
+                }
+            }
+        }
+        return $strPrice;
+    }
+
+    public static function getDiscountByItemID($item_id = 0)
+    {
+        $arDiscount = [];
+        if($item_id) {
+            global $USER;
+            $arUserGroups = $USER->GetUserGroupArray();
+            $arDiscounts = \CCatalogDiscount::GetDiscountByProduct($item_id, $arUserGroups, "N", array(), SITE_ID);
+            if ($arDiscounts) {
+                $arDiscount=current($arDiscounts);
+            }
+        }
+        return $arDiscount;
+    }
+
+    public static function getOldPriceFromTypes($arCurPrice, $arAllPrices)
+    {
+        $arOldPrice = [];
+        $sDiscountPrices = \Bitrix\Main\Config\Option::get(Solution::moduleID, 'DISCOUNT_PRICE', '');
+        $arDiscountPrices = [];
+
+        if($sDiscountPrices){
+            $arDiscountPrices = array_flip(explode(',', $sDiscountPrices));
+            $arDiscountPrices = array_intersect_key($arAllPrices, $arDiscountPrices);
+        }
+
+        if($bUseRegionality = SolutionRegionality::checkUseRegionality()){
+			$arRegion = SolutionRegionality::getCurrentRegion();
+		}
+
+        if ($arRegion) {
+            if (
+                array_key_exists('PROPERTY_OLD_REGION_PRICES_VALUE', $arRegion) &&
+                $arRegion['PROPERTY_OLD_REGION_PRICES_VALUE']
+            ) {
+                if (reset($arRegion['PROPERTY_OLD_REGION_PRICES_VALUE']) !== 'component') {
+                    $oldRegionPrices = $arRegion['PROPERTY_OLD_REGION_PRICES_VALUE'];
+                    $arDiscountPrices = array_filter($arAllPrices, function($arValue) use ($oldRegionPrices) {
+                        return in_array($arValue['PRICE_ID'], $oldRegionPrices);
+                    });
+                }
+            }
+        }
+
+        if( !empty($arDiscountPrices) ){
+            $minOldPrice = self::getCatalogPrice($arDiscountPrices);
+            if($minOldPrice['VALUE'] - $arCurPrice['DISCOUNT_VALUE'] > 0){
+                $percent = round((($minOldPrice['VALUE'] - $arCurPrice['DISCOUNT_VALUE'])/$minOldPrice['VALUE'])*100, 0);
+                $arOldPrice = $minOldPrice;
+                $arOldPrice['DISCOUNT_DIFF_PERCENT'] = $percent;
+            }                        
+        }
+
+        return $arOldPrice;
+    }
+}?>

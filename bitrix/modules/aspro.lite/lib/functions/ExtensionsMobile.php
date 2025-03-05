@@ -1,0 +1,68 @@
+<? 
+namespace Aspro\Lite\Functions;
+
+use CLite as Solution;
+
+class ExtensionsMobile extends \CLite {
+    public static function register($templatePath = '') {
+		$path = $templatePath ? $templatePath : SITE_TEMPLATE_PATH;
+		
+		$arConfig = [
+			'accordion' => [
+				'css' => $path.'/css/block/accordion.min.css',
+			],
+			'counter' => [
+				'js' => $path.'/js/conditional/counter.min.js',
+			],
+			'fancybox' => [
+				'js' => $path.'/js/conditional/fancybox.min.js',
+			],
+			'fancybox.plus' => [
+				'js' => $path.'/js/conditional/fancybox.plus.min.js',
+			],
+			'fancybox.video' => [
+				'js' => $path.'/js/conditional/fancybox.video.min.js',
+			],
+			'filter' => [
+				'js' => $path.'/js/conditional/filter.min.js',
+			],
+			'gallery' => [
+				'css' => $path.'/css/block/gallery.min.css',
+			],
+			'gesture' => [
+				'js' => [
+					$path.'/js/conditional/gesture/TinyGesture.min.js',
+					$path.'/js/conditional/swipe.min.js',
+				],
+			],
+			'map' => [
+				'css' => $path.'/css/block/map.min.css',
+				'js' => $path.'/js/conditional/map.min.js',
+			],
+			'personal_old' => [
+				'css' => $path.'/css/conditional/personal.min.css',
+			],
+			'smart_filter' => [
+				'css' => $path.'/css/block/smart-filter.min.css',
+			],
+			
+		];
+
+		foreach ($arConfig as $ext => $arExt) {
+			\CJSCore::RegisterExt(self::partnerName.'_'.$ext.'_mobile', array_merge($arExt, ['skip_core' => true]));
+		}
+	}
+
+	public static function init($arExtensions){
+		$arExtensions = is_array($arExtensions) ? $arExtensions : (array)$arExtensions;
+
+		if($arExtensions){
+            
+			$arExtensions = array_map(function($ext){
+				return strpos($ext, self::partnerName) !== false ? $ext : self::partnerName.'_'.$ext.'_mobile';
+			}, $arExtensions);
+
+			\CJSCore::Init($arExtensions);
+		}
+	}
+}

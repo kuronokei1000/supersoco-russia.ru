@@ -1,0 +1,3 @@
+<?
+TSolution\ExtensionsMobile::init(['fancybox']);
+?>

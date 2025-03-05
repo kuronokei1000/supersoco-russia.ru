@@ -1,0 +1,1 @@
+<?\TSolution\Extensions::init(['stickers', 'tabs']);?>

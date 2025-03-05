@@ -1,0 +1,79 @@
+<?php
+
+namespace Aspro\Lite\Marketplace\Services;
+
+use Aspro\Lite\Marketplace\Request;
+use Aspro\Lite\Marketplace\Traits\Summary;
+
+abstract class Base
+{
+    use Summary;
+
+    protected $baseApiUrl = '';
+
+    protected $cacheBasedir = 'mp';
+
+    private $httpClient = null;
+
+    abstract public function checkAuth(): bool;
+
+    abstract public function getClientHttpHeader(): array;
+
+    public function __construct()
+    {
+        $this->httpClient = new Request($this->baseApiUrl);
+    }
+
+    public function getUuid(): string
+    {
+        return vsprintf('%s%s-%s-4000-8%.3s-%s%s%s0', str_split(dechex(microtime(true) * 1000) . bin2hex(random_bytes(8)), 4));
+    }
+
+    protected function getClient(): Request
+    {
+        return $this->httpClient;
+    }
+
+    protected function sendRequest(string $method, $url, $payload = [], $useCache = false, $cacheTime = 3600)
+    {
+        $cache = \Bitrix\Main\Data\Cache::createInstance();
+
+        try {
+            if ($useCache) {
+                $cacheId = md5($url.var_export($payload, true).var_export($this->getClientHttpHeader(), true));
+
+                if ($cache->initCache($cacheTime, $cacheId, $this->cacheBasedir)) {
+                    if($cache->getVars()) {
+                        return $cache->getVars();
+                    } else {
+                        $cache->forceRewriting(true);
+                    }
+                }
+            }
+
+            $queryResult = $this->getClient()->call($method, $url, [
+                'HEADERS' => $this->getClientHttpHeader(),
+                'DATA' => $payload
+            ]);
+
+            if($useCache && $cache->startDataCache()) {
+                $cache->endDataCache($queryResult);
+            }
+
+            return $queryResult;
+        } catch (\Exception $exception) {
+
+        }
+    }
+
+    /**
+     * Encoding to site charset
+     *
+     * @param $value
+     * @return mixed
+     */
+    public function encoding($value)
+    {
+        return \Bitrix\Main\Text\Encoding::convertEncoding($value, 'UTF-8', LANG_CHARSET);
+    }
+}

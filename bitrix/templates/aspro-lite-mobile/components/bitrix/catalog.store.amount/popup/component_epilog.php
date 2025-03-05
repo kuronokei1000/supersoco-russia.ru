@@ -1,0 +1,2 @@
+<?
+TSolution\ExtensionsMobile::init(['map']);

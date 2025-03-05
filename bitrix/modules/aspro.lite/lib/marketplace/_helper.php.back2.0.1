@@ -1,0 +1,259 @@
+<?php
+
+namespace Aspro\Lite\Marketplace;
+
+use \Bitrix\Main\Localization\Loc;
+use \Aspro\Lite\Marketplace\Config\Base as ConfigBase;
+
+// IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/aspro.lite/lib/marketplace/wildberries.php');
+
+class Helper
+{
+    static public function getSections(int $iblockId): array
+    {
+        $rsSections = \CIBlockSection::GetList(
+            ['LEFT_MARGIN' => 'ASC'],
+            ['IBLOCK_ID' => $iblockId],
+            false,
+            ['ID', 'IBLOCK_ID', 'NAME', 'IBLOCK_SECTION_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN']
+        );
+
+        $result = [];
+        while ($row = $rsSections->Fetch()) {
+            $row['ID'] = (int)$row['ID'];
+            $row['IBLOCK_SECTION_ID'] = (int)$row['IBLOCK_SECTION_ID'];
+            $row['LEFT_MARGIN'] = (int)$row['LEFT_MARGIN'];
+            $row['RIGHT_MARGIN'] = (int)$row['RIGHT_MARGIN'];
+
+            $result[] = $row;
+        }
+
+        return $result;
+    }
+
+    static public function getSectionGroups(int $iblockId): array
+    {
+        $result = [];
+        $result[0] = [];
+
+        foreach (self::getSections($iblockId) as $section) {
+            if ($section['RIGHT_MARGIN'] - $section['LEFT_MARGIN'] > 1) {
+                $result[$section['ID']] = [];
+            }
+
+            $result[$section['IBLOCK_SECTION_ID']][$section['ID']] = \CUtil::JSEscape(htmlspecialcharsbx($section['NAME']));
+        }
+
+        return $result;
+    }
+
+    static public function getSectionTree(int $iblockId): array
+    {
+        $sectionTree = self::getSectionGroups($iblockId);
+
+        $result = [];
+        foreach ($sectionTree[0] as $sectionId => $sectionName) {
+            $result[$sectionId] = [
+                'NAME' => $sectionName,
+                'CHILDREN' => self::traversalSectionTree($sectionId, '', $sectionTree),
+            ];
+        }
+
+        return $result;
+    }
+
+    static public function getPropertySelectOptions(int $iblockId): array
+    {
+        if(!ConfigBase::isIblockModule()) {
+            return [];
+        }
+
+        $result = [
+            [
+
+                'id' => 'NAME',
+                'text' => Loc::getMessage('AS_SELECT_NAME')
+            ],
+            [
+
+                'id' => 'PREVIEW_TEXT',
+                'text' => Loc::getMessage('AS_SELECT_PREVIEW_TEXT')
+            ],
+            [
+
+                'id' => 'DETAIL_TEXT',
+                'text' => Loc::getMessage('AS_SELECT_DETAIL_TEXT')
+            ],
+            [
+
+                'id' => 'DETAIL_PICTURE',
+                'text' => Loc::getMessage('AS_SELECT_DETAIL_PICTURE')
+            ],
+            [
+
+                'id' => 'PREVIEW_PICTURE',
+                'text' => Loc::getMessage('AS_SELECT_PREVIEW_PICTURE')
+            ],
+            [
+
+                'id' => 'FILELD_WEIGHT',
+                'text' => Loc::getMessage('AS_SELECT_WEIGHT')
+            ],
+            [
+
+                'id' => 'FILELD_WIDTH',
+                'text' => Loc::getMessage('AS_SELECT_WIDTH')
+            ],
+            [
+
+                'id' => 'FILELD_HEIGHT',
+                'text' => Loc::getMessage('AS_SELECT_HEIGHT')
+            ],
+            [
+
+                'id' => 'FILELD_LENGTH',
+                'text' => Loc::getMessage('AS_SELECT_LENGTH')
+            ],
+            [
+
+                'id' => 'FILELD_WEIGHT_KG',
+                'text' => Loc::getMessage('AS_SELECT_WEIGHT_KG')
+            ],
+            [
+
+                'id' => 'FILELD_WIDTH_CM',
+                'text' => Loc::getMessage('AS_SELECT_WIDTH_CM')
+            ],
+            [
+
+                'id' => 'FILELD_HEIGHT_CM',
+                'text' => Loc::getMessage('AS_SELECT_HEIGHT_CM')
+            ],
+            [
+
+                'id' => 'FILELD_LENGTH_CM',
+                'text' => Loc::getMessage('AS_SELECT_LENGTH_CM')
+            ],
+        ];
+
+        $properties = [
+            'text' => Loc::getMessage('AS_SELECT_GROUP_PROPERTIES'),
+            'children' => [],
+        ];
+
+        $rsProperties = \CIBlockProperty::GetList(
+            ['SORT' => 'ASC', 'NAME' => 'ASC'],
+            ['IBLOCK_ID' => $iblockId, 'ACTIVE' => 'Y', 'CHECK_PERMISSIONS' => 'N']
+        );
+
+        while ($arProperty = $rsProperties->Fetch()) {
+            $properties['children'][] = [
+                'id' => $arProperty['CODE'],
+                'text' => $arProperty['NAME']
+            ];
+        }
+
+        $result[] = $properties;
+
+        if(ConfigBase::isCatalogModule()) {
+            $priceIterator = \Bitrix\Catalog\GroupAccessTable::getList([
+                'select' => ['*'],
+                'filter' => ['=GROUP_ID' => 2],
+                'order' => ['CATALOG_GROUP_ID' => 'ASC']
+            ]);
+
+            $prices = [
+                'text' => Loc::getMessage('AS_SELECT_GROUP_PRICES'),
+                'children' => [],
+            ];
+
+            $prices['children'] = self::getPriceSelectOptions();
+
+            $result[] = $prices;
+        }
+
+        return $result;
+    }
+
+    static public function getPriceSelectOptions(): array
+    {
+        if(!ConfigBase::isCatalogModule()) {
+            return [];
+        }
+
+        $rsPriceType = \CCatalogGroup::GetList(
+            ['SORT' => 'ASC'],
+        );
+
+        $result = [];
+        while ($arPriceType = $rsPriceType->Fetch()) {
+            $result[] = [
+                'id' => 'CATALOG_PRICE_' . $arPriceType['ID'],
+                'text' => $arPriceType['NAME_LANG']
+            ];
+        }
+
+        return $result;
+    }
+
+    static public function getStoreSelectOptions(): array
+    {
+        $result = [];
+        foreach (self::getAllStoreList() as $store) {
+            $result[] = [
+                'id' => $store['ID'],
+                'text' => $store['TITLE'],
+            ];
+        }
+
+        return $result;
+    }
+
+    static public function getAllStoreList($select = []): array
+    {
+        if(!ConfigBase::isCatalogModule()) {
+            return [];
+        }
+
+        return \Bitrix\Catalog\StoreTable::getList([
+            'filter' =>['ACTIVE' => 'Y'],
+            'select' => $select ?: ['ID', 'TITLE', 'ADDRESS'],
+        ])->fetchAll();
+    }
+
+    static private function traversalSectionTree($parentSectionId, $parentSectionName, $sectionTree): array
+    {
+        $result = [];
+
+        if (!isset($sectionTree[$parentSectionId])) {
+            return [];
+        }
+
+        foreach ($sectionTree[$parentSectionId] as $sectionId => $sectionName) {
+            $result[$sectionId] = implode(' / ', array_filter([$parentSectionName, $sectionName]));
+
+            foreach (self::traversalSectionTree($sectionId, $sectionName, $sectionTree) as $subsectionId => $subsectionName) {
+                $result[$subsectionId] = $subsectionName;
+            }
+        }
+
+        return $result;
+    }
+
+    static public function getPropertyValueByEnumId(string $enumId)
+    {
+        return \Bitrix\Iblock\PropertyEnumerationTable::getList([
+            'filter' => array('ID'=>$enumId),
+        ])->fetch();
+    }
+
+    static public function getParentsListBySectionId(string $sectionId): array
+    {
+        $rsSections = \CIBlockSection::GetNavChain(false, $sectionId, ['ID']);
+        $arSections = [];
+        while ($arSection = $rsSections->Fetch()) {
+            $arSections[] = $arSection;
+        }
+        return $arSections;
+    }
+}

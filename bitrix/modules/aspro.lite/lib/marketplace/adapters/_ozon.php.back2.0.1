@@ -1,0 +1,1112 @@
+<?php
+/* !!!ATTENTION!!! */
+/*This file is UTF-8 ONLY DO NOT CHANGE CHARSET*/
+namespace Aspro\Lite\Marketplace\Adapters;
+
+use Aspro\Lite\Marketplace\Services\Ozon as OzonService;
+use \Bitrix\Main\Localization\Loc;
+use \Aspro\Lite\Marketplace\Maps\Ozon as Map;
+use Aspro\Lite\Marketplace\Config\Ozon as Config;
+use Aspro\Lite\Marketplace\Helper;
+use Bitrix\Main\Type\Collection;
+
+IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/aspro.lite/lib/marketplace/ozon.php');
+
+class Ozon extends Base
+{
+    const REQUIRED_FIELD_COUNTRY = 'COUNTRY';
+    const REQUIRED_FIELD_VENDOR_CODE = 'OFFER_ID';
+    const REQUIRED_FIELD_BARCODE = 'BARCODE';
+    const REQUIRED_FIELD_PRICE = 'PRICE';
+    const REQUIRED_FIELD_IMAGES = 'IMAGES';
+    const REQUIRED_FIELD_WEIGHT = 'WEIGHT'; // Вес с упаковкой, г 
+    const REQUIRED_FIELD_WIDTH = 'WIDTH'; // Ширина упаковки, мм 
+    const REQUIRED_FIELD_DEPTH = 'DEPTH'; // Длина упаковки, мм 
+    const REQUIRED_FIELD_HEIGHT = 'HEIGHT'; // Высота упаковки, мм 
+    
+    const NAME_SIZE = 'Размер';
+    const NAME_RUS_SIZE = 'Рос. размер';
+
+    const PROPERTY_FILTER_CODE_NAME = 'Название';
+    const PROPERTY_FILTER_CODE_NAME_PDF = 'Название файла PDF';
+    const PROPERTY_FILTER_CODE_ARTICLE = 'Артикул';
+    const PROPERTY_FILTER_CODE_BISNES_TYPE = 'Коммерческий тип';
+    const PROPERTY_FILTER_CODE_RICH_JSON = 'Rich-контент JSON';
+    const PROPERTY_FILTER_CODE_OZON_VIDEO_NAME = 'Озон.Видео: название';
+    const PROPERTY_FILTER_CODE_OZON_VIDEO_LINK = 'Озон.Видео: ссылка';
+    const PROPERTY_FILTER_CODE_OZON_VIDEO_LINK2 = 'Озон.Видеообложка: ссылка';
+    const PROPERTY_FILTER_CODE_OZON_VIDEO_ITEMS = 'Озон.Видео: товары на видео';
+
+    const PROPERTY_TYPE_STRING = 'string';
+    const PROPERTY_TYPE_NUMBER = 'number';
+    const PROPERTY_TYPE_INTEGER = 'integer';
+    const PROPERTY_TYPE_BOOLEAN = 'boolean';
+
+    const BOOLEAN_TRUE = ['1', 'да', 'истина', 'yes', 'y', 'есть'];
+
+    protected $scopeStructures = [];
+    protected $mappingPropertyValues = [];
+
+    public function __construct($client = '', $token = '')
+    {
+        $this->service = new OzonService($client?: self::getClientId(), $token?: self::getToken());
+    }
+
+    public function loadMappingPropsValues($mapping)
+    {
+        $this->mappingPropertyValues = $mapping;
+    }
+
+    /**
+     * Update item on the Service
+     *
+     * @param array $item See method getBuildItem
+     * @param array $payload
+     *  [
+     *      'ELEMENT_ID' => Bitrix element ID
+     *      'ELEMENT_NAME' => Bitrix element NAME
+     *  ]
+     *
+     * @return boolean
+     */
+    public function updateServiceItem(array $item, array $payload): bool
+    {
+        $this->service->clearErrors();
+
+        $result = $this->service->cardsUpdate([$item]);
+
+        $this->callbackCreateOrUpdate($result, $payload);
+
+        return (boolean)$result;
+    }
+
+    /**
+     * Update item on the Service
+     *
+     * @param array $item See method getBuildItem
+     * @param array $payload
+     *  [
+     *      'ELEMENT_ID' => Bitrix element ID
+     *      'ELEMENT_NAME' => Bitrix element NAME
+     *  ]
+     *
+     * @return boolean
+     */
+    public function updateServiceItems(array $items, array $payload): bool
+    {
+        $this->service->clearErrors();
+
+        $result = $this->service->cardsUpdate($items);
+
+        $this->callbackCreateOrUpdateItems($result, $payload);
+
+        return (boolean)$result;
+    }
+
+    /**
+     * Create item on the Service
+     *
+     * @param array $item See method getBuildItem
+     * @param array $payload
+     *  [
+     *      'ELEMENT_ID' => Bitrix element ID
+     *      'ELEMENT_NAME' => Bitrix element NAME
+     *  ]
+     *
+     * @return boolean
+     */
+    public function createServiceItem(array $item, array $payload): bool
+    {
+        $this->service->clearErrors();
+
+        $result = $this->service->cardsCreate([$item]);
+
+        $this->callbackCreateOrUpdate($result, $payload);
+
+        return (boolean)$result;
+    }
+
+    /**
+     * Create items on the Service
+     *
+     * @param array $item See method getBuildItem
+     * @param array $payload
+     *  [
+     *      'ELEMENT_ID' => Bitrix element ID
+     *      'ELEMENT_NAME' => Bitrix element NAME
+     *  ]
+     *
+     * @return boolean
+     */
+    public function createServiceItems(array $items, array $payload): bool
+    {
+        $this->service->clearErrors();
+        
+        $result = $this->service->cardsCreate($items);
+
+        $this->callbackCreateOrUpdateItems($result, $payload);
+
+        return (boolean)$result;
+    }
+
+    /**
+     *  Loading prices.
+     *
+     * @param array $prices
+     * [
+     *      [
+     *          "offer_id" => 1234567, (int)
+     *          "price" => 1000    (int)
+     *          "old_price" => 1000    (int)
+     *      ],
+     *      ...
+     * ]
+     */
+    public function updateServicePrices(array $prices)
+    {
+        $this->service->clearErrors();
+
+        $result = $this->service->updatePrices($prices);
+
+        if($this->service->hasErrors()) {
+            $this->addErrors($this->service->getErrors());
+        }
+
+        $this->addResult([
+            'RESULT' => $result
+        ]);
+    }
+
+    /**
+     * Loading stocks.
+     *
+     * @param array $stocks
+     * [
+     *       [
+     *          'offer_id': "656335639",
+     *          'stock': 1,
+     *          'warehouse_id': 7543
+     *       ],
+     *       ...
+     * ]
+     */
+    public function updateServiceStocks(array $stocks)
+    {
+        $result = $this->service->updateStocks($stocks);
+
+        $this->addResult([
+            'RESULT' => $result
+        ]);
+    }
+
+    /**
+     * Get items from Service
+     *
+     * @param array $params Filtering params
+     * @return array[]
+     */
+    public function getServiceItems(array $params = []): array
+    {
+        return $this->service->getCardList($params);
+    }
+
+    /**
+     * Get categories from Service
+     *
+     * @return array
+     */
+    public function getServiceCategories(): array
+    {
+        $categories = $this->service->getCategoryTree();
+        
+        if (!$categories) {
+            return [];
+        }
+
+        $categories = $this->encoding($categories);
+        $result = [];
+
+        Collection::sortByColumn($categories, 'title');
+        foreach ($categories as &$category) {
+            Collection::sortByColumn($category['children'], 'title');
+            foreach ($category['children'] as &$categoryDeep) {
+                Collection::sortByColumn($categoryDeep['children'], 'title');
+                foreach ($categoryDeep['children'] as $categoryDeepest) {
+                    $result[] = [
+                        'ID' => $categoryDeepest['category_id'],
+                        'FULL_NAME' => "{$category['title']} > {$categoryDeep['title']} > {$categoryDeepest['title']}",
+                        'NAME' => $categoryDeepest['title']
+                    ];
+                }
+            }
+        }
+        unset($category, $categoryDeep);
+        
+        return $result;
+    }
+
+    /**
+     * Get properties by category from Service
+     *
+     * @param string $categoryName Category name
+     * @param boolean $withSectionInfo If you need name root category
+     * @return array
+     *  $withSectionInfo = true
+     *  [
+     *      'object' => 'Category name'
+     *      'parent' => 'Root category name',
+     *      'properties' => [...]
+     *  ]
+     *
+     *  $withSectionInfo = false
+     *  [...] only properties
+     */
+    public function getServiceCategoryProperties(string $categoryName, bool $withSectionInfo = false): array
+    {
+        $arAllAttributes = $this->service->getCategoryAttribute($categoryName);
+
+        if ($this->service->hasErrors()) {
+            $this->addErrors($this->service->getErrors());
+        }
+
+        if (!$arAllAttributes) {
+            return [];
+        }
+
+        $resultProperties = [];
+        
+        foreach (current($arAllAttributes)['attributes'] as $property) {
+            if(in_array($property['name'], $this->getExcludeProps()))
+                continue;
+            $resultProperties[$property['id']] = $this->getPrepareProperty($property);
+        }
+
+        // change merge because its reset numeric index result array
+        // $scopeProperties = array_merge($this->getRequiredCategoryProperties(), $resultProperties);
+
+        $scopeProperties = $this->getRequiredCategoryProperties() + $resultProperties;
+
+        unset($resultProperties);
+
+        if (!$withSectionInfo) {
+            $result = $scopeProperties;
+        } else {
+            $result = [
+                'object' => $categoryName,
+                'properties' => $scopeProperties,
+            ];
+        }
+
+        return $result;
+    }
+
+    public function getExcludeProps():array
+    {
+        return [
+            self::PROPERTY_FILTER_CODE_ARTICLE,
+            self::PROPERTY_FILTER_CODE_BISNES_TYPE,
+            self::PROPERTY_FILTER_CODE_NAME,
+            self::PROPERTY_FILTER_CODE_NAME_PDF,
+            self::PROPERTY_FILTER_CODE_RICH_JSON,
+            self::PROPERTY_FILTER_CODE_OZON_VIDEO_ITEMS,
+            self::PROPERTY_FILTER_CODE_OZON_VIDEO_LINK,
+            self::PROPERTY_FILTER_CODE_OZON_VIDEO_LINK2,
+            self::PROPERTY_FILTER_CODE_OZON_VIDEO_NAME,
+        ];
+    }
+    
+    public function getIncludePropsType():array
+    {
+        return [self::PROPERTY_TYPE_STRING, self::PROPERTY_TYPE_NUMBER, self::PROPERTY_TYPE_BOOLEAN, self::PROPERTY_TYPE_INTEGER];
+    }
+
+    /**
+     * Get list warehouses
+     *
+     * @return array
+     */
+    public function getServiceWarehouses(): array
+    {
+        $result = $this->service->getWarehouses();
+
+        return $result['result'] ?: [];
+    }
+
+    /**
+     * Get a list values
+     *
+     * @return array
+     */
+    public function getServicePropertyValues(string $categoryId, string $propId, $last_value_id = 0, $limit = 99): array
+    {
+        $result = $this->service->getPropertyValues($categoryId, $propId, $last_value_id, $limit);
+
+        /*if ($result['has_next']) {
+            $last_value_id = end($result['result'])['id'];
+            $result['result'] = array_merge($result['result'], $this->getServicePropertyValues($categoryId, $propId, $last_value_id, 5000)['result']);
+            // $result['result'] = $this->getServicePropertyValues($categoryId, $propId, $last_value_id, 5000);
+        }*/
+
+        return $this->encoding($result) ?: [];
+    }
+        
+    /**
+     * Get a list values
+     *
+     * @return array
+     */
+    public function getPropertyValues(string $categoryId, string $propId): array
+    {
+        $result = $this->getServicePropertyValues($categoryId, $propId);
+
+        if ($result['result']) {
+            Collection::sortByColumn($result['result'], 'value');
+            return $result;
+        }
+
+        return [];
+    }
+
+    /**
+     * Get required properties on the Service
+     *
+     * @return array[]
+     */
+    protected function getRequiredCategoryProperties(): array
+    {
+        return [
+            self::REQUIRED_FIELD_BARCODE => [
+                'code' => self::REQUIRED_FIELD_BARCODE,
+                'id' => self::REQUIRED_FIELD_BARCODE,
+                'type' => self::PROPERTY_TYPE_STRING,
+                'name' => 'Штрихкод',
+                'is_required' => false,
+                'is_number' => false,
+                'is_system' => true,
+                'is_available' => false,
+                'is_nomenclature' => false,
+                'is_variation' => false,
+                'to_string' => true,
+            ],
+            self::REQUIRED_FIELD_VENDOR_CODE => [
+                'code' => self::REQUIRED_FIELD_VENDOR_CODE,
+                'id' => self::REQUIRED_FIELD_VENDOR_CODE,
+                'type' => self::PROPERTY_TYPE_STRING,
+                'name' => 'Артикул',
+                'is_required' => true,
+                'is_number' => false,
+                'is_system' => true,
+                'is_available' => false,
+                'is_nomenclature' => false,
+                'is_variation' => false,
+                'to_string' => true,
+            ],
+            self::REQUIRED_FIELD_IMAGES => [
+                'code' => self::REQUIRED_FIELD_IMAGES,
+                'type' => self::PROPERTY_TYPE_STRING,
+                'name' => 'Фото',
+                'is_required' => false,
+                'is_number' => false,
+                'is_system' => false,
+                'is_available' => false,
+                'is_nomenclature' => true,
+                'is_variation' => false,
+            ],
+            self::REQUIRED_FIELD_PRICE => [
+                'code' => self::REQUIRED_FIELD_PRICE,
+                'id' => self::REQUIRED_FIELD_PRICE,
+                'type' => self::PROPERTY_TYPE_STRING,
+                'name' => 'Цена',
+                'is_required' => true,
+                'is_number' => true,
+                'is_system' => false,
+                'is_available' => false,
+                'is_nomenclature' => false,
+                'is_variation' => true,
+                'to_string' => true,
+            ],
+            self::REQUIRED_FIELD_WEIGHT => [
+                'code' => self::REQUIRED_FIELD_WEIGHT,
+                'id' => self::REQUIRED_FIELD_WEIGHT,
+                'type' => self::PROPERTY_TYPE_NUMBER,
+                'name' => 'Вес с упаковкой, г',
+                'is_required' => true,
+                'is_number' => true,
+                'is_system' => false,
+                'is_available' => false,
+                'is_nomenclature' => false,
+                'is_variation' => true,
+            ],
+            self::REQUIRED_FIELD_DEPTH => [
+                'code' => self::REQUIRED_FIELD_DEPTH,
+                'id' => self::REQUIRED_FIELD_DEPTH,
+                'type' => self::PROPERTY_TYPE_NUMBER,
+                'name' => 'Длина упаковки, мм',
+                'is_required' => true,
+                'is_number' => true,
+                'is_system' => false,
+                'is_available' => false,
+                'is_nomenclature' => false,
+                'is_variation' => true,
+            ],
+            self::REQUIRED_FIELD_WIDTH => [
+                'code' => self::REQUIRED_FIELD_WIDTH,
+                'id' => self::REQUIRED_FIELD_WIDTH,
+                'type' => self::PROPERTY_TYPE_NUMBER,
+                'name' => 'Ширина упаковки, мм',
+                'is_required' => true,
+                'is_number' => true,
+                'is_system' => false,
+                'is_available' => false,
+                'is_nomenclature' => false,
+                'is_variation' => true,
+            ],
+            self::REQUIRED_FIELD_HEIGHT => [
+                'code' => self::REQUIRED_FIELD_HEIGHT,
+                'id' => self::REQUIRED_FIELD_HEIGHT,
+                'type' => self::PROPERTY_TYPE_NUMBER,
+                'name' => 'Высота упаковки, мм',
+                'is_required' => true,
+                'is_number' => true,
+                'is_system' => false,
+                'is_available' => false,
+                'is_nomenclature' => false,
+                'is_variation' => true,
+            ],
+        ];
+    }
+
+    /**
+     * Build item for Service
+     *
+     * @param array $element Bitrix element property values
+     * @return array|null
+     */
+    public function getBuildItem(array $element): ?array
+    {
+        $structure = $this->getBuildScopeStructure($element['IBLOCK_SECTION_ID']);
+
+        $errorValidate = false;
+        if (!$this->checkRequiredValues($structure, $element)) {
+            $errorValidate = true;
+        }
+
+        if ($element['TYPE'] == \Bitrix\Catalog\ProductTable::TYPE_PRODUCT) {
+            if (!$this->checkRequiredNomenclatureValues($structure, $element)) {
+                $errorValidate = true;
+            }
+        }
+        if ($element['TYPE'] == \Bitrix\Catalog\ProductTable::TYPE_SKU && $element['OFFERS']) {
+            /** here logic for validate sku offers ($arElement['OFFERS'])  */
+        }
+        
+        if (!$this->checkPropertyValues($structure, $element)) {
+            $errorValidate = true;
+        }
+
+        if ($errorValidate) {
+            $this->addResult([
+                'ELEMENT_ID' => $element['ID'],
+                'ELEMENT_NAME' => $element['NAME'],
+                'RESULT' => false,
+                'STATUS_CODE' => Config::STATUS_ERROR,
+                'WARNINGS' => $this->getGroupErrorSummary("element-item-$element[ID]", PHP_EOL)
+            ]);
+
+            return null;
+        }
+
+        $characteristics = $this->getBuildItemProperties($structure['common_properties'], $element);
+        $variations = $this->getBuildItemProperties($structure['variation_properties'], $element);
+
+        $arVariations = [];
+        foreach ($variations as $variation) {
+            $arVariations[strtolower($variation['id'])] = $variation['values'][0]['value'];
+        }
+
+        $arImgs = $this->getElementImages($structure, $element);
+
+        $item = array_filter([
+            'attributes' => $characteristics,
+            // 'sizes' => $this->getBuildNomenclatures($structure, $element),
+            'category_id' => $structure['object'],
+            'offer_id' => strval($element[$structure['vendor_field']]),
+            'barcode' => strval($element[$structure['barcode_field']]),
+            'name' => $element['NAME'],
+            'dimension_unit' => 'mm',
+            'weight_unit' => 'g',
+        ] + $arVariations + $arImgs);
+        $item['vat'] = strval((float)$element['CATALOG_VAT'] / 100);
+
+        return $item;
+    }
+        
+    /**
+     * Build the structure on the map
+     *
+     * @param int|string $iblockSectionId Bitrix section Id
+     * @return array
+     */
+    protected function getBuildScopeStructure($iblockSectionId): array
+    {
+        if (isset($this->scopeStructures[$iblockSectionId]) && $this->scopeStructures[$iblockSectionId]) {
+            return $this->scopeStructures[$iblockSectionId];
+        }
+
+        $mapCategory = $this->getMap($iblockSectionId);
+
+        if (!isset($mapCategory['object']) && $mapCategory) {
+            $arSections = array_reverse(Helper::getParentsListBySectionId($iblockSectionId));
+            if ($arSections) {
+                foreach ($arSections as $arSection) {
+                    if ($mapCategoryTmp = $this->getMap($arSection['ID'])) {
+                        if (isset($mapCategoryTmp['object'])) {
+                            $mapCategory = $mapCategoryTmp;
+                            unset($mapCategoryTmp);
+
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        $countryPropertyCode = $mapCategory['properties'][self::REQUIRED_FIELD_COUNTRY]['bx_property_code'] ?? null;
+        $vendorPropertyCode = $mapCategory['properties'][self::REQUIRED_FIELD_VENDOR_CODE]['bx_property_code'] ?? null;
+        $barcodePropertyCode = $mapCategory['properties'][self::REQUIRED_FIELD_BARCODE]['bx_property_code'] ?? null;
+        $pricePropertyCode = $mapCategory['properties'][self::REQUIRED_FIELD_PRICE]['bx_property_code'] ?? null;
+
+        $allProperties = array_filter($mapCategory['properties'] ?? [], function ($propertyStructure) {
+            if (isset($propertyStructure['is_system']) && $propertyStructure['is_system'] === true) {
+                return false;
+            }
+
+            return true;
+        });
+
+        $commonProperties = array_filter($allProperties, function ($propertyStructure) {
+            if (
+                (isset($propertyStructure['is_variation']) && $propertyStructure['is_variation'] === true)
+                || (isset($propertyStructure['is_nomenclature']) && $propertyStructure['is_nomenclature'] === true)
+
+            ) {
+                return false;
+            }
+
+            return true;
+        });
+
+        $variationProperties = array_filter($mapCategory['properties'] ?? [], function ($propertyStructure) {
+            if (isset($propertyStructure['is_variation']) && $propertyStructure['is_variation'] === true) {
+                return true;
+            }
+
+            return false;
+        });
+
+        $nomenclatureProperties = array_filter($mapCategory['properties'] ?? [], function ($propertyStructure) {
+            if (isset($propertyStructure['is_nomenclature']) && $propertyStructure['is_nomenclature'] === true) {
+                return true;
+            }
+
+            return false;
+        });
+
+        $this->scopeStructures[$iblockSectionId] = [
+            'object' => $mapCategory['object'] ?? null,
+            'parent' => $mapCategory['parent'] ?? null,
+            'country_field' => $countryPropertyCode,
+            'vendor_field' => $vendorPropertyCode,
+            'barcode_field' => $barcodePropertyCode,
+            'price_field' => $pricePropertyCode,
+            'all_properties' => $allProperties,
+            'common_properties' => $commonProperties,
+            'nomenclature_properties' => $nomenclatureProperties,
+            'variation_properties' => $variationProperties,
+        ];
+
+        return $this->scopeStructures[$iblockSectionId];
+    }
+
+    /**
+     * Get mapping
+     *
+     * @param int|string $sectionId Bitrix section id
+     * @return array
+     */
+    protected function getMap($sectionId = null): array
+    {
+        return $sectionId && $this->mapping[Map::GROUP_SECTIONS][$sectionId]
+            ? $this->mapping[Map::GROUP_SECTIONS][$sectionId]
+            : $this->mapping[Map::GROUP_SECTIONS]
+            ?? [];
+    }
+
+    /**
+     * Validate required properties
+     *
+     * @param array $structure See getBuildScopeStructure
+     * @param array $element Bitrix element property values
+     * @return bool
+     */
+    protected function checkRequiredValues(array $structure, array $element): bool
+    {
+        $error = false;
+
+        $this->beginErrorGroup("element-item-$element[ID]", "$element[NAME][ID:$element[ID]]", [
+            'ELEMENT_ID' => $element['ID'],
+        ]);
+
+        if (
+            !isset($structure['object'])
+            || !$structure['object']
+        ) {
+            $this->addError($this->utf(Loc::getMessage('AS_ERROR_REQUIRED_SECTION')));
+
+            $error = true;
+        }
+
+        $this->endErrorGroup();
+
+        return !$error;
+    }
+
+    /**
+     * Validate required nomenclature properties
+     *
+     * @param array $structure See getBuildScopeStructure
+     * @param array $element Bitrix element property values
+     * @return bool
+     */
+    protected function checkRequiredNomenclatureValues(array $structure, array $element): bool
+    {
+        $error = false;
+
+        $this->beginErrorGroup("element-item-$element[ID]", "$element[NAME][ID:$element[ID]]", [
+            'ELEMENT_ID' => $element['ID'],
+        ]);
+
+        if ($structure['object']) {
+            if ($arProps = array_filter($this->getServiceCategoryProperties($structure['object']), fn($arProp) => $arProp['is_required'])) {
+
+                unset($arProps['OFFER_ID']); // article
+                if (!$structure['vendor_field']) {
+                    $this->addError($this->utf(Loc::getMessage('AS_ERROR_REQUIRED_ARTICLE_MAPPING')));
+                    $error = true;
+                }
+
+                foreach ($arProps as $arProp) {
+                    if (
+                        !$structure['all_properties'][$arProp['code']]
+                         || (
+                                $structure['all_properties'][$arProp['code']] 
+                                && (
+                                        !$structure['all_properties'][$arProp['code']]['bx_property_code']
+                                        && !$structure['all_properties'][$arProp['code']]['default_value']
+                                    )
+                            )
+                        ) {
+                        $this->addError($this->utf(Loc::getMessage('AS_ERROR_REQUIRED_NOT_MAPPING', [
+                            '#CODE#' => $this->encoding($arProp['name']),
+                        ])));
+                        $error = true;
+                    }
+                }
+                if ($structure['vendor_field'] && !$element[$structure['vendor_field']]) {
+                    $this->addError($this->utf(Loc::getMessage('AS_ERROR_REQUIRED_ARTICLE')));
+                    $error = true;
+                }
+            }
+        }
+
+        $this->endErrorGroup();
+
+        return !$error;
+    }
+
+    /**
+     * Validate properties
+     *
+     * @param array $structure See getBuildScopeStructure
+     * @param array $element Bitrix element property values
+     * @return bool
+     */
+    protected function checkPropertyValues(array $structure, array $element): bool
+    {
+        $error = false;
+
+        $this->beginErrorGroup("element-item-$element[ID]", "$element[NAME][ID:$element[ID]]", [
+            'ELEMENT_ID' => $element['ID'],
+        ]);
+
+        foreach ($structure['all_properties'] as $propertyStructure) {
+            $value = $this->getPropertyValue($propertyStructure, $element);
+            if (
+                $propertyStructure['is_required'] === true
+                && !$value
+            ) {
+                $label =
+                    $propertyStructure['name']
+                        ?: $propertyStructure['bx_property_label']
+                        ?: $propertyStructure['bx_property_code']
+                        ?: $propertyStructure['wb_property_code'];
+
+                $this->addError($this->utf(Loc::getMessage('AS_ERROR_REQUIRED', [
+                    '#CODE#' => $this->encoding($label),
+                ])));
+
+                $error = true;
+            }
+        }
+
+        $this->endErrorGroup();
+
+        return !$error;
+    }
+
+    /**
+     * Build value object for property
+     *
+     * @param array $propertyStructures See getBuildScopeStructure
+     * @param array $element Bitrix element property values
+     * @return array
+     */
+    protected function getBuildItemProperties(array $propertyStructures, array $element): array
+    {
+        $result = [];
+
+        foreach ($propertyStructures as $servicePropertyCode => $propertyStructure) {
+            $propValue = '';
+            $value = $this->getPropertyValue($propertyStructure, $element);
+            if($value){
+                if(is_array($value)){
+                    $arValues = [];
+                    foreach ($value as $_value) {
+                        $arValues[] = $this->typeCoercionValue($propertyStructure, $_value);
+                    }
+                    $propValue = implode('/', $arValues);
+                } else {
+                    $propValue = $this->typeCoercionValue($propertyStructure, $value);
+                }
+            }
+
+            if ($propValue) {
+                $arValue = ['value' => $propValue];
+                if ($propertyStructure['dictionary_id']) {
+                    $arValue['dictionary_value_id'] = $propValue;
+                }
+
+                $result[] = [
+                    'id' => $propertyStructure['code'],
+                    'values' => [$arValue]
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get property value element by structure
+     *
+     * @param array $propertyStructure See getBuildScopeStructure
+     * @param array $element Bitrix element property values
+     * @return string|number
+     */
+    protected function getPropertyValue(array $propertyStructure, array $element)
+    {
+        $value = $element[$propertyStructure['bx_property_code']]
+                ?: $element[$propertyStructure['default_value']] // If default_value is a property
+                ?? $propertyStructure['default_value']
+                    ?: null;
+        
+        if ($propertyStructure['dictionary_id']) {
+            if ($this->mappingPropertyValues[$propertyStructure['code']]) {
+                $value = array_search($value, $this->mappingPropertyValues[$propertyStructure['code']]);
+            } else {
+                $value = null;
+            }
+        }
+
+        if (isset($propertyStructure['is_text']) && $propertyStructure['is_text']) {
+            $value = strip_tags($value);
+            $value = str_replace(['—'], '-', $value);
+        }
+
+        if ($propertyStructure['type'] === 'boolean' && $value) {
+            $value = in_array(mb_strtolower(Helper::getPropertyValueByEnumId($value)['VALUE']), $this->encoding(self::BOOLEAN_TRUE)) ? 'true' : 'false';
+        }
+
+        return $value;
+    }
+
+    protected function typeCoercionValue(array $propertyStructure, $value)
+    {
+        if ($propertyStructure['is_number']) {
+            $value = (int)$value;
+            if ($propertyStructure['to_string'] || !$propertyStructure['is_variation']) {
+                $value = strval($value);
+            }
+        } else {
+            $value = $this->getBuildItemPropertyValue($propertyStructure['type'], $value);
+            
+        }
+        return $value;
+    }
+
+    /**
+     * Additional processing of values by property type
+     *
+     * @param string $propertyType WB property type
+     * @param string $propertyValue Value
+     * @return string
+     */
+    protected function getBuildItemPropertyValue(string $propertyType,  string $propertyValue): string
+    {
+        if($propertyType === 'Основной цвет') {
+            return (string) mb_strtolower($propertyValue, 'UTF-8');
+        }
+
+        if($propertyType === 'Доп. цвета') {
+            return (string) mb_strtolower($propertyValue, 'UTF-8');
+        }
+
+        return (string) $propertyValue;
+    }
+
+    /**
+     * Build nomenclature object for item
+     *
+     * @param array $structure See getBuildScopeStructure
+     * @param array $element Bitrix element product or element with sku offers
+     * @return array
+     */
+    protected function getBuildNomenclatures(array $structure, array $element): array
+    {
+        $result = [];
+
+        if ($element['TYPE'] == \Bitrix\Catalog\ProductTable::TYPE_PRODUCT) {    
+            
+            $techSize= $rusSize = '';
+            if(isset($structure['variation_properties'][self::NAME_SIZE]["bx_property_code"]))
+                $techSize = $element[$structure['variation_properties'][self::NAME_SIZE]["bx_property_code"]];
+
+            if(isset($structure['variation_properties'][self::NAME_RUS_SIZE]["bx_property_code"]))
+                $rusSize = $element[$structure['variation_properties'][self::NAME_RUS_SIZE]["bx_property_code"]];
+            
+            
+            $productInfo = [
+                'techSize' => (string)$techSize ?: '',
+                'wbSize' => (string)$rusSize ?: '',
+                'skus' => [$element[$structure['barcode_field']]],
+                'price' => (int)$element[$structure['price_field']],
+            ];
+            if((int)$element[Config::PROPERTY_CHRT_ID]){
+                $productInfo['chrtId'] = (int)$element[Config::PROPERTY_CHRT_ID];
+            }
+            $result[] = $productInfo;
+        }
+
+        if ($element['TYPE'] == \Bitrix\Catalog\ProductTable::TYPE_SKU && $element['OFFERS']) {
+            /** here logic for build sku offers ($arElement['OFFERS'])  */
+        }
+
+        return $result;
+    }
+
+    /**
+     * Build structure images
+     *  [
+     *      'primary_image' => string
+     *      'images' => [...]
+     *  ]
+     *
+     * @param array $structure See getBuildScopeStructure
+     * @param array $element Bitrix element property values
+     * @return array
+     */
+    protected function getElementImages(array $structure, array $element): array
+    {
+        $arResult = [];
+        if ($element['DETAIL_PICTURE']) {
+            $arResult['primary_image'] = $element['DETAIL_PICTURE'];
+        }
+        if ($imgs = $element[$structure['nomenclature_properties']['IMAGES']['bx_property_code']]) {
+            $arResult['images'] = array_slice($imgs, 0, 14);
+        }
+
+        return $arResult;
+    }
+
+    /**
+     * Helper, default values for property
+     *
+     * @param array $property
+     * @param array $appended
+     * @return array
+     */
+    private function getPrepareProperty(array $property, array $appended = []): array
+    {
+        $property['type'] = strtolower($property['type']);
+        switch ($property['type']) {
+            case 'decimal':
+                $propertyType = self::PROPERTY_TYPE_NUMBER;
+                break;
+            case 'multiline':
+                $propertyType = self::PROPERTY_TYPE_STRING;
+                break;
+            default: 
+                $propertyType = $property['type'];
+        }
+        return array_merge([
+            'code' => (string)$property['id'],
+            'name' => $property['name'],
+            'dictionary_id' => $property['dictionary_id'],
+            'type' => $propertyType,
+            'is_available' => $property['isAvailable'] ?? false,
+            'is_number' => $propertyType === self::PROPERTY_TYPE_NUMBER ?? false,
+            'is_required' => $property['is_required'] ?? false,
+            // 'is_variation' => $property['name'] === self::NAME_SIZE || $property['name'] === self::NAME_RUS_SIZE ?: false,
+        ], $appended);
+    }
+
+    
+    /**
+     * Build structure prices
+     *  [
+     *      'price' => string
+     *      'old_price' => string
+     *  ]
+     *
+     * @param array $element Bitrix element property values
+     * @return array
+     */
+    public function getElementPriceWithDiscount(array $element): array
+    {
+        $arResult = [];
+        $priceGroup = str_replace('CATALOG_PRICE_', '', $this->scopeStructures[$element['IBLOCK_SECTION_ID']]['price_field']);
+
+        $priceFilter = [
+            '@PRODUCT_ID' => $element['ID'],
+            [
+                'LOGIC' => 'OR',
+                '<=QUANTITY_FROM' => 1,
+                '=QUANTITY_FROM' => null
+            ],
+            [
+                'LOGIC' => 'OR',
+                '>=QUANTITY_TO' => 1,
+                '=QUANTITY_TO' => null
+            ],
+            '=CATALOG_GROUP_ID' => $priceGroup
+        ];
+
+        $price = \Bitrix\Catalog\PriceTable::getList([
+            'select' => ['ID', 'PRODUCT_ID', 'CATALOG_GROUP_ID', 'PRICE', 'CURRENCY'],
+            'filter' => $priceFilter
+        ])->fetch();
+
+        $arPrice = \CCatalogProduct::GetOptimalPrice(
+            $element['ID'],
+            1,
+            [2],
+            'N',
+            [
+                $price
+            ],
+            $element['LID']
+        );
+
+        if ($arPrice['DISCOUNT_PRICE']) {
+            $arResult = [
+                'price' => (string)$arPrice['RESULT_PRICE']['DISCOUNT_PRICE'],
+                'old_price' => (string)$arPrice['RESULT_PRICE']['BASE_PRICE'],
+            ];
+        }
+
+        return $arResult;
+    }
+
+    public function getLimits(): array
+    {
+        return $this->service->getLimits();
+    }
+
+    /**
+     * Helper. Callback function after doing save or update service card
+     *
+     * @param $result
+     * @param array $payload
+     * @return void
+     *
+     */
+    private function callbackCreateOrUpdate($result, array $payload)
+    {
+        $hasErrors = $this->service->hasErrors();
+
+        if ($hasErrors) {
+            $label = "$payload[ELEMENT_NAME] [ID: $payload[ELEMENT_ID]]";
+
+            $this->beginErrorGroup("element-item-$payload[ELEMENT_ID]", $label, $payload);
+            $this->addErrors($this->service->getErrors());
+            $this->endErrorGroup();
+        }
+
+        if (!$result || $result['error'] === true) {
+            $status = Config::STATUS_ERROR;
+        } else {
+            if ($hasErrors) {
+                $status = Config::STATUS_WARNING;
+            } else {
+                $status = Config::STATUS_SUCCESS;
+            }
+        }
+
+        $this->addResult(array_merge($payload, [
+            'RESULT' => $result ?? false,
+            'STATUS_CODE' => $status,
+            'WARNINGS' => $hasErrors ? $this->service->getErrorSummary(PHP_EOL) : ''
+        ]));
+    }
+
+    /**
+     * Helper. Callback function after doing save or update service card
+     *
+     * @param $result
+     * @param array $payload
+     * @return void
+     *
+     */
+    private function callbackCreateOrUpdateItems($result, array $payload)
+    {
+        $hasErrors = $this->service->hasErrors();
+
+        if ( !$result || $result['error'] === true ) {
+            $status = Config::STATUS_ERROR;
+        } else {
+            if ($hasErrors) {
+                $status = Config::STATUS_WARNING;
+            } else {
+                $status = Config::STATUS_SUCCESS;
+            }
+        }
+
+        foreach ($payload as $arItem) {
+            $this->addResult(array_merge($arItem, [
+                'RESULT' => $result ?? false,
+                'STATUS_CODE' => $status,
+                'WARNINGS' => $hasErrors ? $this->service->getErrorSummary(PHP_EOL) : ''
+            ]));
+        }
+    }
+
+    static public function getToken(): string
+    {
+        return Config::getApiKey();
+    }
+
+    static public function getClientId(): string
+    {
+        return Config::getClientId();
+    }
+}

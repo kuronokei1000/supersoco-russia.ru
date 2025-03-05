@@ -1,0 +1,43 @@
+<?
+$MESS['LITE_GLOBAL_MENU_TEXT'] = 'Aspro: LightShop';
+$MESS['LITE_GLOBAL_MENU_TITLE'] = 'Aspro: LightShop';
+$MESS['LITE_MENU_CONTROL_CENTER_TEXT'] = 'Control Center';
+$MESS['LITE_MENU_CONTROL_CENTER_TITLE'] = 'Control Center';
+$MESS['LITE_MENU_WIZARD_TEXT'] = 'Setup Wizard';
+$MESS['LITE_MENU_WIZARD_TITLE'] = 'Аспро Setup Wizard';
+$MESS['LITE_MENU_TYPOGRAPHY_TEXT'] = 'Settings';
+$MESS['LITE_MENU_TYPOGRAPHY_TITLE'] = 'Settings';
+$MESS['LITE_MENU_PWA_TEXT'] = 'Web Application';
+$MESS['LITE_MENU_PWA_TITLE'] = 'Web Application';
+$MESS['LITE_MENU_CRM_TEXT'] = 'CRM Integration';
+$MESS['LITE_MENU_CRM_TITLE'] = 'CRM Integration';
+$MESS['LITE_MENU_AMO_CRM_TEXT'] = 'AmoCRM';
+$MESS['LITE_MENU_AMO_CRM_TITLE'] = 'AmoCRM';
+$MESS['LITE_MENU_FLOWLU_CRM_TEXT'] = 'Flowlu';
+$MESS['LITE_MENU_FLOWLU_CRM_TITLE'] = 'Flowlu';
+$MESS['LITE_MENU_ACLOUD_CRM_TEXT'] = 'Aspro.Cloud';
+$MESS['LITE_MENU_ACLOUD_CRM_TITLE'] = 'Aspro.Cloud';
+
+$MESS['ASPRO_LITE_GLOBAL_ASPRO_MENU_TEXT'] = 'Aspro';
+$MESS['ASPRO_LITE_GLOBAL_ASPRO_MENU_TITLE'] = 'Aspro';
+
+$MESS['LITE_MENU_GENERATE_FILES_TEXT'] = 'Generating Files';
+$MESS['LITE_MENU_GENERATE_FILES_TITLE'] = 'Generating Files';
+$MESS['LITE_MENU_GENERATE_ROBOTS_TEXT'] = 'robots.txt';
+$MESS['LITE_MENU_GENERATE_ROBOTS_TITLE'] = 'robots.txt';
+$MESS['LITE_MENU_GENERATE_SITEMAP_TEXT'] = 'sitemap.xml';
+$MESS['LITE_MENU_GENERATE_SITEMAP_TITLE'] = 'sitemap.xml';
+$MESS['ASPRO_LITE_MENU_GS_TEXT'] = 'Collect statistics';
+$MESS['ASPRO_LITE_MENU_GS_TITLE'] = 'Collection of statistics';
+$MESS['LITE_MENU_DEVELOP_TEXT'] = 'For developers';
+$MESS['LITE_MENU_DEVELOP_TITLE'] = 'For developers';
+
+$MESS['LITE_MENU_MARKETPLACE'] = 'Integration with Marketplace';
+$MESS['LITE_MENU_MARKETPLACE_WB'] = 'Wildberries';
+$MESS['LITE_MENU_MARKETPLACE_OZON'] = 'Ozon';
+
+$MESS['ASPRO_MAX_MENU_CAMPAIGN_MASTER_TEXT'] = 'Advertising in Yandex';
+$MESS['ASPRO_MAX_MENU_CAMPAIGN_MASTER_TITLE'] = 'Advertising in Yandex';
+$MESS['ASPRO_LITE_SMARTSEO__DOWNLOAD_TEXT'] = 'Install Smart SEO';
+$MESS['ASPRO_LITE_SMARTSEO__DOWNLOAD_TITLE'] = 'Install Smart SEO';
+?>

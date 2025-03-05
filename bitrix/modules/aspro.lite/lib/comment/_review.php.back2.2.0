@@ -1,0 +1,70 @@
+<?php
+
+namespace Aspro\Lite\Comment;
+
+use \Bitrix\Main\Loader,
+    \Bitrix\Main\Application,
+    \Bitrix\Main\Localization\Loc,
+    \Bitrix\Main\Config\Option;
+
+use CLite as Solution,
+    CLiteCache as SolutionCache,
+    Aspro\Functions\CAsproLite as SolutionFunctions;
+
+class Review
+{
+    public static function updateExtendedReviewsProps($commentId, $action = '')
+    {
+        if (Loader::IncludeModule('blog') && Loader::IncludeModule('iblock')) {
+            $comment = \CBlogComment::GetByID($commentId);
+
+            if ($comment) {
+                $product = \CIBlockElement::GetList(
+                    [],
+                    ['PROPERTY_BLOG_POST_ID' => $comment['POST_ID']],
+                    false,
+                    ['nTopCount' => '1'],
+                    ['ID', 'PROPERTY_BLOG_POST_ID', 'IBLOCK_ID']
+                )->Fetch();
+                if ($product) {
+                    $productId = $product['ID'];
+                }
+
+                $commentsCount = $commentsRating = $commentsCountRaiting = 0;
+                $resBlog = \CBlogComment::GetList(
+                    ["ID" => "DESC"],
+                    ['POST_ID' => $comment['POST_ID'], 'PARENT_ID' => false, 'PUBLISH_STATUS' => 'P'],
+                    false,
+                    false,
+                    ['ID', 'UF_ASPRO_COM_RATING']
+                );
+                while ($comment = $resBlog->Fetch()) {
+                    if ($comment['UF_ASPRO_COM_RATING']) {
+                        $commentsCountRaiting++;
+                        $commentsRating += $comment['UF_ASPRO_COM_RATING'];
+                    }
+
+                    $commentsCount++;
+                }
+
+                if ($action == 'delete') {
+                    $commentsCount--;
+                }
+
+                foreach (GetModuleEvents(Solution::moduleID, 'OnAspro' . ucfirst(__FUNCTION__), true) as $arEvent)
+                    ExecuteModuleEventEx($arEvent, array(&$commentsCount, &$commentsRating, &$commentsCountRaiting));
+
+                $catalogIblockId = $product["IBLOCK_ID"];
+                if ($catalogIblockId) {
+                    \CIBlock::clearIblockTagCache($catalogIblockId);
+                    if ($commentsRating) {
+                        $value = round($commentsRating / $commentsCountRaiting, 1);
+                        \CIBlockElement::SetPropertyValuesEx($productId, $catalogIblockId, ['EXTENDED_REVIEWS_COUNT' => $commentsCount, 'EXTENDED_REVIEWS_RAITING' => $value]);
+                    } else {
+                        \CIBlockElement::SetPropertyValuesEx($productId, $catalogIblockId, ['EXTENDED_REVIEWS_COUNT' => $commentsCount, 'EXTENDED_REVIEWS_RAITING' => 0]);
+                    }
+                }
+            }
+        }
+    }
+}

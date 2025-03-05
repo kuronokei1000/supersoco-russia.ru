@@ -1,0 +1,534 @@
+<?php
+
+namespace Aspro\Lite\Marketplace\Run;
+
+use Aspro\Lite\Marketplace\Maps\Ozon as Map;
+use Aspro\Lite\Marketplace\Adapters\Ozon as Adapter;
+use Aspro\Lite\Marketplace\Config\Ozon as Config;
+use Aspro\Lite\Marketplace\Finder;
+use Aspro\Lite\Marketplace\Traits\Summary;
+
+
+class Ozon
+{
+    use Summary;
+
+    const chunkSize = 100;
+
+    protected $iblockId = null;
+
+    /** @var Map|null */
+    protected $map = null;
+
+    /** @var Adapter|null */
+    protected $adapter = null;
+
+    /** @var Finder|null */
+    protected $finder = null;
+
+    /** @var array Справочник статусов */
+    protected $statusEnums = [];
+    /** @var array Данные (артикулы) для синхранизации карточек товара с элементами каталога */
+    private $itemsToSync = [];
+
+    /** @var array Данные для добавления или обновления товаров */
+    private $itemsToUpdate = [];
+
+    /** @var array Данные для обновления цен. (Для элементов у которых есть WB_NM_ID) */
+    private $itemsToPriceUpdate = [];
+
+    /** @var array Данные для обновления остатков. (Для элементов у которых есть WB_CHRT_ID) */
+    private $itemsToStoreUpdate = [];
+
+    /** @var array Сборка значений свойств и идентификаторов элемента каталога */
+    private $scopeElements = [];
+
+    /** @var array Сборка данных по остаткам на складах для каждого элемента */
+    private $scopeElementStores = [];
+
+    /** @var array Сборка штрихкодов полученных с сервиса */
+    private $scopeBarcodes = [];
+
+    /** @var array Сборка штрихкодов присвоенных для элементов */
+    private $scopeElementBarcodes = [];
+
+    /** @var string Относительный путь до папки с логами */
+    private $logFolder = '';
+
+    /** @var string Название файла с раширением */
+    private $logFileName = '';
+
+    /** @var string Относительный путь до файла */
+    private $rLogFilePath = '';
+
+    /** @var string Абсолютный путь до файла */
+    private $aLogFilePath = '';
+
+    /** @var null|int Id последнего элемента отправленного сервису */
+    private $lastSentElementId = null;
+
+    /** @var null|string VendoreProp последнего элемента отправленного сервису */
+    private $curVendoreProp = null;
+
+    /** @var int Максимальное время выполнения */
+    private $maxExecutionTime = 0;
+
+    /** @var int Начало выполнения */
+    private $startExecTime = 0;
+
+    /** @var array Helper. Хранит значения из mapping, для последующего использования в ходе работы */
+    private $mapValues = [];
+
+    /** @var array Helper. Хранит значения из mapping по складам, для последующего использования в ходе работы */
+    private $mapStoreValues = [];
+
+    /** @var array Helper. Store mapping property values with Ozon */
+    private $mapPropertyValues = [];
+
+    /** @var bool export prices with discount */
+    private $usePricesWithDiscount = true;
+
+    /** @var bool export stores */
+    private $needUploadStores = false;
+
+    /** @var bool export prices */
+    private $needUploadPrices = false;
+
+    /** @var bool export product info */
+    private $needUploadProducts = false;
+
+    public function __construct($iblockId, $clientId = '', $token = '')
+    {
+        $this->iblockId = $iblockId;
+
+        $this->map = new Map($iblockId);
+        $this->mapValues = $this->map->getValues(false, 'WB_PROPERTY');
+        $this->mapStoreValues = $this->map->getStoreValues();
+        $this->mapPropertyValues = $this->map->getPropsValuesStructure();
+
+        $this->adapter = new Adapter($clientId, $token);
+        $this->adapter->loadMapping($this->map->getMapStructure());
+        $this->adapter->loadMappingPropsValues($this->map->getPropsValuesStructure());
+
+        $this->finder = new Finder($iblockId);
+    }
+
+    /**
+     * Stored options for run export
+     *
+     * @param array $options
+     * @return void
+     */
+    public function setOptions(array $options)
+    {
+        $this->finder->setOptions([
+            'checkPermission' => $options['checkPermission'],
+            'isAvailable' => $options['isAvailable'],
+            'serverName' => $options['serverName'],
+            'isAllResult' => $options['isAllResult'],
+            'maxResult' => 100,
+            'filter' => $options['filter'],
+            'getPropValueId' => 'Y'
+        ]);
+
+        $this->logFolder = $options['logFolder'] ? $_SERVER['DOCUMENT_ROOT'] . $options['logFolder'] : null;
+        $this->logFileName = $options['logFileName'] ?? null;
+        $this->startExecTime = $options['startExecTime'] ?? 0;
+        $this->maxExecutionTime = $options['maxExecutionTime'] ?? 0;
+        $this->usePricesWithDiscount = $options['usePricesWithDiscount'] ?? false;
+        $this->needUploadStores = $options['needUploadStores'] ?? false;
+        $this->needUploadPrices = $options['needUploadPrices'] ?? false;
+        $this->needUploadProducts = $options['needUploadProducts'] ?? false;
+        $this->curVendoreProp = $options['curVendoreProp'] ?? null;
+    }
+
+    /**
+     * Execute export to Ozon
+     *
+     * @return array
+     */
+    public function export(): array
+    {
+        $finalExport = true;
+        $eachElementId = null;
+
+        $this->scopeElements = $this->finder->getElements();
+        $this->scopeElementStores = $this->finder->getElementStores();
+
+        foreach ($this->scopeElements as $element) {
+            $eachElementId = $element['ID'];
+            $finalExport = false;
+
+            $this->addItem($element);
+        }
+        
+        $this->syncElementsWithCreated();
+
+        $this->sendToUpdatePrices();
+        $this->sendToUpdateStores();
+        
+        $this->sendToUpdate();
+        
+        if ($this->adapter->hasErrors()) {
+            $this->addErrors($this->adapter->getErrors());
+        }
+
+        // $this->writeResults();
+        $this->writeErrors();
+        
+        if($finalExport){
+            $this->clearOldLog();
+        }
+
+        return [
+            'finalExport' => $finalExport,
+            'lastElementId' => $this->lastSentElementId ?: $eachElementId,
+            'curVendoreProp' => $this->curVendoreProp,
+        ];
+    }
+
+    /**
+     * Build item info for send to Ozon
+     */
+    protected function addItem($element)
+    {
+        $element = \Bitrix\Main\Text\Encoding::convertEncoding($element, LANG_CHARSET, 'UTF-8');
+
+        $item = $this->adapter->getBuildItem($element);
+        if(!$item) {
+            return null;
+        }
+
+        if ($this->usePricesWithDiscount) {
+            $item = array_merge($item, $this->adapter->getElementPriceWithDiscount($element));
+        }
+
+        if($element['TYPE'] == \Bitrix\Catalog\ProductTable::TYPE_PRODUCT) {
+            $vendorPropertyCode = $this->getVendorCode($element);
+            if($element[$vendorPropertyCode]) {
+            }
+            $this->itemsToSync[$element['ID']] = $item['offer_id'];
+        }
+
+        // event
+        $event = new \Bitrix\Main\Event(Config::MODULE, 'onAfterBuildItem', array(&$item, $element));
+        $event->send();
+
+        $this->itemsToUpdate[$element['ID']] = $item;
+    }
+
+    /**
+     * Get property code for ARTICLE
+     *
+     * @param $element
+     * @return string|null
+     */
+    protected function getVendorCode($element): ?string
+    {
+        return $this->getBxPropertyCode($element, Adapter::REQUIRED_FIELD_VENDOR_CODE);
+    }
+
+    /**
+     * Get bitrix property code from mapping
+     *
+     * @param $element
+     * @param $propertyCode
+     * @return string|null
+     */
+    protected function getBxPropertyCode($element, $propertyCode): ?string
+    {
+        return $this->mapValues[$element['IBLOCK_SECTION_ID']]['PROPERTIES'][$propertyCode]['BX_PROPERTY'] ?? null;
+    }
+
+    /**
+     * Check elements in Ozon by offer_id (Article) 
+     * and add to update stores and price
+     *
+     * @return void
+     */
+    public function syncElementsWithCreated()
+    {
+        if (!$this->itemsToSync) {
+            return;
+        }
+
+        $flippedItemsToSync = array_flip($this->itemsToSync);
+        $cards = $this->adapter->getServiceItems(
+            array_values($this->itemsToSync)
+        );
+
+        foreach ($cards as $nomenclature) {
+            $elementId = $flippedItemsToSync[$nomenclature['offer_id']];
+
+            if(!$nomenclature || !$elementId || !isset($this->itemsToSync[$elementId])) {
+                continue;
+            }
+
+            if($this->scopeElements[$elementId]['TYPE'] === \Bitrix\Catalog\ProductTable::TYPE_PRODUCT) {
+                $this->addItemForUpdateStore($elementId);
+                $this->addItemForUpdatePrice($elementId);
+            }
+
+            unset($this->itemsToSync[$elementId]);
+        }
+        
+    }
+    
+    /**
+     * Prepare item info for update quantity stores
+     *
+     * @param $elementId
+     */
+    protected function addItemForUpdateStore($elementId)
+    {
+        $element = $this->scopeElements[$elementId];
+
+        if (!$element || !$this->mapStoreValues) {
+            return;
+        }
+
+        $offer_id = $this->itemsToSync[$element['ID']] ;
+
+        if (!$offer_id) {
+            return;
+        }
+
+        $arStores = [];
+        foreach ($this->mapStoreValues as $mapStore) {
+            $arStores[] = [
+                'offer_id' => $offer_id,
+                'stock' => (int)$this->scopeElementStores[$elementId][$mapStore['BX_STORE_ID']]['AMOUNT'],
+                'warehouse_id' => $mapStore['WB_STORE_ID'],
+            ];
+        }
+
+        // event
+        $event = new \Bitrix\Main\Event(Config::MODULE, 'onAfterAddItemForUpdateStore', array(&$arStores, $element));
+        $event->send();
+
+        $this->itemsToStoreUpdate = array_merge($this->itemsToStoreUpdate, $arStores);
+    }
+
+    /**
+     * Prepare item info for update price
+     *
+     * @param $elementId
+     */
+    protected function addItemForUpdatePrice($elementId)
+    {
+        $element = $this->itemsToUpdate[$elementId];
+        
+        if (!$element) {
+            return;
+        }
+
+        $arPrice[] = [
+            'offer_id' => $element['offer_id'],
+            'price' => $element['price'],
+            'old_price' => $element['old_price'],
+        ];
+
+        // event
+        $event = new \Bitrix\Main\Event(Config::MODULE, 'onAfterAddItemForUpdatePrice', array(&$arPrice, $element));
+        $event->send();
+
+        $this->itemsToPriceUpdate = array_merge($this->itemsToPriceUpdate, $arPrice);
+    }
+
+    protected function writeErrors()
+    {
+        if(!$this->hasErrors()) {
+            return;
+        }
+
+        $errorSummary = PHP_EOL . date('H-i-s') . '-----------------------------------------------' . PHP_EOL;
+
+        $errorSummary .= $this->getErrorSummary(PHP_EOL);
+
+        $this->clearErrors();
+
+        $this->writeLog($errorSummary);
+    }
+
+    public function getRLogPath(): string
+    {
+        if ($this->rLogFilePath) {
+            return $this->rLogFilePath;
+        }
+
+        $this->checkLogFolder();
+
+        return $this->rLogFilePath;
+    }
+
+    public function getALogPath(): string
+    {
+        if ($this->aLogFilePath) {
+            return $this->aLogFilePath;
+        }
+        
+        $this->checkLogFolder();
+
+        return $this->aLogFilePath;
+    }
+
+    /**
+     *  Update element property
+     */
+    protected function writeResults()
+    {
+        if ($this->adapter->hasResults()) {
+            foreach ($this->adapter->getResults() as $result) {
+                $elementId = (int)$result['ELEMENT_ID'];
+
+                /*if ($result['ELEMENT_ID']) {
+                    \CIBlockElement::SetPropertyValuesEx($elementId, false, array_filter([
+                        Config::PROPERTY_ERROR_TEXT => [
+                            'VALUE' => [
+                                'TYPE' => 'TEXT',
+                                'TEXT' => $result['WARNINGS'] ? $this->encoding($result['WARNINGS']) : ''
+                            ]
+                        ]
+                    ]));
+                }*/
+            }
+        }
+    }
+
+    protected function checkLogFolder(): bool
+    {
+        if (!$this->logFolder || !$this->logFileName) {
+            return false;
+        }
+
+        if (!file_exists($this->logFolder)) {
+            mkdir($this->logFolder, 0777, true);
+        }
+
+        $dirToLog = $this->logFolder . '/' . $this->logFileName;
+
+        $this->aLogFilePath = $dirToLog;
+
+        $this->rLogFilePath = str_replace($_SERVER['DOCUMENT_ROOT'], '', $dirToLog);
+
+        return true;
+    }
+
+    protected function checkExecutionTime(): bool
+    {
+        if ($this->maxExecutionTime > 0 && (getmicrotime() - $this->startExecTime) >= $this->maxExecutionTime) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Add|Update element info in Ozon
+     *
+     * @return bool
+     */
+    protected function sendToUpdate(): bool
+    {
+        if (!$this->needUploadProducts) {
+            return false;
+        }
+
+        $itemsToUpdate = $itemsToCreate = [];
+        $payloadUpdate = $payloadCreate = [];
+
+        foreach ($this->itemsToUpdate as $elementId => $item) {
+            $itemsToUpdate[] = $item;
+            $payloadUpdate[] = ['ELEMENT_ID' => $elementId];
+
+            $this->lastSentElementId = $elementId;
+            $this->curVendoreProp = $this->getVendorCode($this->scopeElements[$elementId]);
+        }
+        
+        if(count($itemsToUpdate) > 0){
+            $arItems = array_chunk($itemsToUpdate, self::chunkSize);
+
+            foreach ($arItems as $arChunkItems) {
+                $this->adapter->updateServiceItems($arChunkItems, $payloadUpdate);
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Update element prices
+     *
+     * @return bool
+     */
+    protected function sendToUpdatePrices(): bool
+    {
+        if ($this->needUploadPrices && $this->itemsToPriceUpdate) {
+            $arItems = array_chunk($this->itemsToPriceUpdate, self::chunkSize);
+
+            foreach ($arItems as $arChunkItems) {
+                $this->adapter->updateServicePrices(array_values($arChunkItems));
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Update element quantity on stores
+     *
+     * @return bool
+     */
+    protected function sendToUpdateStores(): bool
+    {
+        if ($this->needUploadStores && $this->itemsToStoreUpdate) {
+            $arItems = array_chunk($this->itemsToStoreUpdate, self::chunkSize);
+
+            foreach ($arItems as $arChunkItems) {
+                $this->adapter->updateServiceStocks(array_values($arChunkItems));
+            }
+        }
+
+        return true;
+    }
+
+    protected function writeLog($errorText): bool
+    {
+        if (file_put_contents($this->getALogPath(), self::encoding($errorText), FILE_APPEND) === false) {
+            $this->addError('Failed to create error collection file on path <br /> ' + $this->getALogPath());
+
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function clearOldLog(): bool
+    {
+        $arFiles = glob($this->logFolder."/*.txt");
+        $maxLogDays = (float)\Bitrix\Main\Config\Option::get(Config::MODULE, Config::OPTION_LOG_TIME, "14");
+        $maxLogSec = $maxLogDays > 0 ? $maxLogDays * 86400 : 14 * 86400;
+
+        if($arFiles){
+            foreach($arFiles as $file){
+                if(file_exists($file) && !is_dir($file)){
+                    if(time() - filemtime($file) >= $maxLogSec){ // 14 days
+                        @unlink($file);
+                    }
+                }
+            }
+        }
+        
+        return true;
+    }
+
+    public function encoding($value)
+    {
+        return \Bitrix\Main\Text\Encoding::convertEncoding($value, 'UTF-8', LANG_CHARSET);
+    }
+
+    public function utf($value)
+    {
+        return \Bitrix\Main\Text\Encoding::convertEncoding($value, LANG_CHARSET, 'UTF-8');
+    }
+}
